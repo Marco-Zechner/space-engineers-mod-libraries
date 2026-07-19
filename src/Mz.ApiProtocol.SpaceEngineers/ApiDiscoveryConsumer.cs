@@ -23,6 +23,27 @@ namespace Mz.ApiProtocol.SpaceEngineers
         private bool _isDisposed;
 
         /// <summary>
+        /// Occurs when a provider for the requested API is observed and its
+        /// compatibility has been evaluated.
+        /// </summary>
+        /// <remarks>
+        /// Subscriber exceptions are caught, stored in
+        /// <see cref="LastError"/>, and do not escape through the shared
+        /// mod-message handler.
+        /// </remarks>
+        public event EventHandler<ApiProviderObservedEventArgs>
+            ProviderObserved;
+
+        /// <summary>
+        /// Occurs after a compatible provider connection has been accepted.
+        /// </summary>
+        /// <remarks>
+        /// Subscriber exceptions are caught, stored in
+        /// <see cref="LastError"/>, and do not undo the accepted connection.
+        /// </remarks>
+        public event EventHandler<ApiConnectedEventArgs> Connected;
+
+        /// <summary>
         /// Gets the mod-message channel used for discovery.
         /// </summary>
         public long ChannelId { get; }
@@ -62,6 +83,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </summary>
         /// <remarks>
         /// <see cref="Guid.Empty"/> means there is no unresolved request.
+        /// An incompatible response does not resolve the request because
+        /// another provider may still respond compatibly.
         /// </remarks>
         public Guid PendingCorrelationId
         {
@@ -88,8 +111,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         }
 
         /// <summary>
-        /// Gets the last unexpected error caught while processing an
-        /// announcement or sending a request.
+        /// Gets the last unexpected processing, transport, or subscriber
+        /// error.
         /// </summary>
         public Exception LastError { get; private set; }
 
@@ -170,9 +193,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// The non-empty correlation identifier assigned to the request.
         /// </returns>
         /// <remarks>
-        /// Requests may be sent repeatedly. Only the newest unresolved
-        /// correlation identifier is retained. Unsolicited compatible
-        /// announcements remain acceptable regardless of correlation.
+        /// Requests may be sent repeatedly. A newer request replaces the
+        /// previous unresolved correlation identifier. Responses to older
+        /// requests are then ignored.
         /// </remarks>
         /// <exception cref="ObjectDisposedException">
         /// Thrown when the consumer has been disposed.
@@ -291,15 +314,19 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 LastObservedProvider = announcement.Descriptor;
                 LastCompatibilityStatus = compatibility;
 
-                if (announcement.CorrelationId
-                    == _pendingCorrelationId)
-                {
-                    _pendingCorrelationId = Guid.Empty;
-                }
+                Exception subscriberError =
+                    RaiseProviderObserved(
+                        new ApiProviderObservedEventArgs(
+                            announcement.Descriptor,
+                            compatibility,
+                            announcement.CorrelationId
+                        )
+                    );
 
                 if (compatibility
                     != ApiCompatibilityStatus.Compatible)
                 {
+                    LastError = subscriberError;
                     return;
                 }
 
@@ -316,17 +343,69 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     endpointCopy.Add(pair.Key, pair.Value);
                 }
 
-                Connection = new ApiConnection(
+                var connection = new ApiConnection(
                     announcement.Descriptor,
                     endpointCopy
                 );
 
+                Connection = connection;
                 _pendingCorrelationId = Guid.Empty;
-                LastError = null;
+
+                Exception connectedError =
+                    RaiseConnected(
+                        new ApiConnectedEventArgs(
+                            connection,
+                            announcement.CorrelationId
+                        )
+                    );
+
+                LastError = subscriberError ?? connectedError;
             }
             catch (Exception exception)
             {
                 LastError = exception;
+            }
+        }
+
+        private Exception RaiseProviderObserved(
+            ApiProviderObservedEventArgs eventArgs
+        )
+        {
+            EventHandler<ApiProviderObservedEventArgs> handler =
+                ProviderObserved;
+
+            if (handler == null)
+                return null;
+
+            try
+            {
+                handler(this, eventArgs);
+                return null;
+            }
+            catch (Exception exception)
+            {
+                return exception;
+            }
+        }
+
+        private Exception RaiseConnected(
+            ApiConnectedEventArgs eventArgs
+        )
+        {
+            EventHandler<ApiConnectedEventArgs> handler =
+                Connected;
+
+            if (handler == null)
+                return null;
+
+            try
+            {
+                handler(this, eventArgs);
+                return null;
+            }
+            catch (Exception exception)
+            {
+                return exception;
             }
         }
 
@@ -336,6 +415,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             Connection = null;
             LastObservedProvider = null;
             LastCompatibilityStatus = null;
+            LastError = null;
         }
 
         private void ThrowIfDisposed()
