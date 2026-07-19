@@ -93,12 +93,12 @@ namespace Mz.SemanticVersioning
             if (value == null)
                 return false;
 
-            string trimmedValue = value.Trim();
+            var trimmedValue = value.Trim();
 
             if (trimmedValue.Length == 0)
                 return false;
 
-            string[] components = trimmedValue.Split('.');
+            var components = trimmedValue.Split('.');
 
             if (components.Length != 3)
                 return false;
@@ -175,7 +175,7 @@ namespace Mz.SemanticVersioning
         {
             unchecked
             {
-                int hashCode = 17;
+                var hashCode = 17;
 
                 hashCode = (hashCode * 31) + Major;
                 hashCode = (hashCode * 31) + Minor;

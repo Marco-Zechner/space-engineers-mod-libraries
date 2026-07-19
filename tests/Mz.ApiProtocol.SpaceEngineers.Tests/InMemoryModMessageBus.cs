@@ -73,9 +73,9 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 return;
             }
 
-            Action<object>[] snapshot = handlers.ToArray();
+            var snapshot = handlers.ToArray();
 
-            for (int index = 0; index < snapshot.Length; index++)
+            for (var index = 0; index < snapshot.Length; index++)
                 snapshot[index](payload);
         }
     }

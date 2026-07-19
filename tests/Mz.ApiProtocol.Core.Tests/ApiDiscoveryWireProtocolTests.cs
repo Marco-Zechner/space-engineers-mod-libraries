@@ -10,15 +10,15 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void CreateRequest_UsesOnlyTransportSafeFields()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
                     "  Mz.CommandAPI  ",
                     correlationId
                 );
 
-            object[] fields = Assert.IsType<object[]>(payload);
+            var fields = Assert.IsType<object[]>(payload);
 
             Assert.Equal(3, fields.Length);
 
@@ -34,18 +34,18 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryParseRequest_ValidPayload_ReturnsRequest()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
                     "Mz.CommandAPI",
                     correlationId
                 );
 
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseRequest(
                     payload,
-                    out ApiDiscoveryRequest request
+                    out var request
                 );
 
             Assert.True(success);
@@ -60,10 +60,10 @@ namespace Mz.ApiProtocol.Tests
             object? payload
         )
         {
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseRequest(
                     payload!,
-                    out ApiDiscoveryRequest request
+                    out var request
                 );
 
             Assert.False(success);
@@ -73,14 +73,14 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void CreateAnnouncement_UsesTransportSafeFields()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
             Action endpoint =
                 delegate
                 {
                 };
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     CreateDescriptor(),
                     correlationId,
@@ -90,7 +90,7 @@ namespace Mz.ApiProtocol.Tests
                     }
                 );
 
-            object[] fields = Assert.IsType<object[]>(payload);
+            var fields = Assert.IsType<object[]>(payload);
 
             Assert.Equal(5, fields.Length);
 
@@ -117,14 +117,14 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryParseAnnouncement_ValidPayload_ReturnsAnnouncement()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
             Action endpoint =
                 delegate
                 {
                 };
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     CreateDescriptor(),
                     correlationId,
@@ -134,10 +134,10 @@ namespace Mz.ApiProtocol.Tests
                     }
                 );
 
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseAnnouncement(
                     payload,
-                    out ApiAnnouncement announcement
+                    out var announcement
                 );
 
             Assert.True(success);
@@ -167,17 +167,17 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryParseAnnouncement_AllowsUnsolicitedAnnouncement()
         {
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     CreateDescriptor(),
                     Guid.Empty,
                     new Dictionary<string, Delegate>()
                 );
 
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseAnnouncement(
                     payload,
-                    out ApiAnnouncement announcement
+                    out var announcement
                 );
 
             Assert.True(success);
@@ -193,10 +193,10 @@ namespace Mz.ApiProtocol.Tests
             object? payload
         )
         {
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseAnnouncement(
                     payload!,
-                    out ApiAnnouncement announcement
+                    out var announcement
                 );
 
             Assert.False(success);

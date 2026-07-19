@@ -224,11 +224,11 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 );
             }
 
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
             _pendingCorrelationId = correlationId;
             LastError = null;
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
                     Requirement.ApiId,
                     correlationId
@@ -370,7 +370,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     return;
                 }
 
-                ApiCompatibilityStatus compatibility =
+                var compatibility =
                     Requirement.Evaluate(
                         announcement.Descriptor
                     );
@@ -378,7 +378,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 LastObservedProvider = announcement.Descriptor;
                 LastCompatibilityStatus = compatibility;
 
-                Exception observedError = RaiseEvent(
+                var observedError = RaiseEvent(
                     ProviderObserved,
                     new ApiProviderObservedEventArgs(
                         announcement.Descriptor,
@@ -400,7 +400,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     );
 
                 foreach (
-                    KeyValuePair<string, Delegate> pair
+                    var pair
                     in announcement.Endpoints
                 )
                 {
@@ -415,7 +415,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 Connection = connection;
                 _pendingCorrelationId = Guid.Empty;
 
-                Exception connectedError = RaiseEvent(
+                var connectedError = RaiseEvent(
                     Connected,
                     new ApiConnectedEventArgs(
                         connection,
@@ -435,7 +435,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ApiDisconnectReason reason
         )
         {
-            ApiConnection previousConnection = Connection;
+            var previousConnection = Connection;
 
             if (previousConnection == null)
                 return false;
@@ -464,9 +464,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 return null;
 
             Exception firstError = null;
-            Delegate[] subscribers = handler.GetInvocationList();
+            var subscribers = handler.GetInvocationList();
 
-            for (int index = 0; index < subscribers.Length; index++)
+            for (var index = 0; index < subscribers.Length; index++)
             {
                 try
                 {

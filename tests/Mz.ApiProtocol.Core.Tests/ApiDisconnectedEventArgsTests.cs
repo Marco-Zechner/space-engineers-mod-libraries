@@ -10,7 +10,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_StoresConnectionAndReason()
         {
-            ApiConnection connection = CreateConnection();
+            var connection = CreateConnection();
 
             var eventArgs = new ApiDisconnectedEventArgs(
                 connection,

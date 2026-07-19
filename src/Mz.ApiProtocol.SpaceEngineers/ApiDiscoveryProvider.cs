@@ -97,7 +97,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             );
 
             foreach (
-                KeyValuePair<string, Delegate> pair
+                var pair
                 in validated.Endpoints
             )
             {
@@ -164,7 +164,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 );
             }
 
-            object payload =
+            var payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     Descriptor,
                     Guid.Empty,
@@ -231,7 +231,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     return;
                 }
 
-                object response =
+                var response =
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
                         Descriptor,
                         request.CorrelationId,

@@ -24,7 +24,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 provider.Start();
                 consumer.Start();
 
-                Guid correlationId =
+                var correlationId =
                     consumer.RequestDiscovery();
 
                 Assert.NotEqual(Guid.Empty, correlationId);
@@ -154,7 +154,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             {
                 consumer.Start();
 
-                object announcement =
+                var announcement =
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
                         CreateDescriptor(
                             new SemanticVersion(1, 5, 0)
@@ -165,7 +165,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
                 bus.Send(ChannelId, announcement);
 
-                ApiConnection firstConnection =
+                var firstConnection =
                     consumer.Connection;
 
                 bus.Send(ChannelId, announcement);

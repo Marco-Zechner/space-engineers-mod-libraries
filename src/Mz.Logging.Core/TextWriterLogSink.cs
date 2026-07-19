@@ -54,7 +54,7 @@ namespace Mz.Logging
             if (entry == null)
                 throw new ArgumentNullException(nameof(entry));
 
-            string formattedEntry = _formatter.Format(entry);
+            var formattedEntry = _formatter.Format(entry);
 
             _writer.WriteLine(formattedEntry);
 

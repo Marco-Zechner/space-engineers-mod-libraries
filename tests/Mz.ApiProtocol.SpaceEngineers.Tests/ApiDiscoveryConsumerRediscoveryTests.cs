@@ -30,9 +30,9 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             consumer.Start();
             AnnounceCompatibleProvider(bus);
 
-            ApiConnection previous = consumer.Connection;
+            var previous = consumer.Connection;
 
-            bool removed = consumer.Disconnect();
+            var removed = consumer.Disconnect();
 
             Assert.True(removed);
             Assert.False(consumer.IsConnected);
@@ -97,9 +97,9 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             consumer.Start();
             AnnounceCompatibleProvider(bus);
 
-            int sendCountBeforeRediscovery = bus.SendCount;
+            var sendCountBeforeRediscovery = bus.SendCount;
 
-            Guid correlationId = consumer.Rediscover();
+            var correlationId = consumer.Rediscover();
 
             Assert.NotEqual(Guid.Empty, correlationId);
 
@@ -132,10 +132,10 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             consumer.Start();
             consumer.RequestDiscovery();
 
-            ApiConnection firstConnection =
+            var firstConnection =
                 consumer.Connection;
 
-            Guid correlationId = consumer.Rediscover();
+            var correlationId = consumer.Rediscover();
 
             Assert.NotEqual(Guid.Empty, correlationId);
             Assert.True(consumer.IsConnected);
@@ -214,7 +214,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             var bus = new InMemoryModMessageBus();
 
             using var consumer = CreateConsumer(bus);
-            bool laterSubscriberCalled = false;
+            var laterSubscriberCalled = false;
 
             consumer.Disconnected +=
                 delegate

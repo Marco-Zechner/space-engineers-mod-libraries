@@ -31,7 +31,7 @@ namespace Mz.ApiProtocol.Tests
 
             source.Clear();
 
-            Delegate stored = Assert.Single(
+            var stored = Assert.Single(
                 announcement.Endpoints
             ).Value;
 

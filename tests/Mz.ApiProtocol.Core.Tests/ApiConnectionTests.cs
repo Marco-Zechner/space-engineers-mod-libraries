@@ -46,7 +46,7 @@ namespace Mz.ApiProtocol.Tests
                 endpoint
             );
 
-            bool found = connection.TryGetEndpoint(
+            var found = connection.TryGetEndpoint(
                 "Echo",
                 out Action<string> result
             );
@@ -65,7 +65,7 @@ namespace Mz.ApiProtocol.Tests
                 }
             );
 
-            bool found = connection.TryGetEndpoint(
+            var found = connection.TryGetEndpoint(
                 "Missing",
                 out Action result
             );
@@ -84,7 +84,7 @@ namespace Mz.ApiProtocol.Tests
                 }
             );
 
-            bool found = connection.TryGetEndpoint(
+            var found = connection.TryGetEndpoint(
                 "Ping",
                 out Action<string> result
             );

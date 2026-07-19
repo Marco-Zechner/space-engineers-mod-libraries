@@ -53,13 +53,13 @@ namespace Mz.ApiProtocol
         {
             request = null;
 
-            object[] fields = payload as object[];
+            var fields = payload as object[];
 
             if (fields == null || fields.Length != 3)
                 return false;
 
-            string marker = fields[0] as string;
-            string apiId = fields[1] as string;
+            var marker = fields[0] as string;
+            var apiId = fields[1] as string;
 
             if (!string.Equals(
                 marker,
@@ -76,7 +76,7 @@ namespace Mz.ApiProtocol
             if (!(fields[2] is Guid))
                 return false;
 
-            Guid correlationId = (Guid)fields[2];
+            var correlationId = (Guid)fields[2];
 
             if (correlationId == Guid.Empty)
                 return false;
@@ -110,7 +110,7 @@ namespace Mz.ApiProtocol
                 );
 
             foreach (
-                KeyValuePair<string, Delegate> pair
+                var pair
                 in announcement.Endpoints
             )
             {
@@ -140,14 +140,14 @@ namespace Mz.ApiProtocol
         {
             announcement = null;
 
-            object[] fields = payload as object[];
+            var fields = payload as object[];
 
             if (fields == null || fields.Length != 5)
                 return false;
 
-            string marker = fields[0] as string;
-            string apiId = fields[1] as string;
-            string versionText = fields[2] as string;
+            var marker = fields[0] as string;
+            var apiId = fields[1] as string;
+            var versionText = fields[2] as string;
 
             if (!string.Equals(
                 marker,

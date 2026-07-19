@@ -8,7 +8,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_StoresNormalizedApiIdAndCorrelationId()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
             var request = new ApiDiscoveryRequest(
                 "  Mz.CommandAPI  ",

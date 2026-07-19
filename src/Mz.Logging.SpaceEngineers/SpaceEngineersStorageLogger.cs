@@ -99,7 +99,7 @@ namespace Mz.Logging.SpaceEngineers
             if (callingType == null)
                 throw new ArgumentNullException(nameof(callingType));
 
-            TextWriter writer = writerFactory.OpenLocal(
+            var writer = writerFactory.OpenLocal(
                 fileName.Trim(),
                 callingType
             );
@@ -133,7 +133,7 @@ namespace Mz.Logging.SpaceEngineers
             if (callingType == null)
                 throw new ArgumentNullException(nameof(callingType));
 
-            TextWriter writer = writerFactory.OpenWorld(
+            var writer = writerFactory.OpenWorld(
                 fileName.Trim(),
                 callingType
             );
@@ -163,7 +163,7 @@ namespace Mz.Logging.SpaceEngineers
                 fileName
             );
 
-            TextWriter writer = writerFactory.OpenGlobal(
+            var writer = writerFactory.OpenGlobal(
                 fileName.Trim()
             );
 

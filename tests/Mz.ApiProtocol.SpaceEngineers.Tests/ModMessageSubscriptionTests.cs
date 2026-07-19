@@ -28,7 +28,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                     subscription.ChannelId
                 );
 
-                Registration registration =
+                var registration =
                     Assert.Single(bus.Registrations);
 
                 Assert.Equal(
@@ -97,7 +97,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             subscription.Dispose();
 
-            Registration registration =
+            var registration =
                 Assert.Single(bus.Unregistrations);
 
             Assert.Equal(

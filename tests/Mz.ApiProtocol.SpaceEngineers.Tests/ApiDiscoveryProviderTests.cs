@@ -21,7 +21,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             Assert.True(provider.IsStarted);
             Assert.Equal(1, bus.RegistrationCount);
 
-            ApiAnnouncement announcement =
+            var announcement =
                 ParseLastAnnouncement(bus);
 
             Assert.Equal(
@@ -40,7 +40,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             provider.Start();
 
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
             bus.Send(
                 ChannelId,
@@ -50,7 +50,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 )
             );
 
-            ApiAnnouncement announcement =
+            var announcement =
                 ParseLastAnnouncement(bus);
 
             Assert.Equal(
@@ -69,7 +69,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             provider.Start();
 
-            int sendCountBeforeRequest = bus.SendCount;
+            var sendCountBeforeRequest = bus.SendCount;
 
             bus.Send(
                 ChannelId,
@@ -161,15 +161,15 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             InMemoryModMessageBus bus
         )
         {
-            object payload =
+            var payload =
                 bus.SentPayloads[
                     bus.SentPayloads.Count - 1
                 ];
 
-            bool success =
+            var success =
                 ApiDiscoveryWireProtocol.TryParseAnnouncement(
                     payload,
-                    out ApiAnnouncement announcement
+                    out var announcement
                 );
 
             Assert.True(success);

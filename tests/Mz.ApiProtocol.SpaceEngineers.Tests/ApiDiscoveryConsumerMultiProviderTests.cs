@@ -51,7 +51,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             using var consumer = CreateConsumer(bus);
             consumer.Start();
 
-            Guid correlationId =
+            var correlationId =
                 consumer.RequestDiscovery();
 
             bus.Send(
@@ -83,7 +83,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             using var consumer = CreateConsumer(bus);
             consumer.Start();
 
-            Guid correlationId =
+            var correlationId =
                 consumer.RequestDiscovery();
 
             bus.Send(
@@ -110,10 +110,10 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             using var consumer = CreateConsumer(bus);
             consumer.Start();
 
-            Guid olderCorrelationId =
+            var olderCorrelationId =
                 consumer.RequestDiscovery();
 
-            Guid newerCorrelationId =
+            var newerCorrelationId =
                 consumer.RequestDiscovery();
 
             bus.Send(
@@ -193,7 +193,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             var bus = new InMemoryModMessageBus();
 
             using var consumer = CreateConsumer(bus);
-            int eventCount = 0;
+            var eventCount = 0;
             ApiConnectedEventArgs connected = null!;
 
             consumer.Connected +=
@@ -208,7 +208,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             consumer.Start();
 
-            object announcement = CreateAnnouncement(
+            var announcement = CreateAnnouncement(
                 new SemanticVersion(1, 5, 0),
                 Guid.Empty
             );

@@ -57,7 +57,7 @@ namespace Mz.ApiProtocol
                 StringComparer.Ordinal
             );
 
-            foreach (KeyValuePair<string, Delegate> pair in endpoints)
+            foreach (var pair in endpoints)
             {
                 if (string.IsNullOrWhiteSpace(pair.Key))
                 {
@@ -75,7 +75,7 @@ namespace Mz.ApiProtocol
                     );
                 }
 
-                string normalizedName = pair.Key.Trim();
+                var normalizedName = pair.Key.Trim();
 
                 if (copy.ContainsKey(normalizedName))
                 {

@@ -53,7 +53,7 @@ namespace Mz.ApiProtocol
             );
 
             foreach (
-                KeyValuePair<string, Delegate> pair
+                var pair
                 in validated.Endpoints
             )
             {

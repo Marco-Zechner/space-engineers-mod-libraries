@@ -54,7 +54,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
         private static IMyUtilities GetUtilities()
         {
-            IMyUtilities utilities = MyAPIGateway.Utilities;
+            var utilities = MyAPIGateway.Utilities;
 
             if (utilities == null)
             {
