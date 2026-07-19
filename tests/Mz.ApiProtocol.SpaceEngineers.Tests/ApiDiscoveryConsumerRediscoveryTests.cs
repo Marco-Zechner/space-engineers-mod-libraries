@@ -245,6 +245,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
+                    CreateProviderIdentity(),
                     new ApiDescriptor(
                         "Mz.CommandAPI",
                         new SemanticVersion(1, 5, 0)
@@ -263,13 +264,27 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             return new ApiDiscoveryConsumer(
                 bus,
                 ChannelId,
+                CreateDependency()
+            );
+        }
+
+        private static ApiDependencyDescriptor CreateDependency()
+        {
+            return new ApiDependencyDescriptor(
+                new ApiModIdentity(
+                    "Mz.ConsumerMod",
+                    "Consumer Mod",
+                    new SemanticVersion(2, 0, 0)
+                ),
                 new ApiRequirement(
                     "Mz.CommandAPI",
                     new ApiVersionRange(
                         new SemanticVersion(1, 2, 0),
                         new SemanticVersion(2, 0, 0)
                     )
-                )
+                ),
+                ApiDependencyKind.Optional,
+                "Adds Command API integration"
             );
         }
 
@@ -280,6 +295,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             return new ApiDiscoveryProvider(
                 bus,
                 ChannelId,
+                CreateProviderIdentity(),
                 new ApiDescriptor(
                     "Mz.CommandAPI",
                     new SemanticVersion(1, 5, 0)
@@ -300,6 +316,15 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                     }
                 }
             };
+        }
+        
+        private static ApiModIdentity CreateProviderIdentity()
+        {
+            return new ApiModIdentity(
+                "Mz.CommandApiMod",
+                "Command API",
+                new SemanticVersion(1, 4, 0)
+            );
         }
     }
 }

@@ -31,27 +31,41 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates a transport-safe discovery request.
         /// </summary>
-        /// <param name="apiId">The requested API identifier.</param>
+        /// <param name="dependency">
+        /// The consumer and its API dependency declaration.
+        /// </param>
         /// <param name="correlationId">
         /// The non-empty request correlation identifier.
         /// </param>
         /// <returns>The transport-safe request payload.</returns>
         public static object CreateRequest(
-            string apiId,
+            ApiDependencyDescriptor dependency,
             Guid correlationId
         )
         {
             var request = new ApiDiscoveryRequest(
-                apiId,
+                dependency,
                 correlationId
             );
+
+            ApiVersionRange versions =
+                request.Dependency.Requirement.SupportedVersions;
 
             return new object[]
             {
                 RequestMarker,
                 request.WireProtocolVersion.ToString(),
                 request.LibraryVersion.ToString(),
-                request.ApiId,
+                request.Dependency.Consumer.Id,
+                request.Dependency.Consumer.DisplayName,
+                request.Dependency.Consumer.Version.ToString(),
+                request.Dependency.Requirement.ApiId,
+                versions.MinimumInclusive.ToString(),
+                versions.MaximumExclusive == null
+                    ? null
+                    : versions.MaximumExclusive.ToString(),
+                (int)request.Dependency.Kind,
+                request.Dependency.FeatureDescription,
                 request.CorrelationId
             };
         }
@@ -73,7 +87,7 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null || fields.Length < 5)
+            if (fields == null || fields.Length < 12)
                 return false;
 
             if (!HasMarker(fields, RequestMarker))
@@ -81,6 +95,8 @@ namespace Mz.ApiProtocol
 
             SemanticVersion wireVersion;
             SemanticVersion libraryVersion;
+            ApiModIdentity consumer;
+            ApiVersionRange supportedVersions;
 
             if (!TryParseVersions(
                 fields[1],
@@ -92,34 +108,83 @@ namespace Mz.ApiProtocol
                 return false;
             }
 
-            string apiId = fields[3] as string;
+            if (!TryParseModIdentity(
+                fields[3],
+                fields[4],
+                fields[5],
+                out consumer
+            ))
+            {
+                return false;
+            }
+
+            string apiId = fields[6] as string;
 
             if (string.IsNullOrWhiteSpace(apiId))
                 return false;
 
-            if (!(fields[4] is Guid))
+            if (!TryParseVersionRange(
+                fields[7],
+                fields[8],
+                out supportedVersions
+            ))
+            {
+                return false;
+            }
+
+            if (!(fields[9] is int))
                 return false;
 
-            Guid correlationId = (Guid)fields[4];
+            ApiDependencyKind kind =
+                (ApiDependencyKind)(int)fields[9];
+
+            string featureDescription = fields[10] as string;
+
+            if (featureDescription == null)
+                return false;
+
+            if (!(fields[11] is Guid))
+                return false;
+
+            Guid correlationId = (Guid)fields[11];
 
             if (correlationId == Guid.Empty)
                 return false;
 
-            request = new ApiDiscoveryRequest(
-                apiId,
-                correlationId,
-                wireVersion,
-                libraryVersion
-            );
+            try
+            {
+                var dependency = new ApiDependencyDescriptor(
+                    consumer,
+                    new ApiRequirement(
+                        apiId,
+                        supportedVersions
+                    ),
+                    kind,
+                    featureDescription
+                );
 
-            return true;
+                request = new ApiDiscoveryRequest(
+                    dependency,
+                    correlationId,
+                    wireVersion,
+                    libraryVersion
+                );
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                request = null;
+                return false;
+            }
         }
 
         /// <summary>
         /// Creates a transport-safe provider announcement.
         /// </summary>
+        /// <param name="provider">The mod providing the API.</param>
         /// <param name="descriptor">
-        /// The provider API identity and version.
+        /// The provided API identity and version.
         /// </param>
         /// <param name="providerInstanceId">
         /// The non-empty provider-instance identity.
@@ -133,6 +198,7 @@ namespace Mz.ApiProtocol
         /// </param>
         /// <returns>The transport-safe announcement payload.</returns>
         public static object CreateAnnouncement(
+            ApiModIdentity provider,
             ApiDescriptor descriptor,
             Guid providerInstanceId,
             Guid correlationId,
@@ -140,6 +206,7 @@ namespace Mz.ApiProtocol
         )
         {
             var announcement = new ApiAnnouncement(
+                provider,
                 descriptor,
                 providerInstanceId,
                 correlationId,
@@ -151,6 +218,9 @@ namespace Mz.ApiProtocol
                 AnnouncementMarker,
                 announcement.WireProtocolVersion.ToString(),
                 announcement.LibraryVersion.ToString(),
+                announcement.Provider.Id,
+                announcement.Provider.DisplayName,
+                announcement.Provider.Version.ToString(),
                 announcement.Descriptor.ApiId,
                 announcement.Descriptor.Version.ToString(),
                 announcement.ProviderInstanceId,
@@ -176,7 +246,7 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null || fields.Length < 8)
+            if (fields == null || fields.Length < 11)
                 return false;
 
             if (!HasMarker(fields, AnnouncementMarker))
@@ -184,6 +254,7 @@ namespace Mz.ApiProtocol
 
             SemanticVersion wireVersion;
             SemanticVersion libraryVersion;
+            ApiModIdentity provider;
 
             if (!TryParseVersions(
                 fields[1],
@@ -195,8 +266,18 @@ namespace Mz.ApiProtocol
                 return false;
             }
 
-            string apiId = fields[3] as string;
-            string apiVersionText = fields[4] as string;
+            if (!TryParseModIdentity(
+                fields[3],
+                fields[4],
+                fields[5],
+                out provider
+            ))
+            {
+                return false;
+            }
+
+            string apiId = fields[6] as string;
+            string apiVersionText = fields[7] as string;
 
             if (string.IsNullOrWhiteSpace(apiId))
                 return false;
@@ -211,19 +292,19 @@ namespace Mz.ApiProtocol
                 return false;
             }
 
-            if (!(fields[5] is Guid))
+            if (!(fields[8] is Guid))
                 return false;
 
-            Guid providerInstanceId = (Guid)fields[5];
+            Guid providerInstanceId = (Guid)fields[8];
 
             if (providerInstanceId == Guid.Empty)
                 return false;
 
-            if (!(fields[6] is Guid))
+            if (!(fields[9] is Guid))
                 return false;
 
             var endpoints =
-                fields[7] as IDictionary<string, Delegate>;
+                fields[10] as IDictionary<string, Delegate>;
 
             if (endpoints == null)
                 return false;
@@ -231,9 +312,10 @@ namespace Mz.ApiProtocol
             try
             {
                 announcement = new ApiAnnouncement(
+                    provider,
                     new ApiDescriptor(apiId, apiVersion),
                     providerInstanceId,
-                    (Guid)fields[6],
+                    (Guid)fields[9],
                     wireVersion,
                     libraryVersion,
                     endpoints
@@ -251,17 +333,20 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates a transport-safe provider withdrawal.
         /// </summary>
+        /// <param name="provider">The mod withdrawing the API.</param>
         /// <param name="apiId">The withdrawn API identifier.</param>
         /// <param name="providerInstanceId">
         /// The non-empty provider-instance identity.
         /// </param>
         /// <returns>The transport-safe withdrawal payload.</returns>
         public static object CreateWithdrawal(
+            ApiModIdentity provider,
             string apiId,
             Guid providerInstanceId
         )
         {
             var withdrawal = new ApiProviderWithdrawal(
+                provider,
                 apiId,
                 providerInstanceId
             );
@@ -271,6 +356,9 @@ namespace Mz.ApiProtocol
                 WithdrawalMarker,
                 withdrawal.WireProtocolVersion.ToString(),
                 withdrawal.LibraryVersion.ToString(),
+                withdrawal.Provider.Id,
+                withdrawal.Provider.DisplayName,
+                withdrawal.Provider.Version.ToString(),
                 withdrawal.ApiId,
                 withdrawal.ProviderInstanceId
             };
@@ -293,7 +381,7 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null || fields.Length < 5)
+            if (fields == null || fields.Length < 8)
                 return false;
 
             if (!HasMarker(fields, WithdrawalMarker))
@@ -301,6 +389,7 @@ namespace Mz.ApiProtocol
 
             SemanticVersion wireVersion;
             SemanticVersion libraryVersion;
+            ApiModIdentity provider;
 
             if (!TryParseVersions(
                 fields[1],
@@ -312,27 +401,46 @@ namespace Mz.ApiProtocol
                 return false;
             }
 
-            string apiId = fields[3] as string;
+            if (!TryParseModIdentity(
+                fields[3],
+                fields[4],
+                fields[5],
+                out provider
+            ))
+            {
+                return false;
+            }
+
+            string apiId = fields[6] as string;
 
             if (string.IsNullOrWhiteSpace(apiId))
                 return false;
 
-            if (!(fields[4] is Guid))
+            if (!(fields[7] is Guid))
                 return false;
 
-            Guid providerInstanceId = (Guid)fields[4];
+            Guid providerInstanceId = (Guid)fields[7];
 
             if (providerInstanceId == Guid.Empty)
                 return false;
 
-            withdrawal = new ApiProviderWithdrawal(
-                apiId,
-                providerInstanceId,
-                wireVersion,
-                libraryVersion
-            );
+            try
+            {
+                withdrawal = new ApiProviderWithdrawal(
+                    provider,
+                    apiId,
+                    providerInstanceId,
+                    wireVersion,
+                    libraryVersion
+                );
 
-            return true;
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                withdrawal = null;
+                return false;
+            }
         }
 
         private static bool HasMarker(
@@ -366,6 +474,98 @@ namespace Mz.ApiProtocol
                        libraryVersionField as string,
                        out libraryVersion
                    );
+        }
+
+        private static bool TryParseModIdentity(
+            object idField,
+            object displayNameField,
+            object versionField,
+            out ApiModIdentity identity
+        )
+        {
+            identity = null;
+
+            string id = idField as string;
+            string displayName = displayNameField as string;
+            string versionText = versionField as string;
+
+            SemanticVersion version;
+
+            if (!SemanticVersion.TryParse(
+                versionText,
+                out version
+            ))
+            {
+                return false;
+            }
+
+            try
+            {
+                identity = new ApiModIdentity(
+                    id,
+                    displayName,
+                    version
+                );
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                identity = null;
+                return false;
+            }
+        }
+
+        private static bool TryParseVersionRange(
+            object minimumField,
+            object maximumField,
+            out ApiVersionRange range
+        )
+        {
+            range = null;
+
+            SemanticVersion minimum;
+
+            if (!SemanticVersion.TryParse(
+                minimumField as string,
+                out minimum
+            ))
+            {
+                return false;
+            }
+
+            SemanticVersion maximum = null;
+
+            if (maximumField != null)
+            {
+                string maximumText = maximumField as string;
+
+                if (maximumText == null)
+                    return false;
+
+                if (!SemanticVersion.TryParse(
+                    maximumText,
+                    out maximum
+                ))
+                {
+                    return false;
+                }
+            }
+
+            try
+            {
+                range = new ApiVersionRange(
+                    minimum,
+                    maximum
+                );
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                range = null;
+                return false;
+            }
         }
 
         private static Dictionary<string, Delegate>

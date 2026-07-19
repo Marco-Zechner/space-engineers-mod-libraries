@@ -11,6 +11,11 @@ namespace Mz.ApiProtocol
     public sealed class ApiConnection
     {
         /// <summary>
+        /// Gets the mod providing the API.
+        /// </summary>
+        public ApiModIdentity Provider { get; }
+
+        /// <summary>
         /// Gets the identity and API version exposed by the provider.
         /// </summary>
         public ApiDescriptor Descriptor { get; }
@@ -53,6 +58,7 @@ namespace Mz.ApiProtocol
                 );
             }
 
+            Provider = announcement.Provider;
             Descriptor = announcement.Descriptor;
             ProviderInstanceId =
                 announcement.ProviderInstanceId;

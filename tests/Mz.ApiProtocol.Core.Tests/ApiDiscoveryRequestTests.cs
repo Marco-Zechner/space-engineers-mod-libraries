@@ -1,4 +1,5 @@
 ﻿using System;
+using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -6,32 +7,52 @@ namespace Mz.ApiProtocol.Tests
     public sealed class ApiDiscoveryRequestTests
     {
         [Fact]
-        public void Constructor_StoresNormalizedApiIdAndCorrelationId()
+        public void Constructor_StoresDependencyAndCorrelationId()
         {
-            var correlationId = Guid.NewGuid();
+            ApiDependencyDescriptor dependency =
+                CreateDependency();
+
+            Guid correlationId = Guid.NewGuid();
 
             var request = new ApiDiscoveryRequest(
-                "  Mz.CommandAPI  ",
+                dependency,
                 correlationId
             );
 
-            Assert.Equal("Mz.CommandAPI", request.ApiId);
-            Assert.Equal(correlationId, request.CorrelationId);
+            Assert.Same(
+                dependency,
+                request.Dependency
+            );
+
+            Assert.Equal(
+                "Mz.CommandAPI",
+                request.ApiId
+            );
+
+            Assert.Equal(
+                correlationId,
+                request.CorrelationId
+            );
+
+            Assert.Equal(
+                ApiProtocolInfo.WireProtocolVersion,
+                request.WireProtocolVersion
+            );
+
+            Assert.Equal(
+                ApiProtocolInfo.LibraryVersion,
+                request.LibraryVersion
+            );
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void Constructor_InvalidApiId_ThrowsArgumentException(
-            string? apiId
-        )
+        [Fact]
+        public void Constructor_NullDependency_ThrowsArgumentNullException()
         {
-            Assert.ThrowsAny<ArgumentException>(
+            Assert.Throws<ArgumentNullException>(
                 delegate
                 {
                     new ApiDiscoveryRequest(
-                        apiId!,
+                        null!,
                         Guid.NewGuid()
                     );
                 }
@@ -45,10 +66,30 @@ namespace Mz.ApiProtocol.Tests
                 delegate
                 {
                     new ApiDiscoveryRequest(
-                        "Mz.CommandAPI",
+                        CreateDependency(),
                         Guid.Empty
                     );
                 }
+            );
+        }
+
+        private static ApiDependencyDescriptor CreateDependency()
+        {
+            return new ApiDependencyDescriptor(
+                new ApiModIdentity(
+                    "Mz.ConsumerMod",
+                    "Consumer Mod",
+                    new SemanticVersion(2, 0, 0)
+                ),
+                new ApiRequirement(
+                    "Mz.CommandAPI",
+                    new ApiVersionRange(
+                        new SemanticVersion(1, 0, 0),
+                        new SemanticVersion(2, 0, 0)
+                    )
+                ),
+                ApiDependencyKind.Optional,
+                "Adds Command API integration"
             );
         }
     }

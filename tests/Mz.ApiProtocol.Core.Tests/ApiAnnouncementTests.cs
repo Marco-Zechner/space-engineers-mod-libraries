@@ -24,6 +24,7 @@ namespace Mz.ApiProtocol.Tests
             };
             
             var announcement = new ApiAnnouncement(
+                CreateProviderIdentity(),
                 CreateDescriptor(),
                 Guid.NewGuid(),
                 Guid.Empty,
@@ -65,6 +66,7 @@ namespace Mz.ApiProtocol.Tests
             };
 
             var announcement = new ApiAnnouncement(
+                CreateProviderIdentity(),
                 CreateDescriptor(),
                 Guid.NewGuid(),
                 Guid.Empty,
@@ -81,6 +83,7 @@ namespace Mz.ApiProtocol.Tests
                 delegate
                 {
                     new ApiAnnouncement(
+                        CreateProviderIdentity(),
                         null!,
                         Guid.NewGuid(),
                         Guid.Empty,
@@ -97,6 +100,7 @@ namespace Mz.ApiProtocol.Tests
                 delegate
                 {
                     new ApiAnnouncement(
+                        CreateProviderIdentity(),
                         CreateDescriptor(),
                         Guid.NewGuid(),
                         Guid.Empty,
@@ -127,6 +131,7 @@ namespace Mz.ApiProtocol.Tests
                 delegate
                 {
                     new ApiAnnouncement(
+                        CreateProviderIdentity(),
                         CreateDescriptor(),
                         Guid.NewGuid(),
                         Guid.Empty,
@@ -148,6 +153,7 @@ namespace Mz.ApiProtocol.Tests
                 delegate
                 {
                     new ApiAnnouncement(
+                        CreateProviderIdentity(),
                         CreateDescriptor(),
                         Guid.NewGuid(),
                         Guid.Empty,
@@ -162,6 +168,15 @@ namespace Mz.ApiProtocol.Tests
             return new ApiDescriptor(
                 "Mz.CommandAPI",
                 new SemanticVersion(1, 0, 0)
+            );
+        }
+        
+        private static ApiModIdentity CreateProviderIdentity()
+        {
+            return new ApiModIdentity(
+                "Mz.CommandApiMod",
+                "Command API",
+                new SemanticVersion(1, 4, 0)
             );
         }
     }

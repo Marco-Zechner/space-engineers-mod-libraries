@@ -9,6 +9,11 @@ namespace Mz.ApiProtocol
     public sealed class ApiProviderWithdrawal
     {
         /// <summary>
+        /// Gets the mod withdrawing the API.
+        /// </summary>
+        public ApiModIdentity Provider { get; }
+
+        /// <summary>
         /// Gets the withdrawn API identifier.
         /// </summary>
         public string ApiId { get; }
@@ -31,20 +36,26 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates a withdrawal using the current library and wire versions.
         /// </summary>
+        /// <param name="provider">The mod withdrawing the API.</param>
         /// <param name="apiId">
         /// The case-sensitive API identifier.
         /// </param>
         /// <param name="providerInstanceId">
         /// The non-empty provider-instance identity.
         /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="provider"/> is null.
+        /// </exception>
         /// <exception cref="ArgumentException">
-        /// Thrown when an argument is empty or invalid.
+        /// Thrown when the API or provider-instance identity is empty.
         /// </exception>
         public ApiProviderWithdrawal(
+            ApiModIdentity provider,
             string apiId,
             Guid providerInstanceId
         )
             : this(
+                provider,
                 apiId,
                 providerInstanceId,
                 ApiProtocolInfo.WireProtocolVersion,
@@ -54,12 +65,16 @@ namespace Mz.ApiProtocol
         }
 
         internal ApiProviderWithdrawal(
+            ApiModIdentity provider,
             string apiId,
             Guid providerInstanceId,
             SemanticVersion wireProtocolVersion,
             SemanticVersion libraryVersion
         )
         {
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+
             if (string.IsNullOrWhiteSpace(apiId))
             {
                 throw new ArgumentException(
@@ -91,6 +106,7 @@ namespace Mz.ApiProtocol
                 );
             }
 
+            Provider = provider;
             ApiId = apiId.Trim();
             ProviderInstanceId = providerInstanceId;
             WireProtocolVersion = wireProtocolVersion;

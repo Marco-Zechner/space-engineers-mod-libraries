@@ -59,10 +59,20 @@ namespace Mz.ApiProtocol.SpaceEngineers
         public long ChannelId { get; }
 
         /// <summary>
-        /// Gets the API identity and provider versions accepted by this
-        /// consumer.
+        /// Gets the consumer and its API dependency declaration.
         /// </summary>
-        public ApiRequirement Requirement { get; }
+        public ApiDependencyDescriptor Dependency { get; }
+
+        /// <summary>
+        /// Gets the API requirement declared by the consumer.
+        /// </summary>
+        public ApiRequirement Requirement
+        {
+            get
+            {
+                return Dependency.Requirement;
+            }
+        }
 
         /// <summary>
         /// Gets whether the consumer is currently listening for provider
@@ -136,17 +146,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// The shared discovery channel known by providers and consumers of
         /// this API.
         /// </param>
-        /// <param name="requirement">
+        /// <param name="dependency">
         /// The API identity and supported provider versions.
         /// </param>
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="messageBus"/> or
-        /// <paramref name="requirement"/> is null.
+        /// <paramref name="dependency"/> is null.
         /// </exception>
         public ApiDiscoveryConsumer(
             IModMessageBus messageBus,
             long channelId,
-            ApiRequirement requirement
+            ApiDependencyDescriptor dependency
         )
         {
             if (messageBus == null)
@@ -156,16 +166,16 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 );
             }
 
-            if (requirement == null)
+            if (dependency == null)
             {
                 throw new ArgumentNullException(
-                    nameof(requirement)
+                    nameof(dependency)
                 );
             }
 
             _messageBus = messageBus;
             ChannelId = channelId;
-            Requirement = requirement;
+            Dependency = dependency;
         }
 
         /// <summary>
@@ -227,10 +237,10 @@ namespace Mz.ApiProtocol.SpaceEngineers
             var correlationId = Guid.NewGuid();
             _pendingCorrelationId = correlationId;
             LastError = null;
-
-            var payload =
+            
+            object payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
-                    Requirement.ApiId,
+                    Dependency,
                     correlationId
                 );
 
@@ -402,9 +412,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 var observedError = RaiseEvent(
                     ProviderObserved,
                     new ApiProviderObservedEventArgs(
-                        announcement.Descriptor,
-                        compatibility,
-                        announcement.CorrelationId
+                        announcement,
+                        compatibility
                     )
                 );
 

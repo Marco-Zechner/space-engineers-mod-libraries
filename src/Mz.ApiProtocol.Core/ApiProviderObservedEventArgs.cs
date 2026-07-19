@@ -1,4 +1,5 @@
 ﻿using System;
+using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
 {
@@ -8,50 +9,61 @@ namespace Mz.ApiProtocol
     public sealed class ApiProviderObservedEventArgs : EventArgs
     {
         /// <summary>
-        /// Gets the identity and version announced by the provider.
+        /// Gets the mod providing the observed API.
+        /// </summary>
+        public ApiModIdentity Provider { get; }
+
+        /// <summary>
+        /// Gets the API identity and version announced by the provider.
         /// </summary>
         public ApiDescriptor Descriptor { get; }
 
         /// <summary>
-        /// Gets the compatibility result for the observed provider.
+        /// Gets the compatibility result for the observed API version.
         /// </summary>
         public ApiCompatibilityStatus CompatibilityStatus { get; }
 
         /// <summary>
-        /// Gets the correlation identifier from the provider announcement.
+        /// Gets the provider's wire-protocol version.
         /// </summary>
-        /// <remarks>
-        /// <see cref="Guid.Empty"/> indicates an unsolicited announcement.
-        /// </remarks>
+        public SemanticVersion ProviderWireProtocolVersion { get; }
+
+        /// <summary>
+        /// Gets the provider's embedded protocol-library version.
+        /// </summary>
+        public SemanticVersion ProviderLibraryVersion { get; }
+
+        /// <summary>
+        /// Gets the correlation identifier from the announcement.
+        /// </summary>
         public Guid CorrelationId { get; }
 
         /// <summary>
         /// Creates provider-observation event data.
         /// </summary>
-        /// <param name="descriptor">
-        /// The identity and version announced by the provider.
+        /// <param name="announcement">
+        /// The observed provider announcement.
         /// </param>
         /// <param name="compatibilityStatus">
-        /// The compatibility result for the observed provider.
-        /// </param>
-        /// <param name="correlationId">
-        /// The correlation identifier from the provider announcement.
+        /// The API compatibility result.
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="descriptor"/> is null.
+        /// Thrown when <paramref name="announcement"/> is null.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown when <paramref name="compatibilityStatus"/> is not a defined
-        /// compatibility status.
+        /// Thrown when the compatibility status is undefined.
         /// </exception>
         public ApiProviderObservedEventArgs(
-            ApiDescriptor descriptor,
-            ApiCompatibilityStatus compatibilityStatus,
-            Guid correlationId
+            ApiAnnouncement announcement,
+            ApiCompatibilityStatus compatibilityStatus
         )
         {
-            if (descriptor == null)
-                throw new ArgumentNullException(nameof(descriptor));
+            if (announcement == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(announcement)
+                );
+            }
 
             if (compatibilityStatus
                     < ApiCompatibilityStatus.Compatible
@@ -63,9 +75,17 @@ namespace Mz.ApiProtocol
                 );
             }
 
-            Descriptor = descriptor;
+            Provider = announcement.Provider;
+            Descriptor = announcement.Descriptor;
             CompatibilityStatus = compatibilityStatus;
-            CorrelationId = correlationId;
+
+            ProviderWireProtocolVersion =
+                announcement.WireProtocolVersion;
+
+            ProviderLibraryVersion =
+                announcement.LibraryVersion;
+
+            CorrelationId = announcement.CorrelationId;
         }
     }
 }

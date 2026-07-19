@@ -14,13 +14,13 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
-                    "  Mz.CommandAPI  ",
+                    CreateDependency(),
                     correlationId
                 );
 
             object[] fields = Assert.IsType<object[]>(payload);
 
-            Assert.Equal(5, fields.Length);
+            Assert.Equal(12, fields.Length);
 
             Assert.Equal(
                 ApiDiscoveryWireProtocol.RequestMarker,
@@ -37,8 +37,24 @@ namespace Mz.ApiProtocol.Tests
                 fields[2]
             );
 
-            Assert.Equal("Mz.CommandAPI", fields[3]);
-            Assert.Equal(correlationId, fields[4]);
+            Assert.Equal("Mz.ConsumerMod", fields[3]);
+            Assert.Equal("Consumer Mod", fields[4]);
+            Assert.Equal("2.0.0", fields[5]);
+            Assert.Equal("Mz.CommandAPI", fields[6]);
+            Assert.Equal("1.0.0", fields[7]);
+            Assert.Equal("2.0.0", fields[8]);
+
+            Assert.Equal(
+                (int)ApiDependencyKind.Optional,
+                fields[9]
+            );
+
+            Assert.Equal(
+                "Adds Command API integration",
+                fields[10]
+            );
+
+            Assert.Equal(correlationId, fields[11]);
         }
 
         [Fact]
@@ -48,7 +64,7 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateRequest(
-                    "Mz.CommandAPI",
+                    CreateDependency(),
                     correlationId
                 );
 
@@ -85,7 +101,14 @@ namespace Mz.ApiProtocol.Tests
                 ApiDiscoveryWireProtocol.RequestMarker,
                 ApiProtocolInfo.WireProtocolVersion.ToString(),
                 ApiProtocolInfo.LibraryVersion.ToString(),
+                "Mz.ConsumerMod",
+                "Consumer Mod",
+                "2.0.0",
                 "Mz.CommandAPI",
+                "1.0.0",
+                "2.0.0",
+                (int)ApiDependencyKind.Optional,
+                "Adds Command API integration",
                 correlationId,
                 "future optional field"
             };
@@ -97,7 +120,22 @@ namespace Mz.ApiProtocol.Tests
                 );
 
             Assert.True(success);
-            Assert.Equal(correlationId, request.CorrelationId);
+            Assert.NotNull(request);
+
+            Assert.Equal(
+                correlationId,
+                request.CorrelationId
+            );
+
+            Assert.Equal(
+                "Mz.ConsumerMod",
+                request.Dependency.Consumer.Id
+            );
+
+            Assert.Equal(
+                "Mz.CommandAPI",
+                request.Dependency.Requirement.ApiId
+            );
         }
 
         [Theory]
@@ -129,6 +167,7 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
+                    CreateProviderIdentity(),
                     CreateDescriptor(),
                     providerInstanceId,
                     correlationId,
@@ -140,7 +179,7 @@ namespace Mz.ApiProtocol.Tests
 
             object[] fields = Assert.IsType<object[]>(payload);
 
-            Assert.Equal(8, fields.Length);
+            Assert.Equal(11, fields.Length);
 
             Assert.Equal(
                 ApiDiscoveryWireProtocol.AnnouncementMarker,
@@ -157,14 +196,17 @@ namespace Mz.ApiProtocol.Tests
                 fields[2]
             );
 
-            Assert.Equal("Mz.CommandAPI", fields[3]);
-            Assert.Equal("1.2.3", fields[4]);
-            Assert.Equal(providerInstanceId, fields[5]);
-            Assert.Equal(correlationId, fields[6]);
+            Assert.Equal("Mz.CommandApiMod", fields[3]);
+            Assert.Equal("Command API", fields[4]);
+            Assert.Equal("1.4.0", fields[5]);
+            Assert.Equal("Mz.CommandAPI", fields[6]);
+            Assert.Equal("1.2.3", fields[7]);
+            Assert.Equal(providerInstanceId, fields[8]);
+            Assert.Equal(correlationId, fields[9]);
 
             var endpoints =
                 Assert.IsType<Dictionary<string, Delegate>>(
-                    fields[7]
+                    fields[10]
                 );
 
             Assert.Same(
@@ -186,6 +228,7 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
+                    CreateProviderIdentity(),
                     CreateDescriptor(),
                     providerInstanceId,
                     correlationId,
@@ -245,6 +288,7 @@ namespace Mz.ApiProtocol.Tests
         {
             object payload =
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
+                    CreateProviderIdentity(),
                     CreateDescriptor(),
                     Guid.NewGuid(),
                     Guid.Empty,
@@ -264,7 +308,7 @@ namespace Mz.ApiProtocol.Tests
                 announcement.CorrelationId
             );
         }
-
+        
         [Fact]
         public void TryParseAnnouncement_AdditionalFields_AreIgnored()
         {
@@ -275,6 +319,9 @@ namespace Mz.ApiProtocol.Tests
                 ApiDiscoveryWireProtocol.AnnouncementMarker,
                 ApiProtocolInfo.WireProtocolVersion.ToString(),
                 ApiProtocolInfo.LibraryVersion.ToString(),
+                "Mz.CommandApiMod",
+                "Command API",
+                "1.4.0",
                 "Mz.CommandAPI",
                 "1.2.3",
                 providerInstanceId,
@@ -290,12 +337,25 @@ namespace Mz.ApiProtocol.Tests
                 );
 
             Assert.True(success);
+            Assert.NotNull(announcement);
 
             Assert.Equal(
                 providerInstanceId,
                 announcement.ProviderInstanceId
             );
+
+            Assert.Equal(
+                "Mz.CommandApiMod",
+                announcement.Provider.Id
+            );
+
+            Assert.Equal(
+                "Mz.CommandAPI",
+                announcement.Descriptor.ApiId
+            );
         }
+
+
 
         [Theory]
         [MemberData(nameof(GetInvalidAnnouncementPayloads))]
@@ -320,13 +380,14 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateWithdrawal(
-                    "  Mz.CommandAPI  ",
+                    CreateProviderIdentity(),
+                    "Mz.CommandAPI",
                     providerInstanceId
                 );
 
             object[] fields = Assert.IsType<object[]>(payload);
 
-            Assert.Equal(5, fields.Length);
+            Assert.Equal(8, fields.Length);
 
             Assert.Equal(
                 ApiDiscoveryWireProtocol.WithdrawalMarker,
@@ -343,8 +404,11 @@ namespace Mz.ApiProtocol.Tests
                 fields[2]
             );
 
-            Assert.Equal("Mz.CommandAPI", fields[3]);
-            Assert.Equal(providerInstanceId, fields[4]);
+            Assert.Equal("Mz.CommandApiMod", fields[3]);
+            Assert.Equal("Command API", fields[4]);
+            Assert.Equal("1.4.0", fields[5]);
+            Assert.Equal("Mz.CommandAPI", fields[6]);
+            Assert.Equal(providerInstanceId, fields[7]);
         }
 
         [Fact]
@@ -354,6 +418,7 @@ namespace Mz.ApiProtocol.Tests
 
             object payload =
                 ApiDiscoveryWireProtocol.CreateWithdrawal(
+                    CreateProviderIdentity(),
                     "Mz.CommandAPI",
                     providerInstanceId
                 );
@@ -398,6 +463,9 @@ namespace Mz.ApiProtocol.Tests
                 ApiDiscoveryWireProtocol.WithdrawalMarker,
                 ApiProtocolInfo.WireProtocolVersion.ToString(),
                 ApiProtocolInfo.LibraryVersion.ToString(),
+                "Mz.CommandApiMod",
+                "Command API",
+                "1.4.0",
                 "Mz.CommandAPI",
                 providerInstanceId,
                 "future optional field"
@@ -410,10 +478,21 @@ namespace Mz.ApiProtocol.Tests
                 );
 
             Assert.True(success);
+            Assert.NotNull(withdrawal);
 
             Assert.Equal(
                 providerInstanceId,
                 withdrawal.ProviderInstanceId
+            );
+
+            Assert.Equal(
+                "Mz.CommandApiMod",
+                withdrawal.Provider.Id
+            );
+
+            Assert.Equal(
+                "Mz.CommandAPI",
+                withdrawal.ApiId
             );
         }
 
@@ -730,6 +809,35 @@ namespace Mz.ApiProtocol.Tests
             return new ApiDescriptor(
                 "Mz.CommandAPI",
                 new SemanticVersion(1, 2, 3)
+            );
+        }
+                        
+        private static ApiModIdentity CreateProviderIdentity()
+        {
+            return new ApiModIdentity(
+                "Mz.CommandApiMod",
+                "Command API",
+                new SemanticVersion(1, 4, 0)
+            );
+        }
+        
+        private static ApiDependencyDescriptor CreateDependency()
+        {
+            return new ApiDependencyDescriptor(
+                new ApiModIdentity(
+                    "Mz.ConsumerMod",
+                    "Consumer Mod",
+                    new SemanticVersion(2, 0, 0)
+                ),
+                new ApiRequirement(
+                    "Mz.CommandAPI",
+                    new ApiVersionRange(
+                        new SemanticVersion(1, 0, 0),
+                        new SemanticVersion(2, 0, 0)
+                    )
+                ),
+                ApiDependencyKind.Optional,
+                "Adds Command API integration"
             );
         }
     }

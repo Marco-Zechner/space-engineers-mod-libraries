@@ -21,6 +21,11 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Gets the mod-message channel used for discovery.
         /// </summary>
         public long ChannelId { get; }
+        
+        /// <summary>
+        /// Gets the mod providing the API.
+        /// </summary>
+        public ApiModIdentity Provider { get; }
 
         /// <summary>
         /// Gets the API identity and version exposed by this provider.
@@ -51,6 +56,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <param name="channelId">
         /// The shared API discovery channel.
         /// </param>
+        /// <param name="provider">
+        /// The mod providing the API.
+        /// </param>
         /// <param name="descriptor">
         /// The API identity and version exposed by the provider.
         /// </param>
@@ -60,12 +68,14 @@ namespace Mz.ApiProtocol.SpaceEngineers
         public ApiDiscoveryProvider(
             IModMessageBus messageBus,
             long channelId,
+            ApiModIdentity provider,
             ApiDescriptor descriptor,
             IDictionary<string, Delegate> endpoints
         )
             : this(
                 messageBus,
                 channelId,
+                provider,
                 descriptor,
                 Guid.NewGuid(),
                 endpoints
@@ -81,6 +91,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </param>
         /// <param name="channelId">
         /// The shared API discovery channel.
+        /// </param>
+        /// <param name="provider">
+        /// The mod providing the API.
         /// </param>
         /// <param name="descriptor">
         /// The API identity and version exposed by the provider.
@@ -100,6 +113,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         public ApiDiscoveryProvider(
             IModMessageBus messageBus,
             long channelId,
+            ApiModIdentity provider,
             ApiDescriptor descriptor,
             Guid providerInstanceId,
             IDictionary<string, Delegate> endpoints
@@ -121,6 +135,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
 
             var validated = new ApiAnnouncement(
+                provider,
                 descriptor,
                 providerInstanceId,
                 Guid.Empty,
@@ -129,6 +144,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             _messageBus = messageBus;
             ChannelId = channelId;
+            Provider = validated.Provider;
             Descriptor = validated.Descriptor;
             ProviderInstanceId = providerInstanceId;
 
@@ -204,6 +220,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             _messageBus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
+                    Provider,
                     Descriptor,
                     ProviderInstanceId,
                     Guid.Empty,
@@ -235,6 +252,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     _messageBus.Send(
                         ChannelId,
                         ApiDiscoveryWireProtocol.CreateWithdrawal(
+                            Provider,
                             Descriptor.ApiId,
                             ProviderInstanceId
                         )
@@ -314,6 +332,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 _messageBus.Send(
                     ChannelId,
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
+                        Provider,
                         Descriptor,
                         ProviderInstanceId,
                         request.CorrelationId,

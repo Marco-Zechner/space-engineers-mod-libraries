@@ -9,9 +9,20 @@ namespace Mz.ApiProtocol
     public sealed class ApiDiscoveryRequest
     {
         /// <summary>
+        /// Gets the consuming mod and its API dependency declaration.
+        /// </summary>
+        public ApiDependencyDescriptor Dependency { get; }
+
+        /// <summary>
         /// Gets the requested API identifier.
         /// </summary>
-        public string ApiId { get; }
+        public string ApiId
+        {
+            get
+            {
+                return Dependency.Requirement.ApiId;
+            }
+        }
 
         /// <summary>
         /// Gets the request correlation identifier.
@@ -19,7 +30,7 @@ namespace Mz.ApiProtocol
         public Guid CorrelationId { get; }
 
         /// <summary>
-        /// Gets the wire-protocol version used by the requesting consumer.
+        /// Gets the wire-protocol version used by the consumer.
         /// </summary>
         public SemanticVersion WireProtocolVersion { get; }
 
@@ -31,21 +42,24 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates a request using the current library and wire versions.
         /// </summary>
-        /// <param name="apiId">
-        /// The case-sensitive API identifier being requested.
+        /// <param name="dependency">
+        /// The consuming mod and its API dependency declaration.
         /// </param>
         /// <param name="correlationId">
         /// The non-empty request correlation identifier.
         /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="dependency"/> is null.
+        /// </exception>
         /// <exception cref="ArgumentException">
-        /// Thrown when an argument is empty or invalid.
+        /// Thrown when <paramref name="correlationId"/> is empty.
         /// </exception>
         public ApiDiscoveryRequest(
-            string apiId,
+            ApiDependencyDescriptor dependency,
             Guid correlationId
         )
             : this(
-                apiId,
+                dependency,
                 correlationId,
                 ApiProtocolInfo.WireProtocolVersion,
                 ApiProtocolInfo.LibraryVersion
@@ -54,17 +68,16 @@ namespace Mz.ApiProtocol
         }
 
         internal ApiDiscoveryRequest(
-            string apiId,
+            ApiDependencyDescriptor dependency,
             Guid correlationId,
             SemanticVersion wireProtocolVersion,
             SemanticVersion libraryVersion
         )
         {
-            if (string.IsNullOrWhiteSpace(apiId))
+            if (dependency == null)
             {
-                throw new ArgumentException(
-                    "An API identifier is required.",
-                    nameof(apiId)
+                throw new ArgumentNullException(
+                    nameof(dependency)
                 );
             }
 
@@ -91,7 +104,7 @@ namespace Mz.ApiProtocol
                 );
             }
 
-            ApiId = apiId.Trim();
+            Dependency = dependency;
             CorrelationId = correlationId;
             WireProtocolVersion = wireProtocolVersion;
             LibraryVersion = libraryVersion;

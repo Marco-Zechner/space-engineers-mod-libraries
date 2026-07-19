@@ -64,6 +64,7 @@ namespace Mz.ApiProtocol.Tests
         private static ApiConnection CreateConnection()
         {
             var announcement = new ApiAnnouncement(
+                CreateProviderIdentity(),
                 new ApiDescriptor(
                     "Mz.CommandAPI",
                     new SemanticVersion(1, 0, 0)
@@ -75,6 +76,16 @@ namespace Mz.ApiProtocol.Tests
             
             return new ApiConnection(
                 announcement
+            );
+        }
+        
+                        
+        private static ApiModIdentity CreateProviderIdentity()
+        {
+            return new ApiModIdentity(
+                "Mz.CommandApiMod",
+                "Command API",
+                new SemanticVersion(1, 4, 0)
             );
         }
     }

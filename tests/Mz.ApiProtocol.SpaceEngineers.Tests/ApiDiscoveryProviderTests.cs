@@ -45,7 +45,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
-                    "Mz.CommandAPI",
+                    CreateDependency(),
                     correlationId
                 )
             );
@@ -74,7 +74,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
-                    "Mz.OtherAPI",
+                    CreateDependency("Mz.OtherAPI"),
                     Guid.NewGuid()
                 )
             );
@@ -141,6 +141,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             return new ApiDiscoveryProvider(
                 bus,
                 ChannelId,
+                CreateProviderIdentity(),
                 new ApiDescriptor(
                     "Mz.CommandAPI",
                     new SemanticVersion(1, 5, 0)
@@ -174,6 +175,37 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             Assert.True(success);
             return announcement;
+        }
+        
+        private static ApiModIdentity CreateProviderIdentity()
+        {
+            return new ApiModIdentity(
+                "Mz.CommandApiMod",
+                "Command API",
+                new SemanticVersion(1, 4, 0)
+            );
+        }
+        
+        private static ApiDependencyDescriptor CreateDependency(
+            string apiId = "Mz.CommandAPI"
+        )
+        {
+            return new ApiDependencyDescriptor(
+                new ApiModIdentity(
+                    "Mz.ConsumerMod",
+                    "Consumer Mod",
+                    new SemanticVersion(2, 0, 0)
+                ),
+                new ApiRequirement(
+                    apiId,
+                    new ApiVersionRange(
+                        new SemanticVersion(1, 0, 0),
+                        new SemanticVersion(2, 0, 0)
+                    )
+                ),
+                ApiDependencyKind.Optional,
+                "Adds Command API integration"
+            );
         }
     }
 }

@@ -11,6 +11,11 @@ namespace Mz.ApiProtocol
     public sealed class ApiAnnouncement
     {
         /// <summary>
+        /// Gets the mod providing the API.
+        /// </summary>
+        public ApiModIdentity Provider { get; }
+
+        /// <summary>
         /// Gets the provider API identity and version.
         /// </summary>
         public ApiDescriptor Descriptor { get; }
@@ -47,8 +52,9 @@ namespace Mz.ApiProtocol
         /// Creates an announcement using the current library and wire
         /// versions.
         /// </summary>
+        /// <param name="provider">The mod providing the API.</param>
         /// <param name="descriptor">
-        /// The provider API identity and version.
+        /// The API identity and version being provided.
         /// </param>
         /// <param name="providerInstanceId">
         /// The non-empty provider-instance identity.
@@ -61,18 +67,21 @@ namespace Mz.ApiProtocol
         /// The endpoint delegates exposed by the provider.
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when a required object is null.
+        /// Thrown when a required argument is null.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// Thrown when the provider identity or an endpoint is invalid.
+        /// Thrown when the provider-instance identity or an endpoint is
+        /// invalid.
         /// </exception>
         public ApiAnnouncement(
+            ApiModIdentity provider,
             ApiDescriptor descriptor,
             Guid providerInstanceId,
             Guid correlationId,
             IDictionary<string, Delegate> endpoints
         )
             : this(
+                provider,
                 descriptor,
                 providerInstanceId,
                 correlationId,
@@ -84,6 +93,7 @@ namespace Mz.ApiProtocol
         }
 
         internal ApiAnnouncement(
+            ApiModIdentity provider,
             ApiDescriptor descriptor,
             Guid providerInstanceId,
             Guid correlationId,
@@ -92,6 +102,9 @@ namespace Mz.ApiProtocol
             IDictionary<string, Delegate> endpoints
         )
         {
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+
             if (descriptor == null)
                 throw new ArgumentNullException(nameof(descriptor));
 
@@ -120,6 +133,7 @@ namespace Mz.ApiProtocol
             if (endpoints == null)
                 throw new ArgumentNullException(nameof(endpoints));
 
+            Provider = provider;
             Descriptor = descriptor;
             ProviderInstanceId = providerInstanceId;
             CorrelationId = correlationId;
