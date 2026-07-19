@@ -15,15 +15,49 @@ namespace Mz.ApiProtocol
         public ApiDescriptor Descriptor { get; }
 
         /// <summary>
+        /// Gets the identity of the connected provider instance.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Guid.Empty"/> identifies a legacy provider whose
+        /// instance identity is unavailable.
+        /// </remarks>
+        public Guid ProviderInstanceId { get; }
+
+        /// <summary>
         /// Gets the endpoint delegates exposed by the provider.
         /// </summary>
         public IReadOnlyDictionary<string, Delegate> Endpoints { get; }
+
+        /// <summary>
+        /// Creates a legacy API connection without provider identity.
+        /// </summary>
+        /// <param name="descriptor">
+        /// The identity and version exposed by the provider.
+        /// </param>
+        /// <param name="endpoints">
+        /// The endpoint delegates exposed by the provider.
+        /// </param>
+        public ApiConnection(
+            ApiDescriptor descriptor,
+            IDictionary<string, Delegate> endpoints
+        )
+            : this(
+                descriptor,
+                Guid.Empty,
+                endpoints
+            )
+        {
+        }
 
         /// <summary>
         /// Creates an accepted API connection.
         /// </summary>
         /// <param name="descriptor">
         /// The identity and version exposed by the provider.
+        /// </param>
+        /// <param name="providerInstanceId">
+        /// The provider-instance identity, or <see cref="Guid.Empty"/> for a
+        /// legacy provider.
         /// </param>
         /// <param name="endpoints">
         /// The endpoint delegates exposed by the provider.
@@ -37,23 +71,26 @@ namespace Mz.ApiProtocol
         /// </exception>
         public ApiConnection(
             ApiDescriptor descriptor,
+            Guid providerInstanceId,
             IDictionary<string, Delegate> endpoints
         )
         {
             var validated = new ApiAnnouncement(
                 descriptor,
+                providerInstanceId,
                 Guid.Empty,
                 endpoints
             );
 
             Descriptor = validated.Descriptor;
+            ProviderInstanceId = validated.ProviderInstanceId;
 
             var copy = new Dictionary<string, Delegate>(
                 StringComparer.Ordinal
             );
 
             foreach (
-                var pair
+                KeyValuePair<string, Delegate> pair
                 in validated.Endpoints
             )
             {
@@ -68,9 +105,7 @@ namespace Mz.ApiProtocol
         /// Attempts to retrieve an endpoint using its expected delegate type.
         /// </summary>
         /// <typeparam name="TDelegate">
-        /// The expected delegate type. Cross-mod endpoints should normally use
-        /// standard <see cref="Action"/> or <see cref="Func{TResult}"/>
-        /// delegate types containing only shared runtime or game types.
+        /// The expected delegate type.
         /// </typeparam>
         /// <param name="endpointName">
         /// The case-sensitive endpoint name.
@@ -79,11 +114,11 @@ namespace Mz.ApiProtocol
         /// Receives the endpoint when it exists and has the expected type.
         /// </param>
         /// <returns>
-        /// True when the endpoint exists and can be assigned to
-        /// <typeparamref name="TDelegate"/>; otherwise false.
+        /// True when the endpoint exists with the expected type; otherwise
+        /// false.
         /// </returns>
         /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="endpointName"/> is empty or
+        /// Thrown when the endpoint name is empty or
         /// <typeparamref name="TDelegate"/> is not a delegate type.
         /// </exception>
         public bool TryGetEndpoint<TDelegate>(

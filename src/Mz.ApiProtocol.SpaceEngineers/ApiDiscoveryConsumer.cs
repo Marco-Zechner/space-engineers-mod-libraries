@@ -339,20 +339,36 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
         private void HandleMessage(object payload)
         {
-            if (!IsStarted || _isDisposed || IsConnected)
+            if (!IsStarted || _isDisposed)
                 return;
 
             try
             {
+                ApiProviderWithdrawal withdrawal;
+
+                if (ApiDiscoveryWireProtocol.TryParseWithdrawal(
+                        payload,
+                        out withdrawal
+                    ))
+                {
+                    HandleWithdrawal(withdrawal);
+                    return;
+                }
+
+                if (IsConnected)
+                    return;
+
                 ApiAnnouncement announcement;
 
                 if (!ApiDiscoveryWireProtocol.TryParseAnnouncement(
-                    payload,
-                    out announcement
-                ))
+                        payload,
+                        out announcement
+                    ))
                 {
                     return;
                 }
+
+                // Keep the remainder of the existing announcement logic.
 
                 if (!string.Equals(
                     Requirement.ApiId,
@@ -409,6 +425,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
                 var connection = new ApiConnection(
                     announcement.Descriptor,
+                    announcement.ProviderInstanceId,
                     endpointCopy
                 );
 
@@ -429,6 +446,38 @@ namespace Mz.ApiProtocol.SpaceEngineers
             {
                 LastError = exception;
             }
+        }
+        
+        private void HandleWithdrawal(
+            ApiProviderWithdrawal withdrawal
+        )
+        {
+            if (!string.Equals(
+                    Requirement.ApiId,
+                    withdrawal.ApiId,
+                    StringComparison.Ordinal
+                ))
+            {
+                return;
+            }
+
+            ApiConnection connection = Connection;
+
+            if (connection == null)
+                return;
+
+            if (connection.ProviderInstanceId == Guid.Empty)
+                return;
+
+            if (connection.ProviderInstanceId
+                != withdrawal.ProviderInstanceId)
+            {
+                return;
+            }
+
+            DisconnectInternal(
+                ApiDisconnectReason.ProviderWithdrawn
+            );
         }
 
         private bool DisconnectInternal(

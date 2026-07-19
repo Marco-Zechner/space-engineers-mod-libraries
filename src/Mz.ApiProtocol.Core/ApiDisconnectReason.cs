@@ -17,8 +17,13 @@
         RediscoveryRequested = 1,
 
         /// <summary>
-        /// The consumer stopped listening during its lifecycle shutdown.
+        /// The consumer stopped listening during lifecycle shutdown.
         /// </summary>
-        ConsumerStopped = 2
+        ConsumerStopped = 2,
+
+        /// <summary>
+        /// The connected provider announced that its instance stopped.
+        /// </summary>
+        ProviderWithdrawn = 3
     }
 }

@@ -8,17 +8,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
     /// Exposes one API through the Space Engineers mod-message discovery
     /// protocol.
     /// </summary>
-    /// <remarks>
-    /// The provider registers when <see cref="Start"/> is called, broadcasts
-    /// an unsolicited announcement, and responds to later matching discovery
-    /// requests. The instance must be stopped or disposed during mod unload.
-    /// </remarks>
     public sealed class ApiDiscoveryProvider : IDisposable
     {
         private readonly IModMessageBus _messageBus;
         private readonly Dictionary<string, Delegate> _endpoints;
 
         private ModMessageSubscription _subscription;
+        private bool _withdrawalSent;
         private bool _isDisposed;
 
         /// <summary>
@@ -32,46 +28,80 @@ namespace Mz.ApiProtocol.SpaceEngineers
         public ApiDescriptor Descriptor { get; }
 
         /// <summary>
+        /// Gets the identity of this provider instance.
+        /// </summary>
+        public Guid ProviderInstanceId { get; }
+
+        /// <summary>
         /// Gets whether the provider is currently listening for requests.
         /// </summary>
         public bool IsStarted { get; private set; }
 
         /// <summary>
-        /// Gets the last unexpected error caught while processing a discovery
-        /// request.
+        /// Gets the last unexpected lifecycle or message-processing error.
         /// </summary>
-        /// <remarks>
-        /// Malformed and unrelated messages are ignored and do not populate
-        /// this property.
-        /// </remarks>
         public Exception LastError { get; private set; }
 
         /// <summary>
-        /// Creates an API discovery provider.
+        /// Creates a provider with a generated provider-instance identity.
         /// </summary>
         /// <param name="messageBus">
         /// The mod-message transport used for discovery.
         /// </param>
         /// <param name="channelId">
-        /// The shared discovery channel known by providers and consumers of
-        /// this API.
+        /// The shared API discovery channel.
         /// </param>
         /// <param name="descriptor">
         /// The API identity and version exposed by the provider.
         /// </param>
         /// <param name="endpoints">
-        /// The endpoint delegates exposed to compatible consumers.
+        /// The endpoint delegates exposed by the provider.
+        /// </param>
+        public ApiDiscoveryProvider(
+            IModMessageBus messageBus,
+            long channelId,
+            ApiDescriptor descriptor,
+            IDictionary<string, Delegate> endpoints
+        )
+            : this(
+                messageBus,
+                channelId,
+                descriptor,
+                Guid.NewGuid(),
+                endpoints
+            )
+        {
+        }
+
+        /// <summary>
+        /// Creates a provider with an explicit provider-instance identity.
+        /// </summary>
+        /// <param name="messageBus">
+        /// The mod-message transport used for discovery.
+        /// </param>
+        /// <param name="channelId">
+        /// The shared API discovery channel.
+        /// </param>
+        /// <param name="descriptor">
+        /// The API identity and version exposed by the provider.
+        /// </param>
+        /// <param name="providerInstanceId">
+        /// The non-empty identity of this provider instance.
+        /// </param>
+        /// <param name="endpoints">
+        /// The endpoint delegates exposed by the provider.
         /// </param>
         /// <exception cref="ArgumentNullException">
         /// Thrown when a required argument is null.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// Thrown when an endpoint name or delegate is invalid.
+        /// Thrown when the provider-instance ID or an endpoint is invalid.
         /// </exception>
         public ApiDiscoveryProvider(
             IModMessageBus messageBus,
             long channelId,
             ApiDescriptor descriptor,
+            Guid providerInstanceId,
             IDictionary<string, Delegate> endpoints
         )
         {
@@ -82,8 +112,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 );
             }
 
+            if (providerInstanceId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "A provider requires a non-empty instance identifier.",
+                    nameof(providerInstanceId)
+                );
+            }
+
             var validated = new ApiAnnouncement(
                 descriptor,
+                providerInstanceId,
                 Guid.Empty,
                 endpoints
             );
@@ -91,13 +130,14 @@ namespace Mz.ApiProtocol.SpaceEngineers
             _messageBus = messageBus;
             ChannelId = channelId;
             Descriptor = validated.Descriptor;
+            ProviderInstanceId = providerInstanceId;
 
             _endpoints = new Dictionary<string, Delegate>(
                 StringComparer.Ordinal
             );
 
             foreach (
-                var pair
+                KeyValuePair<string, Delegate> pair
                 in validated.Endpoints
             )
             {
@@ -106,12 +146,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         }
 
         /// <summary>
-        /// Registers the discovery request handler and broadcasts an
-        /// unsolicited provider announcement.
+        /// Registers the request handler and broadcasts provider readiness.
         /// </summary>
-        /// <remarks>
-        /// Repeated calls while already started have no effect.
-        /// </remarks>
         /// <exception cref="ObjectDisposedException">
         /// Thrown when the provider has been disposed.
         /// </exception>
@@ -129,6 +165,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             );
 
             _subscription = subscription;
+            _withdrawalSent = false;
             IsStarted = true;
 
             try
@@ -164,33 +201,69 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 );
             }
 
-            var payload =
+            _messageBus.Send(
+                ChannelId,
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     Descriptor,
+                    ProviderInstanceId,
                     Guid.Empty,
                     _endpoints
-                );
+                )
+            );
 
-            _messageBus.Send(ChannelId, payload);
             LastError = null;
         }
 
         /// <summary>
-        /// Unregisters the discovery request handler.
+        /// Announces provider withdrawal and unregisters the request handler.
         /// </summary>
         /// <remarks>
         /// Repeated calls while already stopped have no effect. The provider
-        /// may be started again after being stopped.
+        /// may be started again after stopping.
         /// </remarks>
         public void Stop()
         {
             if (_isDisposed || !IsStarted)
                 return;
 
-            _subscription.Dispose();
+            Exception withdrawalError = null;
+
+            if (!_withdrawalSent)
+            {
+                try
+                {
+                    _messageBus.Send(
+                        ChannelId,
+                        ApiDiscoveryWireProtocol.CreateWithdrawal(
+                            Descriptor.ApiId,
+                            ProviderInstanceId
+                        )
+                    );
+
+                    _withdrawalSent = true;
+                }
+                catch (Exception exception)
+                {
+                    withdrawalError = exception;
+                }
+            }
+
+            try
+            {
+                _subscription.Dispose();
+            }
+            catch (Exception exception)
+            {
+                LastError = withdrawalError ?? exception;
+                throw;
+            }
 
             _subscription = null;
             IsStarted = false;
+            LastError = withdrawalError;
+
+            if (withdrawalError != null)
+                throw withdrawalError;
         }
 
         /// <summary>
@@ -231,14 +304,16 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     return;
                 }
 
-                var response =
+                _messageBus.Send(
+                    ChannelId,
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
                         Descriptor,
+                        ProviderInstanceId,
                         request.CorrelationId,
                         _endpoints
-                    );
+                    )
+                );
 
-                _messageBus.Send(ChannelId, response);
                 LastError = null;
             }
             catch (Exception exception)

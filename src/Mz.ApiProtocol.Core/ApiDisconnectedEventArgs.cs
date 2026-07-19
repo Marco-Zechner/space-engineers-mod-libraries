@@ -45,7 +45,7 @@ namespace Mz.ApiProtocol
             }
 
             if (reason < ApiDisconnectReason.ConsumerRequested
-                || reason > ApiDisconnectReason.ConsumerStopped)
+                || reason > ApiDisconnectReason.ProviderWithdrawn)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(reason)
