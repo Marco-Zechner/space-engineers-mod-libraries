@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <LangVersion>6</LangVersion>
+
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+
+        <RootNamespace>Mz.Logging.SpaceEngineers</RootNamespace>
+        <AssemblyName>Mz.Logging.SpaceEngineers</AssemblyName>
+
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Mz.Logging.Core\Mz.Logging.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Sandbox.Common">
+            <HintPath>E:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+
+        <Reference Include="VRage.Game">
+            <HintPath>E:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+</Project>
