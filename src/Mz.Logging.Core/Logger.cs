@@ -68,10 +68,7 @@ namespace Mz.Logging
         )
         {
             if (string.IsNullOrWhiteSpace(source))
-                throw new ArgumentException(
-                    "A logger source is required.",
-                    nameof(source)
-                );
+                throw new ArgumentException("A logger source is required.", nameof(source));
 
             if (sink == null)
                 throw new ArgumentNullException(nameof(sink));
@@ -94,6 +91,72 @@ namespace Mz.Logging
         {
             ValidateLevel(level, nameof(level));
             return level >= MinimumLevel;
+        }
+
+        /// <summary>
+        /// Writes a trace-level message.
+        /// </summary>
+        public void Trace(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Trace, message, exception);
+        }
+
+        /// <summary>
+        /// Writes a debug-level message.
+        /// </summary>
+        public void Debug(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Debug, message, exception);
+        }
+
+        /// <summary>
+        /// Writes an information-level message.
+        /// </summary>
+        public void Info(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Information, message, exception);
+        }
+
+        /// <summary>
+        /// Writes a warning-level message.
+        /// </summary>
+        public void Warning(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Warning, message, exception);
+        }
+
+        /// <summary>
+        /// Writes an error-level message.
+        /// </summary>
+        public void Error(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Error, message, exception);
+        }
+
+        /// <summary>
+        /// Writes a critical-level message.
+        /// </summary>
+        public void Critical(
+            string message,
+            Exception exception = null
+        )
+        {
+            Write(LogLevel.Critical, message, exception);
         }
 
         /// <summary>
@@ -135,9 +198,7 @@ namespace Mz.Logging
         )
         {
             if (level < LogLevel.Trace || level > LogLevel.Critical)
-            {
                 throw new ArgumentOutOfRangeException(parameterName);
-            }
         }
     }
 }
