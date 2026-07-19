@@ -249,6 +249,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                         "Mz.CommandAPI",
                         new SemanticVersion(1, 5, 0)
                     ),
+                    Guid.NewGuid(),
                     Guid.Empty,
                     CreateEndpoints()
                 )

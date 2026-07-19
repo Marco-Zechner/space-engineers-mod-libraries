@@ -330,6 +330,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                     "Mz.CommandAPI",
                     version
                 ),
+                Guid.NewGuid(),
                 correlationId,
                 CreateEndpoints()
             );

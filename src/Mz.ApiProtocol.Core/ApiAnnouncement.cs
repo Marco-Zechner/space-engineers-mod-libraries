@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
 {
@@ -17,10 +18,6 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the identity of the provider instance.
         /// </summary>
-        /// <remarks>
-        /// <see cref="Guid.Empty"/> identifies a legacy announcement that did
-        /// not expose provider-instance identity.
-        /// </remarks>
         public Guid ProviderInstanceId { get; }
 
         /// <summary>
@@ -32,46 +29,29 @@ namespace Mz.ApiProtocol
         public Guid CorrelationId { get; }
 
         /// <summary>
+        /// Gets the provider's wire-protocol version.
+        /// </summary>
+        public SemanticVersion WireProtocolVersion { get; }
+
+        /// <summary>
+        /// Gets the protocol-library version embedded by the provider.
+        /// </summary>
+        public SemanticVersion LibraryVersion { get; }
+
+        /// <summary>
         /// Gets the API endpoints exposed by the provider.
         /// </summary>
         public IReadOnlyDictionary<string, Delegate> Endpoints { get; }
 
         /// <summary>
-        /// Creates a legacy announcement without provider-instance identity.
-        /// </summary>
-        /// <param name="descriptor">
-        /// The provider API identity and version.
-        /// </param>
-        /// <param name="correlationId">
-        /// The request correlation identifier, or <see cref="Guid.Empty"/>
-        /// for an unsolicited announcement.
-        /// </param>
-        /// <param name="endpoints">
-        /// The endpoint delegates exposed by the provider.
-        /// </param>
-        public ApiAnnouncement(
-            ApiDescriptor descriptor,
-            Guid correlationId,
-            IDictionary<string, Delegate> endpoints
-        )
-            : this(
-                descriptor,
-                Guid.Empty,
-                correlationId,
-                endpoints
-            )
-        {
-        }
-
-        /// <summary>
-        /// Creates a provider announcement.
+        /// Creates an announcement using the current library and wire
+        /// versions.
         /// </summary>
         /// <param name="descriptor">
         /// The provider API identity and version.
         /// </param>
         /// <param name="providerInstanceId">
-        /// The identity of the provider instance, or
-        /// <see cref="Guid.Empty"/> for a legacy provider.
+        /// The non-empty provider-instance identity.
         /// </param>
         /// <param name="correlationId">
         /// The request correlation identifier, or <see cref="Guid.Empty"/>
@@ -81,11 +61,10 @@ namespace Mz.ApiProtocol
         /// The endpoint delegates exposed by the provider.
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="descriptor"/> or
-        /// <paramref name="endpoints"/> is null.
+        /// Thrown when a required object is null.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// Thrown when an endpoint name or delegate is invalid.
+        /// Thrown when the provider identity or an endpoint is invalid.
         /// </exception>
         public ApiAnnouncement(
             ApiDescriptor descriptor,
@@ -93,9 +72,50 @@ namespace Mz.ApiProtocol
             Guid correlationId,
             IDictionary<string, Delegate> endpoints
         )
+            : this(
+                descriptor,
+                providerInstanceId,
+                correlationId,
+                ApiProtocolInfo.WireProtocolVersion,
+                ApiProtocolInfo.LibraryVersion,
+                endpoints
+            )
+        {
+        }
+
+        internal ApiAnnouncement(
+            ApiDescriptor descriptor,
+            Guid providerInstanceId,
+            Guid correlationId,
+            SemanticVersion wireProtocolVersion,
+            SemanticVersion libraryVersion,
+            IDictionary<string, Delegate> endpoints
+        )
         {
             if (descriptor == null)
                 throw new ArgumentNullException(nameof(descriptor));
+
+            if (providerInstanceId == Guid.Empty)
+            {
+                throw new ArgumentException(
+                    "A provider requires a non-empty instance identifier.",
+                    nameof(providerInstanceId)
+                );
+            }
+
+            if (wireProtocolVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(wireProtocolVersion)
+                );
+            }
+
+            if (libraryVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(libraryVersion)
+                );
+            }
 
             if (endpoints == null)
                 throw new ArgumentNullException(nameof(endpoints));
@@ -103,6 +123,8 @@ namespace Mz.ApiProtocol
             Descriptor = descriptor;
             ProviderInstanceId = providerInstanceId;
             CorrelationId = correlationId;
+            WireProtocolVersion = wireProtocolVersion;
+            LibraryVersion = libraryVersion;
             Endpoints = CopyEndpoints(endpoints);
         }
 

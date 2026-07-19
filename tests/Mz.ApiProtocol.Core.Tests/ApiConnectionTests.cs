@@ -20,9 +20,15 @@ namespace Mz.ApiProtocol.Tests
                 { "Ping", endpoint }
             };
 
-            var connection = new ApiConnection(
+            var announcement = new ApiAnnouncement(
                 CreateDescriptor(),
+                Guid.NewGuid(),
+                Guid.Empty,
                 endpoints
+            );
+            
+            var connection = new ApiConnection(
+                announcement
             );
 
             endpoints.Clear();
@@ -119,12 +125,18 @@ namespace Mz.ApiProtocol.Tests
             Delegate endpoint
         )
         {
-            return new ApiConnection(
+            var announcement = new ApiAnnouncement(
                 CreateDescriptor(),
+                Guid.NewGuid(),
+                Guid.Empty,
                 new Dictionary<string, Delegate>
                 {
                     { endpointName, endpoint }
                 }
+            );
+            
+            return new ApiConnection(
+                announcement
             );
         }
 

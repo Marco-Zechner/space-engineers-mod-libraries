@@ -22,9 +22,10 @@ namespace Mz.ApiProtocol.Tests
                     endpoint
                 }
             };
-
+            
             var announcement = new ApiAnnouncement(
                 CreateDescriptor(),
+                Guid.NewGuid(),
                 Guid.Empty,
                 source
             );
@@ -65,6 +66,7 @@ namespace Mz.ApiProtocol.Tests
 
             var announcement = new ApiAnnouncement(
                 CreateDescriptor(),
+                Guid.NewGuid(),
                 Guid.Empty,
                 endpoints
             );
@@ -80,6 +82,7 @@ namespace Mz.ApiProtocol.Tests
                 {
                     new ApiAnnouncement(
                         null!,
+                        Guid.NewGuid(),
                         Guid.Empty,
                         new Dictionary<string, Delegate>()
                     );
@@ -95,6 +98,7 @@ namespace Mz.ApiProtocol.Tests
                 {
                     new ApiAnnouncement(
                         CreateDescriptor(),
+                        Guid.NewGuid(),
                         Guid.Empty,
                         null!
                     );
@@ -124,6 +128,7 @@ namespace Mz.ApiProtocol.Tests
                 {
                     new ApiAnnouncement(
                         CreateDescriptor(),
+                        Guid.NewGuid(),
                         Guid.Empty,
                         endpoints
                     );
@@ -144,6 +149,7 @@ namespace Mz.ApiProtocol.Tests
                 {
                     new ApiAnnouncement(
                         CreateDescriptor(),
+                        Guid.NewGuid(),
                         Guid.Empty,
                         endpoints
                     );

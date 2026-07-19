@@ -44,7 +44,7 @@ namespace Mz.ApiProtocol.Tests
 
         [Theory]
         [InlineData(-1)]
-        [InlineData(3)]
+        [InlineData(4)]
         [InlineData(100)]
         public void Constructor_InvalidReason_ThrowsArgumentOutOfRangeException(
             int numericReason
@@ -63,12 +63,18 @@ namespace Mz.ApiProtocol.Tests
 
         private static ApiConnection CreateConnection()
         {
-            return new ApiConnection(
+            var announcement = new ApiAnnouncement(
                 new ApiDescriptor(
                     "Mz.CommandAPI",
                     new SemanticVersion(1, 0, 0)
                 ),
+                Guid.NewGuid(),
+                Guid.Empty,
                 new Dictionary<string, Delegate>()
+            );
+            
+            return new ApiConnection(
+                announcement
             );
         }
     }

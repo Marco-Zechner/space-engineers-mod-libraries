@@ -1,4 +1,5 @@
 ﻿using System;
+using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
 {
@@ -17,16 +18,46 @@ namespace Mz.ApiProtocol
         /// </summary>
         public Guid CorrelationId { get; }
 
-        
         /// <summary>
-        /// Creates a discovery request.
+        /// Gets the wire-protocol version used by the requesting consumer.
         /// </summary>
-        /// <param name="apiId"></param>
-        /// <param name="correlationId"></param>
-        /// <exception cref="ArgumentException"></exception>
+        public SemanticVersion WireProtocolVersion { get; }
+
+        /// <summary>
+        /// Gets the protocol-library version embedded by the consumer.
+        /// </summary>
+        public SemanticVersion LibraryVersion { get; }
+
+        /// <summary>
+        /// Creates a request using the current library and wire versions.
+        /// </summary>
+        /// <param name="apiId">
+        /// The case-sensitive API identifier being requested.
+        /// </param>
+        /// <param name="correlationId">
+        /// The non-empty request correlation identifier.
+        /// </param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when an argument is empty or invalid.
+        /// </exception>
         public ApiDiscoveryRequest(
             string apiId,
             Guid correlationId
+        )
+            : this(
+                apiId,
+                correlationId,
+                ApiProtocolInfo.WireProtocolVersion,
+                ApiProtocolInfo.LibraryVersion
+            )
+        {
+        }
+
+        internal ApiDiscoveryRequest(
+            string apiId,
+            Guid correlationId,
+            SemanticVersion wireProtocolVersion,
+            SemanticVersion libraryVersion
         )
         {
             if (string.IsNullOrWhiteSpace(apiId))
@@ -46,8 +77,24 @@ namespace Mz.ApiProtocol
                 );
             }
 
+            if (wireProtocolVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(wireProtocolVersion)
+                );
+            }
+
+            if (libraryVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(libraryVersion)
+                );
+            }
+
             ApiId = apiId.Trim();
             CorrelationId = correlationId;
+            WireProtocolVersion = wireProtocolVersion;
+            LibraryVersion = libraryVersion;
         }
     }
 }

@@ -367,8 +367,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 {
                     return;
                 }
-
-                // Keep the remainder of the existing announcement logic.
+                
+                if (!ApiProtocolInfo.IsWireProtocolCompatible(
+                        announcement.WireProtocolVersion
+                    ))
+                {
+                    return;
+                }
 
                 if (!string.Equals(
                     Requirement.ApiId,
@@ -423,11 +428,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     endpointCopy.Add(pair.Key, pair.Value);
                 }
 
-                var connection = new ApiConnection(
-                    announcement.Descriptor,
-                    announcement.ProviderInstanceId,
-                    endpointCopy
-                );
+                var connection = new ApiConnection(announcement);
 
                 Connection = connection;
                 _pendingCorrelationId = Guid.Empty;
@@ -452,6 +453,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ApiProviderWithdrawal withdrawal
         )
         {
+            if (!ApiProtocolInfo.IsWireProtocolCompatible(
+                    withdrawal.WireProtocolVersion
+                ))
+            {
+                return;
+            }
+            
             if (!string.Equals(
                     Requirement.ApiId,
                     withdrawal.ApiId,

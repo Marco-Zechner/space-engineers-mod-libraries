@@ -294,6 +294,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 {
                     return;
                 }
+                
+                if (!ApiProtocolInfo.IsWireProtocolCompatible(
+                        request.WireProtocolVersion
+                    ))
+                {
+                    return;
+                }
 
                 if (!string.Equals(
                     Descriptor.ApiId,

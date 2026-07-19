@@ -119,41 +119,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             Assert.Same(connection, consumer.Connection);
         }
 
-        [Fact]
-        public void LegacyConnection_IgnoresWithdrawal()
-        {
-            var bus = new InMemoryModMessageBus();
-
-            using var consumer = CreateConsumer(bus);
-            consumer.Start();
-
-            bus.Send(
-                ChannelId,
-                ApiDiscoveryWireProtocol.CreateAnnouncement(
-                    CreateDescriptor(),
-                    Guid.Empty,
-                    CreateEndpoints()
-                )
-            );
-
-            Assert.True(consumer.IsConnected);
-
-            Assert.Equal(
-                Guid.Empty,
-                consumer.Connection.ProviderInstanceId
-            );
-
-            bus.Send(
-                ChannelId,
-                ApiDiscoveryWireProtocol.CreateWithdrawal(
-                    "Mz.CommandAPI",
-                    Guid.NewGuid()
-                )
-            );
-
-            Assert.True(consumer.IsConnected);
-        }
-
         private static ApiDiscoveryProvider CreateProvider(
             IModMessageBus bus,
             Guid providerInstanceId

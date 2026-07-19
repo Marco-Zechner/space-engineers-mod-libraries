@@ -112,6 +112,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                             new SemanticVersion(1, 5, 0)
                         ),
                         Guid.NewGuid(),
+                        Guid.NewGuid(),
                         CreateEndpoints()
                     )
                 );
@@ -136,6 +137,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                         CreateDescriptor(
                             new SemanticVersion(1, 5, 0)
                         ),
+                        Guid.NewGuid(),
                         Guid.Empty,
                         CreateEndpoints()
                     )
@@ -159,6 +161,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                         CreateDescriptor(
                             new SemanticVersion(1, 5, 0)
                         ),
+                        Guid.NewGuid(),
                         Guid.Empty,
                         CreateEndpoints()
                     );
@@ -202,12 +205,15 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             {
                 consumer.Start();
 
+                var providerInstanceId = Guid.NewGuid();
+                
                 bus.Send(
                     ChannelId,
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
                         CreateDescriptor(
                             new SemanticVersion(1, 5, 0)
                         ),
+                        providerInstanceId,
                         Guid.Empty,
                         CreateEndpoints()
                     )
@@ -226,6 +232,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                         CreateDescriptor(
                             new SemanticVersion(1, 5, 0)
                         ),
+                        providerInstanceId,
                         Guid.Empty,
                         CreateEndpoints()
                     )

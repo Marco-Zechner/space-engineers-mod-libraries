@@ -1,4 +1,5 @@
 ﻿using System;
+using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
 {
@@ -18,21 +19,45 @@ namespace Mz.ApiProtocol
         public Guid ProviderInstanceId { get; }
 
         /// <summary>
-        /// Creates a provider-withdrawal message.
+        /// Gets the provider's wire-protocol version.
+        /// </summary>
+        public SemanticVersion WireProtocolVersion { get; }
+
+        /// <summary>
+        /// Gets the protocol-library version embedded by the provider.
+        /// </summary>
+        public SemanticVersion LibraryVersion { get; }
+
+        /// <summary>
+        /// Creates a withdrawal using the current library and wire versions.
         /// </summary>
         /// <param name="apiId">
         /// The case-sensitive API identifier.
         /// </param>
         /// <param name="providerInstanceId">
-        /// The non-empty identity of the provider instance.
+        /// The non-empty provider-instance identity.
         /// </param>
         /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="apiId"/> is empty or
-        /// <paramref name="providerInstanceId"/> is empty.
+        /// Thrown when an argument is empty or invalid.
         /// </exception>
         public ApiProviderWithdrawal(
             string apiId,
             Guid providerInstanceId
+        )
+            : this(
+                apiId,
+                providerInstanceId,
+                ApiProtocolInfo.WireProtocolVersion,
+                ApiProtocolInfo.LibraryVersion
+            )
+        {
+        }
+
+        internal ApiProviderWithdrawal(
+            string apiId,
+            Guid providerInstanceId,
+            SemanticVersion wireProtocolVersion,
+            SemanticVersion libraryVersion
         )
         {
             if (string.IsNullOrWhiteSpace(apiId))
@@ -52,8 +77,24 @@ namespace Mz.ApiProtocol
                 );
             }
 
+            if (wireProtocolVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(wireProtocolVersion)
+                );
+            }
+
+            if (libraryVersion == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(libraryVersion)
+                );
+            }
+
             ApiId = apiId.Trim();
             ProviderInstanceId = providerInstanceId;
+            WireProtocolVersion = wireProtocolVersion;
+            LibraryVersion = libraryVersion;
         }
     }
 }

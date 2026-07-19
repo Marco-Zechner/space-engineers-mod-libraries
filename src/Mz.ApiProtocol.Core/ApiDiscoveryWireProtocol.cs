@@ -17,17 +17,10 @@ namespace Mz.ApiProtocol
             "Mz.ApiProtocol.Discovery.Request/1";
 
         /// <summary>
-        /// Gets the legacy provider-announcement wire marker.
+        /// Gets the provider-announcement wire marker.
         /// </summary>
         public const string AnnouncementMarker =
             "Mz.ApiProtocol.Discovery.Announcement/1";
-
-        /// <summary>
-        /// Gets the provider-announcement marker that includes provider
-        /// instance identity.
-        /// </summary>
-        public const string AnnouncementMarkerV2 =
-            "Mz.ApiProtocol.Discovery.Announcement/2";
 
         /// <summary>
         /// Gets the provider-withdrawal wire marker.
@@ -36,11 +29,9 @@ namespace Mz.ApiProtocol
             "Mz.ApiProtocol.Discovery.Withdrawal/1";
 
         /// <summary>
-        /// Creates a transport-safe discovery request payload.
+        /// Creates a transport-safe discovery request.
         /// </summary>
-        /// <param name="apiId">
-        /// The case-sensitive API identifier being requested.
-        /// </param>
+        /// <param name="apiId">The requested API identifier.</param>
         /// <param name="correlationId">
         /// The non-empty request correlation identifier.
         /// </param>
@@ -58,13 +49,15 @@ namespace Mz.ApiProtocol
             return new object[]
             {
                 RequestMarker,
+                request.WireProtocolVersion.ToString(),
+                request.LibraryVersion.ToString(),
                 request.ApiId,
                 request.CorrelationId
             };
         }
 
         /// <summary>
-        /// Attempts to decode a discovery request payload.
+        /// Attempts to decode a discovery request.
         /// </summary>
         /// <param name="payload">The received transport payload.</param>
         /// <param name="request">
@@ -80,84 +73,56 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null || fields.Length != 3)
+            if (fields == null || fields.Length < 5)
                 return false;
 
-            string marker = fields[0] as string;
-            string apiId = fields[1] as string;
+            if (!HasMarker(fields, RequestMarker))
+                return false;
 
-            if (!string.Equals(
-                marker,
-                RequestMarker,
-                StringComparison.Ordinal
+            SemanticVersion wireVersion;
+            SemanticVersion libraryVersion;
+
+            if (!TryParseVersions(
+                fields[1],
+                fields[2],
+                out wireVersion,
+                out libraryVersion
             ))
             {
                 return false;
             }
 
+            string apiId = fields[3] as string;
+
             if (string.IsNullOrWhiteSpace(apiId))
                 return false;
 
-            if (!(fields[2] is Guid))
+            if (!(fields[4] is Guid))
                 return false;
 
-            Guid correlationId = (Guid)fields[2];
+            Guid correlationId = (Guid)fields[4];
 
             if (correlationId == Guid.Empty)
                 return false;
 
             request = new ApiDiscoveryRequest(
                 apiId,
-                correlationId
+                correlationId,
+                wireVersion,
+                libraryVersion
             );
 
             return true;
         }
 
         /// <summary>
-        /// Creates a legacy announcement without provider-instance identity.
-        /// </summary>
-        /// <param name="descriptor">
-        /// The provider API identity and version.
-        /// </param>
-        /// <param name="correlationId">
-        /// The request correlation identifier, or <see cref="Guid.Empty"/>
-        /// for an unsolicited announcement.
-        /// </param>
-        /// <param name="endpoints">
-        /// The provider endpoint delegates.
-        /// </param>
-        /// <returns>The transport-safe legacy announcement payload.</returns>
-        public static object CreateAnnouncement(
-            ApiDescriptor descriptor,
-            Guid correlationId,
-            IDictionary<string, Delegate> endpoints
-        )
-        {
-            var announcement = new ApiAnnouncement(
-                descriptor,
-                correlationId,
-                endpoints
-            );
-
-            return new object[]
-            {
-                AnnouncementMarker,
-                announcement.Descriptor.ApiId,
-                announcement.Descriptor.Version.ToString(),
-                announcement.CorrelationId,
-                CopyEndpointPayload(announcement.Endpoints)
-            };
-        }
-
-        /// <summary>
-        /// Creates an announcement containing provider-instance identity.
+        /// Creates a transport-safe provider announcement.
         /// </summary>
         /// <param name="descriptor">
         /// The provider API identity and version.
         /// </param>
         /// <param name="providerInstanceId">
-        /// The non-empty provider-instance identifier.
+        /// The non-empty provider-instance identity.
         /// </param>
         /// <param name="correlationId">
         /// The request correlation identifier, or <see cref="Guid.Empty"/>
@@ -166,10 +131,7 @@ namespace Mz.ApiProtocol
         /// <param name="endpoints">
         /// The provider endpoint delegates.
         /// </param>
-        /// <returns>The transport-safe version-two announcement payload.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="providerInstanceId"/> is empty.
-        /// </exception>
+        /// <returns>The transport-safe announcement payload.</returns>
         public static object CreateAnnouncement(
             ApiDescriptor descriptor,
             Guid providerInstanceId,
@@ -177,15 +139,6 @@ namespace Mz.ApiProtocol
             IDictionary<string, Delegate> endpoints
         )
         {
-            if (providerInstanceId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "A version-two announcement requires a non-empty "
-                    + "provider instance identifier.",
-                    nameof(providerInstanceId)
-                );
-            }
-
             var announcement = new ApiAnnouncement(
                 descriptor,
                 providerInstanceId,
@@ -195,7 +148,9 @@ namespace Mz.ApiProtocol
 
             return new object[]
             {
-                AnnouncementMarkerV2,
+                AnnouncementMarker,
+                announcement.WireProtocolVersion.ToString(),
+                announcement.LibraryVersion.ToString(),
                 announcement.Descriptor.ApiId,
                 announcement.Descriptor.Version.ToString(),
                 announcement.ProviderInstanceId,
@@ -205,7 +160,7 @@ namespace Mz.ApiProtocol
         }
 
         /// <summary>
-        /// Attempts to decode either a legacy or version-two announcement.
+        /// Attempts to decode a provider announcement.
         /// </summary>
         /// <param name="payload">The received transport payload.</param>
         /// <param name="announcement">
@@ -221,48 +176,84 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null)
+            if (fields == null || fields.Length < 8)
                 return false;
 
-            string marker = fields.Length > 0
-                ? fields[0] as string
-                : null;
+            if (!HasMarker(fields, AnnouncementMarker))
+                return false;
 
-            if (string.Equals(
-                marker,
-                AnnouncementMarker,
-                StringComparison.Ordinal
+            SemanticVersion wireVersion;
+            SemanticVersion libraryVersion;
+
+            if (!TryParseVersions(
+                fields[1],
+                fields[2],
+                out wireVersion,
+                out libraryVersion
             ))
             {
-                return TryParseLegacyAnnouncement(
-                    fields,
-                    out announcement
-                );
+                return false;
             }
 
-            if (string.Equals(
-                marker,
-                AnnouncementMarkerV2,
-                StringComparison.Ordinal
+            string apiId = fields[3] as string;
+            string apiVersionText = fields[4] as string;
+
+            if (string.IsNullOrWhiteSpace(apiId))
+                return false;
+
+            SemanticVersion apiVersion;
+
+            if (!SemanticVersion.TryParse(
+                apiVersionText,
+                out apiVersion
             ))
             {
-                return TryParseVersionTwoAnnouncement(
-                    fields,
-                    out announcement
-                );
+                return false;
             }
 
-            return false;
+            if (!(fields[5] is Guid))
+                return false;
+
+            Guid providerInstanceId = (Guid)fields[5];
+
+            if (providerInstanceId == Guid.Empty)
+                return false;
+
+            if (!(fields[6] is Guid))
+                return false;
+
+            var endpoints =
+                fields[7] as IDictionary<string, Delegate>;
+
+            if (endpoints == null)
+                return false;
+
+            try
+            {
+                announcement = new ApiAnnouncement(
+                    new ApiDescriptor(apiId, apiVersion),
+                    providerInstanceId,
+                    (Guid)fields[6],
+                    wireVersion,
+                    libraryVersion,
+                    endpoints
+                );
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                announcement = null;
+                return false;
+            }
         }
 
         /// <summary>
-        /// Creates a provider-withdrawal payload.
+        /// Creates a transport-safe provider withdrawal.
         /// </summary>
-        /// <param name="apiId">
-        /// The case-sensitive API identifier being withdrawn.
-        /// </param>
+        /// <param name="apiId">The withdrawn API identifier.</param>
         /// <param name="providerInstanceId">
-        /// The non-empty provider-instance identifier.
+        /// The non-empty provider-instance identity.
         /// </param>
         /// <returns>The transport-safe withdrawal payload.</returns>
         public static object CreateWithdrawal(
@@ -278,13 +269,15 @@ namespace Mz.ApiProtocol
             return new object[]
             {
                 WithdrawalMarker,
+                withdrawal.WireProtocolVersion.ToString(),
+                withdrawal.LibraryVersion.ToString(),
                 withdrawal.ApiId,
                 withdrawal.ProviderInstanceId
             };
         }
 
         /// <summary>
-        /// Attempts to decode a provider-withdrawal payload.
+        /// Attempts to decode a provider withdrawal.
         /// </summary>
         /// <param name="payload">The received transport payload.</param>
         /// <param name="withdrawal">
@@ -300,139 +293,79 @@ namespace Mz.ApiProtocol
 
             object[] fields = payload as object[];
 
-            if (fields == null || fields.Length != 3)
+            if (fields == null || fields.Length < 5)
                 return false;
 
-            if (!string.Equals(
-                fields[0] as string,
-                WithdrawalMarker,
-                StringComparison.Ordinal
+            if (!HasMarker(fields, WithdrawalMarker))
+                return false;
+
+            SemanticVersion wireVersion;
+            SemanticVersion libraryVersion;
+
+            if (!TryParseVersions(
+                fields[1],
+                fields[2],
+                out wireVersion,
+                out libraryVersion
             ))
             {
                 return false;
             }
 
-            string apiId = fields[1] as string;
+            string apiId = fields[3] as string;
 
             if (string.IsNullOrWhiteSpace(apiId))
                 return false;
 
-            if (!(fields[2] is Guid))
+            if (!(fields[4] is Guid))
                 return false;
 
-            Guid providerInstanceId = (Guid)fields[2];
+            Guid providerInstanceId = (Guid)fields[4];
 
             if (providerInstanceId == Guid.Empty)
                 return false;
 
             withdrawal = new ApiProviderWithdrawal(
                 apiId,
-                providerInstanceId
+                providerInstanceId,
+                wireVersion,
+                libraryVersion
             );
 
             return true;
         }
 
-        private static bool TryParseLegacyAnnouncement(
+        private static bool HasMarker(
             object[] fields,
-            out ApiAnnouncement announcement
+            string expectedMarker
         )
         {
-            announcement = null;
-
-            if (fields.Length != 5)
-                return false;
-
-            return TryCreateAnnouncement(
-                fields[1],
-                fields[2],
-                Guid.Empty,
-                fields[3],
-                fields[4],
-                out announcement
-            );
-        }
-
-        private static bool TryParseVersionTwoAnnouncement(
-            object[] fields,
-            out ApiAnnouncement announcement
-        )
-        {
-            announcement = null;
-
-            if (fields.Length != 6)
-                return false;
-
-            if (!(fields[3] is Guid))
-                return false;
-
-            Guid providerInstanceId = (Guid)fields[3];
-
-            if (providerInstanceId == Guid.Empty)
-                return false;
-
-            return TryCreateAnnouncement(
-                fields[1],
-                fields[2],
-                providerInstanceId,
-                fields[4],
-                fields[5],
-                out announcement
-            );
-        }
-
-        private static bool TryCreateAnnouncement(
-            object apiIdField,
-            object versionField,
-            Guid providerInstanceId,
-            object correlationField,
-            object endpointsField,
-            out ApiAnnouncement announcement
-        )
-        {
-            announcement = null;
-
-            string apiId = apiIdField as string;
-            string versionText = versionField as string;
-
-            if (string.IsNullOrWhiteSpace(apiId))
-                return false;
-
-            SemanticVersion version;
-
-            if (!SemanticVersion.TryParse(
-                versionText,
-                out version
-            ))
-            {
-                return false;
-            }
-
-            if (!(correlationField is Guid))
-                return false;
-
-            var endpoints =
-                endpointsField as IDictionary<string, Delegate>;
-
-            if (endpoints == null)
-                return false;
-
-            try
-            {
-                announcement = new ApiAnnouncement(
-                    new ApiDescriptor(apiId, version),
-                    providerInstanceId,
-                    (Guid)correlationField,
-                    endpoints
+            return fields.Length > 0
+                && string.Equals(
+                    fields[0] as string,
+                    expectedMarker,
+                    StringComparison.Ordinal
                 );
+        }
 
-                return true;
-            }
-            catch (Exception)
-            {
-                announcement = null;
-                return false;
-            }
+        private static bool TryParseVersions(
+            object wireVersionField,
+            object libraryVersionField,
+            out SemanticVersion wireVersion,
+            out SemanticVersion libraryVersion
+        )
+        {
+            wireVersion = null;
+            libraryVersion = null;
+
+            return SemanticVersion.TryParse(
+                       wireVersionField as string,
+                       out wireVersion
+                   )
+                && SemanticVersion.TryParse(
+                       libraryVersionField as string,
+                       out libraryVersion
+                   );
         }
 
         private static Dictionary<string, Delegate>

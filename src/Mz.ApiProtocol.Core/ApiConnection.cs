@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
 {
@@ -10,18 +11,24 @@ namespace Mz.ApiProtocol
     public sealed class ApiConnection
     {
         /// <summary>
-        /// Gets the identity and version exposed by the provider.
+        /// Gets the identity and API version exposed by the provider.
         /// </summary>
         public ApiDescriptor Descriptor { get; }
 
         /// <summary>
         /// Gets the identity of the connected provider instance.
         /// </summary>
-        /// <remarks>
-        /// <see cref="Guid.Empty"/> identifies a legacy provider whose
-        /// instance identity is unavailable.
-        /// </remarks>
         public Guid ProviderInstanceId { get; }
+
+        /// <summary>
+        /// Gets the provider's wire-protocol version.
+        /// </summary>
+        public SemanticVersion ProviderWireProtocolVersion { get; }
+
+        /// <summary>
+        /// Gets the protocol-library version embedded by the provider.
+        /// </summary>
+        public SemanticVersion ProviderLibraryVersion { get; }
 
         /// <summary>
         /// Gets the endpoint delegates exposed by the provider.
@@ -29,61 +36,32 @@ namespace Mz.ApiProtocol
         public IReadOnlyDictionary<string, Delegate> Endpoints { get; }
 
         /// <summary>
-        /// Creates a legacy API connection without provider identity.
+        /// Creates a connection from a validated provider announcement.
         /// </summary>
-        /// <param name="descriptor">
-        /// The identity and version exposed by the provider.
-        /// </param>
-        /// <param name="endpoints">
-        /// The endpoint delegates exposed by the provider.
-        /// </param>
-        public ApiConnection(
-            ApiDescriptor descriptor,
-            IDictionary<string, Delegate> endpoints
-        )
-            : this(
-                descriptor,
-                Guid.Empty,
-                endpoints
-            )
-        {
-        }
-
-        /// <summary>
-        /// Creates an accepted API connection.
-        /// </summary>
-        /// <param name="descriptor">
-        /// The identity and version exposed by the provider.
-        /// </param>
-        /// <param name="providerInstanceId">
-        /// The provider-instance identity, or <see cref="Guid.Empty"/> for a
-        /// legacy provider.
-        /// </param>
-        /// <param name="endpoints">
-        /// The endpoint delegates exposed by the provider.
+        /// <param name="announcement">
+        /// The accepted provider announcement.
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="descriptor"/> or
-        /// <paramref name="endpoints"/> is null.
+        /// Thrown when <paramref name="announcement"/> is null.
         /// </exception>
-        /// <exception cref="ArgumentException">
-        /// Thrown when an endpoint name or delegate is invalid.
-        /// </exception>
-        public ApiConnection(
-            ApiDescriptor descriptor,
-            Guid providerInstanceId,
-            IDictionary<string, Delegate> endpoints
-        )
+        public ApiConnection(ApiAnnouncement announcement)
         {
-            var validated = new ApiAnnouncement(
-                descriptor,
-                providerInstanceId,
-                Guid.Empty,
-                endpoints
-            );
+            if (announcement == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(announcement)
+                );
+            }
 
-            Descriptor = validated.Descriptor;
-            ProviderInstanceId = validated.ProviderInstanceId;
+            Descriptor = announcement.Descriptor;
+            ProviderInstanceId =
+                announcement.ProviderInstanceId;
+
+            ProviderWireProtocolVersion =
+                announcement.WireProtocolVersion;
+
+            ProviderLibraryVersion =
+                announcement.LibraryVersion;
 
             var copy = new Dictionary<string, Delegate>(
                 StringComparer.Ordinal
@@ -91,7 +69,7 @@ namespace Mz.ApiProtocol
 
             foreach (
                 KeyValuePair<string, Delegate> pair
-                in validated.Endpoints
+                in announcement.Endpoints
             )
             {
                 copy.Add(pair.Key, pair.Value);
@@ -111,15 +89,15 @@ namespace Mz.ApiProtocol
         /// The case-sensitive endpoint name.
         /// </param>
         /// <param name="endpoint">
-        /// Receives the endpoint when it exists and has the expected type.
+        /// Receives the endpoint when it exists with the expected type.
         /// </param>
         /// <returns>
         /// True when the endpoint exists with the expected type; otherwise
         /// false.
         /// </returns>
         /// <exception cref="ArgumentException">
-        /// Thrown when the endpoint name is empty or
-        /// <typeparamref name="TDelegate"/> is not a delegate type.
+        /// Thrown when the endpoint name is empty or the requested type is
+        /// not a delegate.
         /// </exception>
         public bool TryGetEndpoint<TDelegate>(
             string endpointName,
