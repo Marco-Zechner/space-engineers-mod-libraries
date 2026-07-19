@@ -1,0 +1,25 @@
+﻿# Build output
+**/bin/
+**/obj/
+artifacts/
+# Test output
+TestResults/
+coverage/
+coverage.*
+*.trx
+# IDE files
+.vs/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+# NuGet artifacts
+*.nupkg
+*.snupkg
+packages/
+# Operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini
+# Local agent workspace
+.agent/

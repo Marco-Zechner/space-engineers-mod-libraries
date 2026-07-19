@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Mz.SemanticVersioning/Mz.SemanticVersioning.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Mz.SemanticVersioning.Tests/Mz.SemanticVersioning.Tests.csproj" />
+  </Folder>
+</Solution>
