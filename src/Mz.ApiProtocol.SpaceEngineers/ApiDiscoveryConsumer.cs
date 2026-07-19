@@ -10,9 +10,10 @@ namespace Mz.ApiProtocol.SpaceEngineers
     /// </summary>
     /// <remarks>
     /// The consumer listens for unsolicited provider announcements and may
-    /// request discovery explicitly at any time through
-    /// <see cref="RequestDiscovery"/>. This supports either provider or
-    /// consumer loading first.
+    /// request discovery explicitly through <see cref="RequestDiscovery"/>.
+    /// A connected consumer may release its provider with
+    /// <see cref="Disconnect"/> or atomically disconnect and request again
+    /// with <see cref="Rediscover"/>.
     /// </remarks>
     public sealed class ApiDiscoveryConsumer : IDisposable
     {
@@ -27,9 +28,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// compatibility has been evaluated.
         /// </summary>
         /// <remarks>
-        /// Subscriber exceptions are caught, stored in
-        /// <see cref="LastError"/>, and do not escape through the shared
-        /// mod-message handler.
+        /// Subscriber failures are captured in <see cref="LastError"/>.
+        /// One failing subscriber does not prevent later subscribers from
+        /// receiving the event.
         /// </remarks>
         public event EventHandler<ApiProviderObservedEventArgs>
             ProviderObserved;
@@ -38,10 +39,19 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Occurs after a compatible provider connection has been accepted.
         /// </summary>
         /// <remarks>
-        /// Subscriber exceptions are caught, stored in
-        /// <see cref="LastError"/>, and do not undo the accepted connection.
+        /// Subscriber failures are captured in <see cref="LastError"/> and do
+        /// not undo the accepted connection.
         /// </remarks>
         public event EventHandler<ApiConnectedEventArgs> Connected;
+
+        /// <summary>
+        /// Occurs after an accepted provider connection has been removed.
+        /// </summary>
+        /// <remarks>
+        /// Subscriber failures are captured in <see cref="LastError"/> and do
+        /// not restore the removed connection.
+        /// </remarks>
+        public event EventHandler<ApiDisconnectedEventArgs> Disconnected;
 
         /// <summary>
         /// Gets the mod-message channel used for discovery.
@@ -162,10 +172,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Registers the provider announcement handler.
         /// </summary>
         /// <remarks>
-        /// This method does not automatically send a request. Call
-        /// <see cref="RequestDiscovery"/> when the consuming mod wants to ask
-        /// for a provider. Repeated calls while already started have no
-        /// effect.
+        /// This method does not automatically send a request. Repeated calls
+        /// while already started have no effect.
         /// </remarks>
         /// <exception cref="ObjectDisposedException">
         /// Thrown when the consumer has been disposed.
@@ -193,24 +201,26 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// The non-empty correlation identifier assigned to the request.
         /// </returns>
         /// <remarks>
-        /// Requests may be sent repeatedly. A newer request replaces the
-        /// previous unresolved correlation identifier. Responses to older
-        /// requests are then ignored.
+        /// Requests may be sent repeatedly while disconnected. A newer
+        /// request replaces the previous unresolved correlation identifier.
         /// </remarks>
         /// <exception cref="ObjectDisposedException">
         /// Thrown when the consumer has been disposed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// Thrown when the consumer has not been started.
+        /// Thrown when the consumer has not been started or already has an
+        /// accepted connection.
         /// </exception>
         public Guid RequestDiscovery()
         {
             ThrowIfDisposed();
+            EnsureStarted();
 
-            if (!IsStarted)
+            if (IsConnected)
             {
                 throw new InvalidOperationException(
-                    "The API discovery consumer has not been started."
+                    "The API discovery consumer is already connected. "
+                    + "Call Rediscover to replace the current connection."
                 );
             }
 
@@ -241,6 +251,54 @@ namespace Mz.ApiProtocol.SpaceEngineers
         }
 
         /// <summary>
+        /// Removes the accepted provider connection.
+        /// </summary>
+        /// <returns>
+        /// True when a connection was removed; false when the consumer was
+        /// already disconnected.
+        /// </returns>
+        /// <exception cref="ObjectDisposedException">
+        /// Thrown when the consumer has been disposed.
+        /// </exception>
+        public bool Disconnect()
+        {
+            ThrowIfDisposed();
+
+            return DisconnectInternal(
+                ApiDisconnectReason.ConsumerRequested
+            );
+        }
+
+        /// <summary>
+        /// Removes the current provider connection and immediately sends a
+        /// new discovery request.
+        /// </summary>
+        /// <returns>
+        /// The correlation identifier assigned to the new request.
+        /// </returns>
+        /// <remarks>
+        /// The method also works while currently disconnected. In that case
+        /// it behaves like <see cref="RequestDiscovery"/>.
+        /// </remarks>
+        /// <exception cref="ObjectDisposedException">
+        /// Thrown when the consumer has been disposed.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when the consumer has not been started.
+        /// </exception>
+        public Guid Rediscover()
+        {
+            ThrowIfDisposed();
+            EnsureStarted();
+
+            DisconnectInternal(
+                ApiDisconnectReason.RediscoveryRequested
+            );
+
+            return RequestDiscovery();
+        }
+
+        /// <summary>
         /// Stops listening and clears the current connection and pending
         /// request.
         /// </summary>
@@ -257,8 +315,14 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             _subscription = null;
             IsStarted = false;
+            _pendingCorrelationId = Guid.Empty;
 
-            ResetDiscoveryState();
+            DisconnectInternal(
+                ApiDisconnectReason.ConsumerStopped
+            );
+
+            LastObservedProvider = null;
+            LastCompatibilityStatus = null;
         }
 
         /// <summary>
@@ -314,19 +378,19 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 LastObservedProvider = announcement.Descriptor;
                 LastCompatibilityStatus = compatibility;
 
-                Exception subscriberError =
-                    RaiseProviderObserved(
-                        new ApiProviderObservedEventArgs(
-                            announcement.Descriptor,
-                            compatibility,
-                            announcement.CorrelationId
-                        )
-                    );
+                Exception observedError = RaiseEvent(
+                    ProviderObserved,
+                    new ApiProviderObservedEventArgs(
+                        announcement.Descriptor,
+                        compatibility,
+                        announcement.CorrelationId
+                    )
+                );
 
                 if (compatibility
                     != ApiCompatibilityStatus.Compatible)
                 {
-                    LastError = subscriberError;
+                    LastError = observedError;
                     return;
                 }
 
@@ -351,15 +415,15 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 Connection = connection;
                 _pendingCorrelationId = Guid.Empty;
 
-                Exception connectedError =
-                    RaiseConnected(
-                        new ApiConnectedEventArgs(
-                            connection,
-                            announcement.CorrelationId
-                        )
-                    );
+                Exception connectedError = RaiseEvent(
+                    Connected,
+                    new ApiConnectedEventArgs(
+                        connection,
+                        announcement.CorrelationId
+                    )
+                );
 
-                LastError = subscriberError ?? connectedError;
+                LastError = observedError ?? connectedError;
             }
             catch (Exception exception)
             {
@@ -367,55 +431,68 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
         }
 
-        private Exception RaiseProviderObserved(
-            ApiProviderObservedEventArgs eventArgs
+        private bool DisconnectInternal(
+            ApiDisconnectReason reason
         )
         {
-            EventHandler<ApiProviderObservedEventArgs> handler =
-                ProviderObserved;
+            ApiConnection previousConnection = Connection;
 
-            if (handler == null)
-                return null;
+            if (previousConnection == null)
+                return false;
 
-            try
-            {
-                handler(this, eventArgs);
-                return null;
-            }
-            catch (Exception exception)
-            {
-                return exception;
-            }
-        }
-
-        private Exception RaiseConnected(
-            ApiConnectedEventArgs eventArgs
-        )
-        {
-            EventHandler<ApiConnectedEventArgs> handler =
-                Connected;
-
-            if (handler == null)
-                return null;
-
-            try
-            {
-                handler(this, eventArgs);
-                return null;
-            }
-            catch (Exception exception)
-            {
-                return exception;
-            }
-        }
-
-        private void ResetDiscoveryState()
-        {
-            _pendingCorrelationId = Guid.Empty;
             Connection = null;
-            LastObservedProvider = null;
-            LastCompatibilityStatus = null;
-            LastError = null;
+            _pendingCorrelationId = Guid.Empty;
+
+            LastError = RaiseEvent(
+                Disconnected,
+                new ApiDisconnectedEventArgs(
+                    previousConnection,
+                    reason
+                )
+            );
+
+            return true;
+        }
+
+        private Exception RaiseEvent<TEventArgs>(
+            EventHandler<TEventArgs> handler,
+            TEventArgs eventArgs
+        )
+            where TEventArgs : EventArgs
+        {
+            if (handler == null)
+                return null;
+
+            Exception firstError = null;
+            Delegate[] subscribers = handler.GetInvocationList();
+
+            for (int index = 0; index < subscribers.Length; index++)
+            {
+                try
+                {
+                    var subscriber =
+                        (EventHandler<TEventArgs>)subscribers[index];
+
+                    subscriber(this, eventArgs);
+                }
+                catch (Exception exception)
+                {
+                    if (firstError == null)
+                        firstError = exception;
+                }
+            }
+
+            return firstError;
+        }
+
+        private void EnsureStarted()
+        {
+            if (!IsStarted)
+            {
+                throw new InvalidOperationException(
+                    "The API discovery consumer has not been started."
+                );
+            }
         }
 
         private void ThrowIfDisposed()
