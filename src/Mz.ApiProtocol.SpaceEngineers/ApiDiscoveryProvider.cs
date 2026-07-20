@@ -27,6 +27,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </remarks>
         public event EventHandler<ApiWireIncompatibilityEventArgs> WireIncompatibilityObserved;
 
+        /// <summary>
+        /// Occurs when a mod requests the API and its supported API range has been
+        /// evaluated.
+        /// </summary>
+        /// <remarks>
+        /// The event is raised for compatible and incompatible consumers. Subscriber
+        /// failures are captured in <see cref="LastError"/> and do not escape through
+        /// the shared mod-message handler.
+        /// </remarks>
+        public event EventHandler<ApiConsumerObservedEventArgs>
+            ConsumerObserved;
         
         /// <summary>
         /// Gets the mod-message channel used for discovery.
@@ -317,9 +328,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 ApiWireEnvelope envelope;
 
                 if (!ApiDiscoveryWireProtocol.TryParseEnvelope(
-                        payload,
-                        out envelope
-                    ))
+                    payload,
+                    out envelope
+                ))
                 {
                     return;
                 }
@@ -331,10 +342,10 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 }
 
                 if (!string.Equals(
-                        Descriptor.ApiId,
-                        envelope.ApiId,
-                        StringComparison.Ordinal
-                    ))
+                    Descriptor.ApiId,
+                    envelope.ApiId,
+                    StringComparison.Ordinal
+                ))
                 {
                     return;
                 }
@@ -361,10 +372,30 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 ApiDiscoveryRequest request;
 
                 if (!ApiDiscoveryWireProtocol.TryParseRequest(
-                        payload,
-                        out request
-                    ))
+                    payload,
+                    out request
+                ))
                 {
+                    return;
+                }
+
+                ApiCompatibilityStatus apiCompatibility =
+                    request.Dependency.Requirement.Evaluate(
+                        Descriptor
+                    );
+
+                Exception observationError = RaiseEvent(
+                    ConsumerObserved,
+                    new ApiConsumerObservedEventArgs(
+                        request,
+                        apiCompatibility
+                    )
+                );
+
+                if (apiCompatibility
+                    != ApiCompatibilityStatus.Compatible)
+                {
+                    LastError = observationError;
                     return;
                 }
 
@@ -379,7 +410,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     )
                 );
 
-                LastError = null;
+                LastError = observationError;
             }
             catch (Exception exception)
             {
