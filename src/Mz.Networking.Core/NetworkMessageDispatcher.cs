@@ -28,13 +28,6 @@ namespace Mz.Networking
         /// <summary>
         /// Registers one handler for an application-defined message type.
         /// </summary>
-        /// <param name="messageType">
-        /// The message type handled by the callback.
-        /// </param>
-        /// <param name="handler">The receive callback.</param>
-        /// <returns>
-        /// A subscription that removes the exact registration when disposed.
-        /// </returns>
         public NetworkMessageSubscription RegisterHandler(
             string messageType,
             Action<NetworkReceiveContext> handler
@@ -68,26 +61,32 @@ namespace Mz.Networking
         }
 
         /// <summary>
-        /// Attempts to dispatch a received envelope to its registered handler.
+        /// Attempts to dispatch using compatibility trust assumptions.
         /// </summary>
-        /// <param name="envelope">The received envelope.</param>
-        /// <param name="transportSenderId">
-        /// The sender identity reported by the trusted transport.
-        /// </param>
-        /// <param name="isServer">
-        /// Whether the local endpoint is the authoritative server.
-        /// </param>
-        /// <param name="context">
-        /// Receives the completed context when a handler was found.
-        /// </param>
-        /// <returns>
-        /// True when the message type had a registered handler; otherwise
-        /// false.
-        /// </returns>
         public bool TryDispatch(
             NetworkEnvelope envelope,
             ulong transportSenderId,
             bool isServer,
+            out NetworkReceiveContext context
+        )
+        {
+            return TryDispatch(
+                envelope,
+                transportSenderId,
+                isServer,
+                !isServer,
+                out context
+            );
+        }
+
+        /// <summary>
+        /// Attempts to dispatch a received envelope to its registered handler.
+        /// </summary>
+        public bool TryDispatch(
+            NetworkEnvelope envelope,
+            ulong transportSenderId,
+            bool isServer,
+            bool transportSenderIsServer,
             out NetworkReceiveContext context
         )
         {
@@ -109,6 +108,7 @@ namespace Mz.Networking
                 envelope,
                 transportSenderId,
                 isServer,
+                transportSenderIsServer,
                 handler
             );
 

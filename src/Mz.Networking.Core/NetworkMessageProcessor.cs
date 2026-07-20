@@ -9,6 +9,26 @@ namespace Mz.Networking
     public static class NetworkMessageProcessor
     {
         /// <summary>
+        /// Validates a received envelope using compatibility assumptions and
+        /// invokes its application handler.
+        /// </summary>
+        public static NetworkReceiveContext Process(
+            NetworkEnvelope envelope,
+            ulong transportSenderId,
+            bool isServer,
+            Action<NetworkReceiveContext> handler
+        )
+        {
+            return Process(
+                envelope,
+                transportSenderId,
+                isServer,
+                !isServer,
+                handler
+            );
+        }
+
+        /// <summary>
         /// Validates a received envelope and invokes its application handler.
         /// </summary>
         /// <param name="envelope">The received message envelope.</param>
@@ -18,6 +38,10 @@ namespace Mz.Networking
         /// <param name="isServer">
         /// Whether processing occurs on the authoritative server.
         /// </param>
+        /// <param name="transportSenderIsServer">
+        /// Whether the trusted transport identified the immediate sender as
+        /// the authoritative server.
+        /// </param>
         /// <param name="handler">
         /// The application handler that may select relay behavior.
         /// </param>
@@ -26,6 +50,7 @@ namespace Mz.Networking
             NetworkEnvelope envelope,
             ulong transportSenderId,
             bool isServer,
+            bool transportSenderIsServer,
             Action<NetworkReceiveContext> handler
         )
         {
@@ -35,23 +60,47 @@ namespace Mz.Networking
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
+            if (!isServer && !transportSenderIsServer)
+            {
+                throw new InvalidOperationException(
+                    "A client can only accept network messages sent "
+                    + "by the authoritative server."
+                );
+            }
+
             bool senderWasCorrected =
                 isServer
                 && envelope.OriginalSenderId
                     != transportSenderId;
 
-            NetworkEnvelope validatedEnvelope =
-                senderWasCorrected
-                    ? envelope.WithOriginalSenderId(
+            bool relayFlagWasCorrected =
+                isServer
+                && !transportSenderIsServer
+                && envelope.IsRelay;
+
+            NetworkEnvelope validatedEnvelope = envelope;
+
+            if (senderWasCorrected)
+            {
+                validatedEnvelope =
+                    validatedEnvelope.WithOriginalSenderId(
                         transportSenderId
-                    )
-                    : envelope;
+                    );
+            }
+
+            if (relayFlagWasCorrected)
+            {
+                validatedEnvelope =
+                    validatedEnvelope.WithRelay(false);
+            }
 
             var context = new NetworkReceiveContext(
                 validatedEnvelope,
                 transportSenderId,
                 isServer,
-                senderWasCorrected
+                transportSenderIsServer,
+                senderWasCorrected,
+                relayFlagWasCorrected
             );
 
             handler(context);

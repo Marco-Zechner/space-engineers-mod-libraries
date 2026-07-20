@@ -217,6 +217,34 @@ namespace Mz.Networking.Tests
             );
         }
 
+        [Fact]
+        public void Receive_ClientMessageNotFromServer_Throws()
+        {
+            var endpoint = new NetworkEndpoint(
+                new RecordingTransport(
+                    false,
+                    101UL
+                )
+            );
+
+            Assert.Throws<InvalidOperationException>(
+                delegate
+                {
+                    endpoint.Receive(
+                        new NetworkEnvelope(
+                            "Command.Result",
+                            202UL,
+                            false,
+                            new byte[0]
+                        ),
+                        202UL,
+                        false,
+                        out NetworkReceiveContext context
+                    );
+                }
+            );
+        }
+
         private sealed class RecordingTransport :
             INetworkTransport
         {

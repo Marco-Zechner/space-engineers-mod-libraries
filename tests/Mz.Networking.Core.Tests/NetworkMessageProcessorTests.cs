@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 
 namespace Mz.Networking.Tests
@@ -101,6 +102,58 @@ namespace Mz.Networking.Tests
                 result.RelayMode
             );
 
+            Assert.True(result.RequiresSerialization);
+        }
+
+        [Fact]
+        public void Process_ClientReceiveFromNonServer_Throws()
+        {
+            var envelope = new NetworkEnvelope(
+                "Command.Result",
+                333UL,
+                false,
+                new byte[] { 1 }
+            );
+
+            Assert.Throws<InvalidOperationException>(
+                delegate
+                {
+                    NetworkMessageProcessor.Process(
+                        envelope,
+                        444UL,
+                        false,
+                        false,
+                        delegate
+                        {
+                        }
+                    );
+                }
+            );
+        }
+
+        [Fact]
+        public void Process_ServerReceive_StripsForgedRelayFlag()
+        {
+            var envelope = new NetworkEnvelope(
+                "Command.Execute",
+                222UL,
+                true,
+                new byte[] { 2 }
+            );
+
+            NetworkReceiveContext result =
+                NetworkMessageProcessor.Process(
+                    envelope,
+                    222UL,
+                    true,
+                    false,
+                    delegate
+                    {
+                    }
+                );
+
+            Assert.False(result.Envelope.IsRelay);
+            Assert.True(result.RelayFlagWasCorrected);
             Assert.True(result.RequiresSerialization);
         }
     }

@@ -19,15 +19,26 @@ namespace Mz.Networking
         public ulong TransportSenderId { get; }
 
         /// <summary>
-        /// Gets whether the message is being processed by the server.
+        /// Gets whether the local endpoint is the authoritative server.
         /// </summary>
         public bool IsServer { get; }
+
+        /// <summary>
+        /// Gets whether the immediate transport sender is the authoritative
+        /// server.
+        /// </summary>
+        public bool TransportSenderIsServer { get; }
 
         /// <summary>
         /// Gets whether the claimed original sender was replaced with the
         /// trusted transport sender.
         /// </summary>
         public bool OriginalSenderWasCorrected { get; }
+
+        /// <summary>
+        /// Gets whether a client-forged relay flag was removed.
+        /// </summary>
+        public bool RelayFlagWasCorrected { get; }
 
         /// <summary>
         /// Gets or sets how the server should relay the processed message.
@@ -44,7 +55,9 @@ namespace Mz.Networking
             NetworkEnvelope envelope,
             ulong transportSenderId,
             bool isServer,
-            bool originalSenderWasCorrected
+            bool transportSenderIsServer,
+            bool originalSenderWasCorrected,
+            bool relayFlagWasCorrected
         )
         {
             if (envelope == null)
@@ -53,12 +66,17 @@ namespace Mz.Networking
             Envelope = envelope;
             TransportSenderId = transportSenderId;
             IsServer = isServer;
+            TransportSenderIsServer = transportSenderIsServer;
             OriginalSenderWasCorrected =
                 originalSenderWasCorrected;
 
+            RelayFlagWasCorrected =
+                relayFlagWasCorrected;
+
             RelayMode = NetworkRelayMode.None;
             RequiresSerialization =
-                originalSenderWasCorrected;
+                originalSenderWasCorrected
+                || relayFlagWasCorrected;
         }
     }
 }

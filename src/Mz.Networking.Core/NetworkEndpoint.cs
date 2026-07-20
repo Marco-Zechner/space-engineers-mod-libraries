@@ -59,6 +59,7 @@ namespace Mz.Networking
                 Receive(
                     envelope,
                     _transport.LocalPeerId,
+                    true,
                     out ignored
                 );
 
@@ -93,7 +94,7 @@ namespace Mz.Networking
         }
 
         /// <summary>
-        /// Processes an envelope received from the concrete transport.
+        /// Processes a received envelope using compatibility trust assumptions.
         /// </summary>
         public bool Receive(
             NetworkEnvelope envelope,
@@ -101,11 +102,39 @@ namespace Mz.Networking
             out NetworkReceiveContext context
         )
         {
+            return Receive(
+                envelope,
+                transportSenderId,
+                !_transport.IsServer,
+                out context
+            );
+        }
+
+        /// <summary>
+        /// Processes an envelope received from the concrete transport.
+        /// </summary>
+        public bool Receive(
+            NetworkEnvelope envelope,
+            ulong transportSenderId,
+            bool transportSenderIsServer,
+            out NetworkReceiveContext context
+        )
+        {
+            if (!_transport.IsServer
+                && !transportSenderIsServer)
+            {
+                throw new InvalidOperationException(
+                    "A client can only accept network messages sent "
+                    + "by the authoritative server."
+                );
+            }
+
             bool dispatched =
                 _dispatcher.TryDispatch(
                     envelope,
                     transportSenderId,
                     _transport.IsServer,
+                    transportSenderIsServer,
                     out context
                 );
 
