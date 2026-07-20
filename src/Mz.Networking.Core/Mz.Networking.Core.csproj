@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0</TargetFrameworks>
+        <LangVersion>6</LangVersion>
+
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+
+        <RootNamespace>Mz.Networking</RootNamespace>
+        <AssemblyName>Mz.Networking.Core</AssemblyName>
+
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+</Project>

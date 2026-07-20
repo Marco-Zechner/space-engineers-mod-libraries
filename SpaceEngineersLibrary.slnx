@@ -4,6 +4,7 @@
     <Project Path="src/Mz.ApiProtocol.SpaceEngineers/Mz.ApiProtocol.SpaceEngineers.csproj" />
     <Project Path="src/Mz.Logging.Core/Mz.Logging.Core.csproj" />
     <Project Path="src/Mz.Logging.SpaceEngineers/Mz.Logging.SpaceEngineers.csproj" />
+    <Project Path="src/Mz.Networking.Core/Mz.Networking.Core.csproj" />
     <Project Path="src/Mz.SemanticVersioning/Mz.SemanticVersioning.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -11,6 +12,7 @@
     <Project Path="tests/Mz.ApiProtocol.SpaceEngineers.Tests/Mz.ApiProtocol.SpaceEngineers.Tests.csproj" />
     <Project Path="tests/Mz.Logging.Core.Tests/Mz.Logging.Core.Tests.csproj" />
     <Project Path="tests/Mz.Logging.SpaceEngineers.Tests/Mz.Logging.SpaceEngineers.Tests.csproj" />
+    <Project Path="tests/Mz.Networking.Core.Tests/Mz.Networking.Core.Tests.csproj" />
     <Project Path="tests/Mz.SemanticVersioning.Tests/Mz.SemanticVersioning.Tests.csproj" />
   </Folder>
   <Folder Name="/validation/">
