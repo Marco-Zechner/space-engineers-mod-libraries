@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net48</TargetFramework>
@@ -7,8 +7,8 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
 
-        <RootNamespace>Mz.Logging.SpaceEngineers</RootNamespace>
-        <AssemblyName>Mz.Logging.SpaceEngineers</AssemblyName>
+        <RootNamespace>Mz.ApiProtocol.SpaceEngineers</RootNamespace>
+        <AssemblyName>Mz.ApiProtocol.SpaceEngineers</AssemblyName>
 
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -17,7 +17,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Mz.Logging.Core\Mz.Logging.Core.csproj" />
+        <ProjectReference Include="..\Mz.ApiProtocol.Core\Mz.ApiProtocol.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -30,6 +30,12 @@
             <HintPath>$(SpaceEngineersBin64)\VRage.Game.dll</HintPath>
             <Private>false</Private>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference
+            Include="..\..\validation\Mz.ApiProtocol.SourceCopyValidation\Mz.ApiProtocol.SourceCopyValidation.csproj"
+            ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

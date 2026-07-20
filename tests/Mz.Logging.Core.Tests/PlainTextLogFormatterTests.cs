@@ -35,7 +35,7 @@ namespace Mz.Logging.Tests
                 null
             );
 
-            string result = formatter.Format(entry);
+            var result = formatter.Format(entry);
 
             Assert.Equal(
                 "2026-07-19T18:30:00.000Z "
@@ -71,9 +71,9 @@ namespace Mz.Logging.Tests
                 exception
             );
 
-            string result = formatter.Format(entry);
+            var result = formatter.Format(entry);
 
-            string expected =
+            var expected =
                 "2026-07-19T18:30:00.000Z "
                 + "[ERROR] [CommandAPI] Command failed."
                 + Environment.NewLine
@@ -103,7 +103,7 @@ namespace Mz.Logging.Tests
                 null
             );
 
-            string result = formatter.Format(entry);
+            var result = formatter.Format(entry);
 
             Assert.EndsWith(
                 "[INFO] [CommandAPI]  first line\nsecond line ",

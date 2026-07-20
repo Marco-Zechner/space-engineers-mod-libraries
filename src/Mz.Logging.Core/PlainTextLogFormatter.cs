@@ -16,7 +16,7 @@ namespace Mz.Logging
             if (entry == null)
                 throw new ArgumentNullException(nameof(entry));
 
-            string formatted = string.Format(
+            var formatted = string.Format(
                 CultureInfo.InvariantCulture,
                 "{0:yyyy-MM-ddTHH:mm:ss.fff'Z'} [{1}] [{2}] {3}",
                 entry.TimestampUtc,
