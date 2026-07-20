@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -197,7 +197,7 @@ namespace Mz.Logging.Tests
         private static LogEntry CreateEntry()
         {
             return new LogEntry(
-                DateTimeOffset.UtcNow,
+                DateTime.UtcNow,
                 LogLevel.Information,
                 "CommandAPI",
                 "Example message.",

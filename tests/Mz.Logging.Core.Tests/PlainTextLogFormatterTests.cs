@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xunit;
 
 namespace Mz.Logging.Tests
@@ -20,14 +20,14 @@ namespace Mz.Logging.Tests
             var formatter = new PlainTextLogFormatter();
 
             var entry = new LogEntry(
-                new DateTimeOffset(
+                new DateTime(
                     2026,
                     7,
                     19,
-                    20,
+                    18,
                     30,
                     0,
-                    TimeSpan.FromHours(2)
+                    DateTimeKind.Utc
                 ),
                 level,
                 "CommandAPI",
@@ -56,14 +56,14 @@ namespace Mz.Logging.Tests
             );
 
             var entry = new LogEntry(
-                new DateTimeOffset(
+                new DateTime(
                     2026,
                     7,
                     19,
                     18,
                     30,
                     0,
-                    TimeSpan.Zero
+                    DateTimeKind.Utc
                 ),
                 LogLevel.Error,
                 "CommandAPI",
@@ -88,7 +88,15 @@ namespace Mz.Logging.Tests
             var formatter = new PlainTextLogFormatter();
 
             var entry = new LogEntry(
-                DateTimeOffset.UnixEpoch,
+                new DateTime(
+                    1970,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    DateTimeKind.Utc
+                ),
                 LogLevel.Information,
                 "CommandAPI",
                 " first line\nsecond line ",

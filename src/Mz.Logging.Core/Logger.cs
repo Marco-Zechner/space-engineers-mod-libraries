@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Mz.Logging
 {
@@ -8,7 +8,7 @@ namespace Mz.Logging
     public sealed class Logger
     {
         private readonly ILogSink _sink;
-        private readonly Func<DateTimeOffset> _utcNow;
+        private readonly Func<DateTime> _utcNow;
         private LogLevel _minimumLevel;
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Mz.Logging
             string source,
             ILogSink sink,
             LogLevel minimumLevel,
-            Func<DateTimeOffset> utcNow
+            Func<DateTime> utcNow
         )
         {
             if (string.IsNullOrWhiteSpace(source))
@@ -187,9 +187,9 @@ namespace Mz.Logging
             _sink.Write(entry);
         }
 
-        private static DateTimeOffset GetUtcNow()
+        private static DateTime GetUtcNow()
         {
-            return DateTimeOffset.UtcNow;
+            return DateTime.UtcNow;
         }
 
         private static void ValidateLevel(
@@ -198,7 +198,10 @@ namespace Mz.Logging
         )
         {
             if (level < LogLevel.Trace || level > LogLevel.Critical)
-                throw new ArgumentOutOfRangeException(parameterName);
+                throw new ArgumentException(
+                    "The log level is outside the supported range.",
+                    parameterName
+                );
         }
     }
 }

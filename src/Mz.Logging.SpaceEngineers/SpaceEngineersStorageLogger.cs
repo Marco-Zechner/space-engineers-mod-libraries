@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace Mz.Logging.SpaceEngineers
@@ -274,8 +274,8 @@ namespace Mz.Logging.SpaceEngineers
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException(
-                    nameof(SpaceEngineersStorageLogger)
+                throw new InvalidOperationException(
+                    "The Space Engineers storage logger has been disposed."
                 );
             }
         }

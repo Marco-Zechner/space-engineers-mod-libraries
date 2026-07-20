@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <LangVersion>6</LangVersion>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <AssemblyName>Mz.Logging.SourceCopyValidation</AssemblyName>
+        <RootNamespace>Mz.Logging.SourceCopyValidation</RootNamespace>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <SpaceEngineersBin64>E:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</SpaceEngineersBin64>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile
+            Include="..\..\src\Mz.Logging.Core\*.cs"
+            Link="Libraries\Mz.Logging.Core\%(Filename)%(Extension)" />
+        <Compile
+            Include="..\..\src\Mz.Logging.SpaceEngineers\*.cs"
+            Link="Libraries\Mz.Logging.SpaceEngineers\%(Filename)%(Extension)" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference
+            Include="Mal.Mdk2.ModAnalyzers"
+            Version="2.1.16"
+            PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <Reference Include="Sandbox.Common">
+            <HintPath>$(SpaceEngineersBin64)\Sandbox.Common.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage.Game">
+            <HintPath>$(SpaceEngineersBin64)\VRage.Game.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+</Project>
