@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 namespace Mz.SemanticVersioning
@@ -33,13 +33,22 @@ namespace Mz.SemanticVersioning
         public SemanticVersion(int major, int minor, int patch)
         {
             if (major < 0)
-                throw new ArgumentOutOfRangeException(nameof(major));
+                throw new ArgumentException(
+                    "The major component cannot be negative.",
+                    nameof(major)
+                );
 
             if (minor < 0)
-                throw new ArgumentOutOfRangeException(nameof(minor));
+                throw new ArgumentException(
+                    "The minor component cannot be negative.",
+                    nameof(minor)
+                );
 
             if (patch < 0)
-                throw new ArgumentOutOfRangeException(nameof(patch));
+                throw new ArgumentException(
+                    "The patch component cannot be negative.",
+                    nameof(patch)
+                );
 
             Major = major;
             Minor = minor;

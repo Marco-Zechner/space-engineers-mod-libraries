@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Mz.ApiProtocol
 {
@@ -27,8 +27,7 @@ namespace Mz.ApiProtocol
         /// The exact delegate type required for the endpoint.
         /// </param>
         /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="name"/> is empty or
-        /// <paramref name="delegateType"/> is not a delegate type.
+        /// Thrown when <paramref name="name"/> is empty.
         /// </exception>
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="delegateType"/> is null.
@@ -49,16 +48,6 @@ namespace Mz.ApiProtocol
             if (delegateType == null)
             {
                 throw new ArgumentNullException(
-                    nameof(delegateType)
-                );
-            }
-
-            if (!typeof(Delegate).IsAssignableFrom(
-                delegateType
-            ))
-            {
-                throw new ArgumentException(
-                    "The endpoint type must be a delegate type.",
                     nameof(delegateType)
                 );
             }

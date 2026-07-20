@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -57,7 +57,7 @@ namespace Mz.ApiProtocol
         /// <param name="apiId">
         /// The API identifier associated with the message.
         /// </param>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="messageKind"/> is undefined.
         /// </exception>
         /// <exception cref="ArgumentNullException">
@@ -77,7 +77,8 @@ namespace Mz.ApiProtocol
             if (messageKind < ApiWireMessageKind.Request
                 || messageKind > ApiWireMessageKind.Withdrawal)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(messageKind)
                 );
             }

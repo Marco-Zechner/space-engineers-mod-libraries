@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -82,7 +81,9 @@ namespace Mz.ApiProtocol
             }
 
             Endpoints =
-                new ReadOnlyDictionary<string, Delegate>(copy);
+                new ReadOnlyDictionaryView<string, Delegate>(
+                    copy
+                );
         }
 
         /// <summary>
@@ -102,8 +103,7 @@ namespace Mz.ApiProtocol
         /// false.
         /// </returns>
         /// <exception cref="ArgumentException">
-        /// Thrown when the endpoint name is empty or the requested type is
-        /// not a delegate.
+        /// Thrown when the endpoint name is empty.
         /// </exception>
         public bool TryGetEndpoint<TDelegate>(
             string endpointName,
@@ -116,16 +116,6 @@ namespace Mz.ApiProtocol
                 throw new ArgumentException(
                     "An endpoint name is required.",
                     nameof(endpointName)
-                );
-            }
-
-            if (!typeof(Delegate).IsAssignableFrom(
-                typeof(TDelegate)
-            ))
-            {
-                throw new ArgumentException(
-                    "The requested endpoint type must be a delegate.",
-                    nameof(TDelegate)
                 );
             }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.SemanticVersioning;
 using Xunit;
@@ -27,19 +27,17 @@ namespace Mz.ApiProtocol.Tests
         }
 
         [Fact]
-        public void Requirement_NonDelegateType_ThrowsArgumentException()
+        public void Requirement_StoresExpectedTypeWithoutReflection()
         {
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    new ApiEndpointRequirement(
-                        "RegisterCommand",
-                        typeof(string)
-                    );
-                }
+            var requirement = new ApiEndpointRequirement(
+                "RegisterCommand",
+                typeof(string)
+            );
+            Assert.Equal(
+                typeof(string),
+                requirement.DelegateType
             );
         }
-
         [Fact]
         public void Constructor_DuplicateNames_ThrowsArgumentException()
         {

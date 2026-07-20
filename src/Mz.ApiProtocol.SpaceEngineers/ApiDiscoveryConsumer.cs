@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 
@@ -32,7 +32,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// One failing subscriber does not prevent later subscribers from
         /// receiving the event.
         /// </remarks>
-        public event EventHandler<ApiProviderObservedEventArgs>
+        public event Action<ApiProviderObservedEventArgs>
             ProviderObserved;
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Subscriber failures are captured in <see cref="LastError"/> and do
         /// not undo the accepted connection.
         /// </remarks>
-        public event EventHandler<ApiConnectedEventArgs> Connected;
+        public event Action<ApiConnectedEventArgs> Connected;
 
         /// <summary>
         /// Occurs after an accepted provider connection has been removed.
@@ -51,7 +51,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Subscriber failures are captured in <see cref="LastError"/> and do
         /// not restore the removed connection.
         /// </remarks>
-        public event EventHandler<ApiDisconnectedEventArgs> Disconnected;
+        public event Action<ApiDisconnectedEventArgs> Disconnected;
 
         /// <summary>
         /// Occurs when a provider for the requested API uses an incompatible wire
@@ -61,7 +61,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Subscriber failures are captured in <see cref="LastError"/> and do not
         /// escape through the shared mod-message handler.
         /// </remarks>
-        public event EventHandler<ApiWireIncompatibilityEventArgs>
+        public event Action<ApiWireIncompatibilityEventArgs>
             WireIncompatibilityObserved;
         
         /// <summary>
@@ -196,7 +196,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// This method does not automatically send a request. Repeated calls
         /// while already started have no effect.
         /// </remarks>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the consumer has been disposed.
         /// </exception>
         public void Start()
@@ -225,7 +225,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Requests may be sent repeatedly while disconnected. A newer
         /// request replaces the previous unresolved correlation identifier.
         /// </remarks>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the consumer has been disposed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
@@ -278,7 +278,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// True when a connection was removed; false when the consumer was
         /// already disconnected.
         /// </returns>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the consumer has been disposed.
         /// </exception>
         public bool Disconnect()
@@ -301,7 +301,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// The method also works while currently disconnected. In that case
         /// it behaves like <see cref="RequestDiscovery"/>.
         /// </remarks>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the consumer has been disposed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
@@ -573,10 +573,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         }
 
         private Exception RaiseEvent<TEventArgs>(
-            EventHandler<TEventArgs> handler,
+            Action<TEventArgs> handler,
             TEventArgs eventArgs
         )
-            where TEventArgs : EventArgs
         {
             if (handler == null)
                 return null;
@@ -589,9 +588,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 try
                 {
                     var subscriber =
-                        (EventHandler<TEventArgs>)subscribers[index];
+                        (Action<TEventArgs>)subscribers[index];
 
-                    subscriber(this, eventArgs);
+                    subscriber(eventArgs);
                 }
                 catch (Exception exception)
                 {
@@ -617,8 +616,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException(
-                    nameof(ApiDiscoveryConsumer)
+                throw new InvalidOperationException(
+                    "The API discovery consumer has been disposed."
                 );
             }
         }

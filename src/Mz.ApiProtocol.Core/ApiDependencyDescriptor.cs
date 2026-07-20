@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Mz.ApiProtocol
 {
@@ -51,7 +51,7 @@ namespace Mz.ApiProtocol
         /// Thrown when <paramref name="consumer"/> or
         /// <paramref name="requirement"/> is null.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="kind"/> is not defined.
         /// </exception>
         public ApiDependencyDescriptor(
@@ -70,7 +70,8 @@ namespace Mz.ApiProtocol
             if (kind < ApiDependencyKind.Required
                 || kind > ApiDependencyKind.Optional)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(kind)
                 );
             }

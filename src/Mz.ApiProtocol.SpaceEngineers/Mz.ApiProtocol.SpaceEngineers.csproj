@@ -32,4 +32,10 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference
+            Include="..\..\validation\Mz.ApiProtocol.SourceCopyValidation\Mz.ApiProtocol.SourceCopyValidation.csproj"
+            ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
 </Project>

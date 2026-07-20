@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 
@@ -25,7 +25,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Subscriber failures are captured in <see cref="LastError"/> and do not
         /// escape through the shared mod-message handler.
         /// </remarks>
-        public event EventHandler<ApiWireIncompatibilityEventArgs> WireIncompatibilityObserved;
+        public event Action<ApiWireIncompatibilityEventArgs> WireIncompatibilityObserved;
 
         /// <summary>
         /// Occurs when a mod requests the API and its supported API range has been
@@ -36,7 +36,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// failures are captured in <see cref="LastError"/> and do not escape through
         /// the shared mod-message handler.
         /// </remarks>
-        public event EventHandler<ApiConsumerObservedEventArgs>
+        public event Action<ApiConsumerObservedEventArgs>
             ConsumerObserved;
         
         /// <summary>
@@ -186,7 +186,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <summary>
         /// Registers the request handler and broadcasts provider readiness.
         /// </summary>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the provider has been disposed.
         /// </exception>
         public void Start()
@@ -222,7 +222,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <summary>
         /// Broadcasts an unsolicited provider announcement.
         /// </summary>
-        /// <exception cref="ObjectDisposedException">
+        /// <exception cref="InvalidOperationException">
         /// Thrown when the provider has been disposed.
         /// </exception>
         /// <exception cref="InvalidOperationException">
@@ -419,10 +419,9 @@ namespace Mz.ApiProtocol.SpaceEngineers
         }
         
         private Exception RaiseEvent<TEventArgs>(
-            EventHandler<TEventArgs> handler,
+            Action<TEventArgs> handler,
             TEventArgs eventArgs
         )
-            where TEventArgs : EventArgs
         {
             if (handler == null)
                 return null;
@@ -434,9 +433,10 @@ namespace Mz.ApiProtocol.SpaceEngineers
             {
                 try
                 {
-                    var subscriber = (EventHandler<TEventArgs>)subscriberItem;
+                    var subscriber =
+                        (Action<TEventArgs>)subscriberItem;
 
-                    subscriber(this, eventArgs);
+                    subscriber(eventArgs);
                 }
                 catch (Exception exception)
                 {
@@ -452,8 +452,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException(
-                    nameof(ApiDiscoveryProvider)
+                throw new InvalidOperationException(
+                    "The API discovery provider has been disposed."
                 );
             }
         }

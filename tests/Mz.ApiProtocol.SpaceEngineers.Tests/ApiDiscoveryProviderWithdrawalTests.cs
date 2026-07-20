@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 using Mz.SemanticVersioning;
@@ -68,7 +68,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             consumer.Disconnected +=
                 delegate(
-                    object sender,
                     ApiDisconnectedEventArgs eventArgs
                 )
                 {

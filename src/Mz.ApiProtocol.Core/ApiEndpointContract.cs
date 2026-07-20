@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Mz.ApiProtocol
 {
@@ -70,7 +69,7 @@ namespace Mz.ApiProtocol
             }
 
             Requirements =
-                new ReadOnlyCollection<ApiEndpointRequirement>(
+                new ReadOnlyListView<ApiEndpointRequirement>(
                     copy
                 );
         }

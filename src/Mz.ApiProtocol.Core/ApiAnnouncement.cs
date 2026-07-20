@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -185,7 +184,7 @@ namespace Mz.ApiProtocol
                 copy.Add(normalizedName, pair.Value);
             }
 
-            return new ReadOnlyDictionary<string, Delegate>(
+            return new ReadOnlyDictionaryView<string, Delegate>(
                 copy
             );
         }

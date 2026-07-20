@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 using Mz.SemanticVersioning;
@@ -20,10 +20,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiConsumerObservedEventArgs observed = null!;
 
             provider.ConsumerObserved +=
-                delegate(
-                    object sender,
-                    ApiConsumerObservedEventArgs eventArgs
-                )
+                delegate(ApiConsumerObservedEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };
@@ -85,10 +82,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiConsumerObservedEventArgs observed = null!;
 
             provider.ConsumerObserved +=
-                delegate(
-                    object sender,
-                    ApiConsumerObservedEventArgs eventArgs
-                )
+                delegate(ApiConsumerObservedEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };
@@ -138,10 +132,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiConsumerObservedEventArgs observed = null!;
 
             provider.ConsumerObserved +=
-                delegate(
-                    object sender,
-                    ApiConsumerObservedEventArgs eventArgs
-                )
+                delegate(ApiConsumerObservedEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Mz.ApiProtocol
 {
@@ -38,7 +38,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="requirement"/> is null.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="kind"/> is undefined.
         /// </exception>
         /// <exception cref="ArgumentException">
@@ -61,7 +61,8 @@ namespace Mz.ApiProtocol
                 || kind
                     > ApiEndpointContractIssueKind.WrongDelegateType)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(kind)
                 );
             }

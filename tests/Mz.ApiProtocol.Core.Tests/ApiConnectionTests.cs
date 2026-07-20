@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.SemanticVersioning;
 using Xunit;
@@ -101,7 +101,7 @@ namespace Mz.ApiProtocol.Tests
         }
 
         [Fact]
-        public void TryGetEndpoint_NonDelegateType_ThrowsArgumentException()
+        public void TryGetEndpoint_NonDelegateType_ReturnsFalse()
         {
             var connection = CreateConnection(
                 "Ping",
@@ -109,18 +109,13 @@ namespace Mz.ApiProtocol.Tests
                 {
                 }
             );
-
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    connection.TryGetEndpoint(
-                        "Ping",
-                        out string result
-                    );
-                }
+            var found = connection.TryGetEndpoint(
+                "Ping",
+                out string result
             );
+            Assert.False(found);
+            Assert.Null(result);
         }
-
         private static ApiConnection CreateConnection(
             string endpointName,
             Delegate endpoint

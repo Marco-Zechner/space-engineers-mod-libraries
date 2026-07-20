@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 using Mz.SemanticVersioning;
@@ -19,10 +19,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiDisconnectedEventArgs disconnected = null!;
 
             consumer.Disconnected +=
-                delegate(
-                    object sender,
-                    ApiDisconnectedEventArgs eventArgs
-                )
+                delegate(ApiDisconnectedEventArgs eventArgs)
                 {
                     disconnected = eventArgs;
                 };
@@ -86,10 +83,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiDisconnectReason? reason = null;
 
             consumer.Disconnected +=
-                delegate(
-                    object sender,
-                    ApiDisconnectedEventArgs eventArgs
-                )
+                delegate(ApiDisconnectedEventArgs eventArgs)
                 {
                     reason = eventArgs.Reason;
                 };
@@ -160,10 +154,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiDisconnectReason? reason = null;
 
             consumer.Disconnected +=
-                delegate(
-                    object sender,
-                    ApiDisconnectedEventArgs eventArgs
-                )
+                delegate(ApiDisconnectedEventArgs eventArgs)
                 {
                     reason = eventArgs.Reason;
                 };

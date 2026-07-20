@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 using Xunit;
 
@@ -91,11 +91,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(2)]
         [InlineData(100)]
-        public void Constructor_InvalidKind_ThrowsArgumentOutOfRangeException(
+        public void Constructor_InvalidKind_ThrowsArgumentException(
             int numericKind
         )
         {
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     new ApiDependencyDescriptor(

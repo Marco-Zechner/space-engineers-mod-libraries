@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Mz.ApiProtocol
 {
@@ -29,7 +29,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="previousConnection"/> is null.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="reason"/> is not a defined reason.
         /// </exception>
         public ApiDisconnectedEventArgs(
@@ -47,7 +47,8 @@ namespace Mz.ApiProtocol
             if (reason < ApiDisconnectReason.ConsumerRequested
                 || reason > ApiDisconnectReason.ProviderWithdrawn)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(reason)
                 );
             }

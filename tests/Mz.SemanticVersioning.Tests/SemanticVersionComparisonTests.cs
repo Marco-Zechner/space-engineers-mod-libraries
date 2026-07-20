@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xunit;
 
 namespace Mz.SemanticVersioning.Tests
@@ -19,14 +19,14 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(-1, 0, 0, "major")]
         [InlineData(0, -1, 0, "minor")]
         [InlineData(0, 0, -1, "patch")]
-        public void Constructor_NegativeComponent_ThrowsArgumentOutOfRangeException(
+        public void Constructor_NegativeComponent_ThrowsArgumentException(
             int major,
             int minor,
             int patch,
             string expectedParameterName
         )
         {
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            var exception = Assert.Throws<ArgumentException>(
                 delegate
                 {
                     new SemanticVersion(major, minor, patch);

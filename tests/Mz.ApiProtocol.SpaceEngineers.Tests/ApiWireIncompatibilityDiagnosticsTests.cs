@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 using Mz.SemanticVersioning;
@@ -20,10 +20,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiWireIncompatibilityEventArgs observed = null!;
 
             provider.WireIncompatibilityObserved +=
-                delegate(
-                    object sender,
-                    ApiWireIncompatibilityEventArgs eventArgs
-                )
+                delegate(ApiWireIncompatibilityEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };
@@ -77,10 +74,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiWireIncompatibilityEventArgs observed = null!;
 
             consumer.WireIncompatibilityObserved +=
-                delegate(
-                    object sender,
-                    ApiWireIncompatibilityEventArgs eventArgs
-                )
+                delegate(ApiWireIncompatibilityEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };

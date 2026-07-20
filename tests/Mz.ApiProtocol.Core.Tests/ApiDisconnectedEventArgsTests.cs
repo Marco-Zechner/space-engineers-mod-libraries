@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.SemanticVersioning;
 using Xunit;
@@ -46,11 +46,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(4)]
         [InlineData(100)]
-        public void Constructor_InvalidReason_ThrowsArgumentOutOfRangeException(
+        public void Constructor_InvalidReason_ThrowsArgumentException(
             int numericReason
         )
         {
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     new ApiDisconnectedEventArgs(

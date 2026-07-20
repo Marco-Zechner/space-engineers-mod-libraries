@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Mz.ApiProtocol;
 using Mz.SemanticVersioning;
@@ -151,10 +151,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiProviderObservedEventArgs observed = null!;
 
             consumer.ProviderObserved +=
-                delegate(
-                    object sender,
-                    ApiProviderObservedEventArgs eventArgs
-                )
+                delegate(ApiProviderObservedEventArgs eventArgs)
                 {
                     observed = eventArgs;
                 };
@@ -197,10 +194,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             ApiConnectedEventArgs connected = null!;
 
             consumer.Connected +=
-                delegate(
-                    object sender,
-                    ApiConnectedEventArgs eventArgs
-                )
+                delegate(ApiConnectedEventArgs eventArgs)
                 {
                     eventCount++;
                     connected = eventArgs;

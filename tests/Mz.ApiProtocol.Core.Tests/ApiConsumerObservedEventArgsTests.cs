@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 using Xunit;
 
@@ -67,11 +67,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(4)]
         [InlineData(100)]
-        public void Constructor_InvalidStatus_ThrowsArgumentOutOfRangeException(
+        public void Constructor_InvalidStatus_ThrowsArgumentException(
             int numericStatus
         )
         {
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     new ApiConsumerObservedEventArgs(

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -86,7 +86,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="request"/> is null.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="compatibilityStatus"/> is undefined.
         /// </exception>
         public ApiConsumerObservedEventArgs(
@@ -106,7 +106,8 @@ namespace Mz.ApiProtocol
                 || compatibilityStatus
                     > ApiCompatibilityStatus.ProviderTooNew)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(compatibilityStatus)
                 );
             }

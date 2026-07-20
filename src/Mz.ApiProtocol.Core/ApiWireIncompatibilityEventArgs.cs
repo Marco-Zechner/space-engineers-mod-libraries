@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -89,7 +89,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="compatibilityStatus"/> is compatible.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="compatibilityStatus"/> is undefined.
         /// </exception>
         public ApiWireIncompatibilityEventArgs(
@@ -109,7 +109,8 @@ namespace Mz.ApiProtocol
                 || compatibilityStatus
                     > ApiWireCompatibilityStatus.RemoteTooNew)
             {
-                throw new ArgumentOutOfRangeException(
+                throw new ArgumentException(
+                    "The value is outside the supported range.",
                     nameof(compatibilityStatus)
                 );
             }
