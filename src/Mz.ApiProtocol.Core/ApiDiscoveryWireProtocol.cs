@@ -14,19 +14,19 @@ namespace Mz.ApiProtocol
         /// Gets the discovery-request wire marker.
         /// </summary>
         public const string RequestMarker =
-            "Mz.ApiProtocol.Discovery.Request/1";
+            "Mz.ApiProtocol.Discovery.Request";
 
         /// <summary>
         /// Gets the provider-announcement wire marker.
         /// </summary>
         public const string AnnouncementMarker =
-            "Mz.ApiProtocol.Discovery.Announcement/1";
+            "Mz.ApiProtocol.Discovery.Announcement";
 
         /// <summary>
         /// Gets the provider-withdrawal wire marker.
         /// </summary>
         public const string WithdrawalMarker =
-            "Mz.ApiProtocol.Discovery.Withdrawal/1";
+            "Mz.ApiProtocol.Discovery.Withdrawal";
 
         /// <summary>
         /// Creates a transport-safe discovery request.
@@ -70,6 +70,88 @@ namespace Mz.ApiProtocol
             };
         }
 
+        /// <summary>
+        /// Attempts to parse the stable diagnostic envelope shared by every
+        /// discovery message.
+        /// </summary>
+        /// <param name="payload">The received transport payload.</param>
+        /// <param name="envelope">
+        /// Receives the parsed envelope when decoding succeeds.
+        /// </param>
+        /// <returns>
+        /// True when the stable envelope is valid; otherwise false.
+        /// </returns>
+        public static bool TryParseEnvelope(
+            object payload,
+            out ApiWireEnvelope envelope
+        )
+        {
+            envelope = null;
+
+            object[] fields = payload as object[];
+
+            if (fields == null || fields.Length < 7)
+                return false;
+
+            ApiWireMessageKind messageKind;
+
+            if (!TryParseMessageKind(
+                    fields[0] as string,
+                    out messageKind
+                ))
+            {
+                return false;
+            }
+
+            SemanticVersion wireVersion;
+            SemanticVersion libraryVersion;
+
+            if (!TryParseVersions(
+                    fields[1],
+                    fields[2],
+                    out wireVersion,
+                    out libraryVersion
+                ))
+            {
+                return false;
+            }
+
+            ApiModIdentity participant;
+
+            if (!TryParseModIdentity(
+                    fields[3],
+                    fields[4],
+                    fields[5],
+                    out participant
+                ))
+            {
+                return false;
+            }
+
+            string apiId = fields[6] as string;
+
+            if (string.IsNullOrWhiteSpace(apiId))
+                return false;
+
+            try
+            {
+                envelope = new ApiWireEnvelope(
+                    messageKind,
+                    participant,
+                    wireVersion,
+                    libraryVersion,
+                    apiId
+                );
+
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                envelope = null;
+                return false;
+            }
+        }
+        
         /// <summary>
         /// Attempts to decode a discovery request.
         /// </summary>
@@ -454,6 +536,45 @@ namespace Mz.ApiProtocol
                     expectedMarker,
                     StringComparison.Ordinal
                 );
+        }
+        
+        private static bool TryParseMessageKind(
+            string marker,
+            out ApiWireMessageKind messageKind
+        )
+        {
+            if (string.Equals(
+                    marker,
+                    RequestMarker,
+                    StringComparison.Ordinal
+                ))
+            {
+                messageKind = ApiWireMessageKind.Request;
+                return true;
+            }
+
+            if (string.Equals(
+                    marker,
+                    AnnouncementMarker,
+                    StringComparison.Ordinal
+                ))
+            {
+                messageKind = ApiWireMessageKind.Announcement;
+                return true;
+            }
+
+            if (string.Equals(
+                    marker,
+                    WithdrawalMarker,
+                    StringComparison.Ordinal
+                ))
+            {
+                messageKind = ApiWireMessageKind.Withdrawal;
+                return true;
+            }
+
+            messageKind = default(ApiWireMessageKind);
+            return false;
         }
 
         private static bool TryParseVersions(

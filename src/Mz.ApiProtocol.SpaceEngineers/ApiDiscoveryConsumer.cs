@@ -54,6 +54,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
         public event EventHandler<ApiDisconnectedEventArgs> Disconnected;
 
         /// <summary>
+        /// Occurs when a provider for the requested API uses an incompatible wire
+        /// protocol.
+        /// </summary>
+        /// <remarks>
+        /// Subscriber failures are captured in <see cref="LastError"/> and do not
+        /// escape through the shared mod-message handler.
+        /// </remarks>
+        public event EventHandler<ApiWireIncompatibilityEventArgs>
+            WireIncompatibilityObserved;
+        
+        /// <summary>
         /// Gets the mod-message channel used for discovery.
         /// </summary>
         public long ChannelId { get; }
@@ -354,19 +365,66 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             try
             {
-                ApiProviderWithdrawal withdrawal;
+                ApiWireEnvelope envelope;
 
-                if (ApiDiscoveryWireProtocol.TryParseWithdrawal(
+                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(
                         payload,
-                        out withdrawal
+                        out envelope
                     ))
                 {
-                    HandleWithdrawal(withdrawal);
                     return;
                 }
 
-                if (IsConnected)
+                if (!string.Equals(
+                        Requirement.ApiId,
+                        envelope.ApiId,
+                        StringComparison.Ordinal
+                    ))
+                {
                     return;
+                }
+
+                ApiWireCompatibilityStatus wireCompatibility =
+                    ApiProtocolInfo.EvaluateWireProtocol(
+                        envelope.WireProtocolVersion
+                    );
+
+                if (wireCompatibility
+                    != ApiWireCompatibilityStatus.Compatible)
+                {
+                    LastError = RaiseEvent(
+                        WireIncompatibilityObserved,
+                        new ApiWireIncompatibilityEventArgs(
+                            envelope,
+                            wireCompatibility
+                        )
+                    );
+
+                    return;
+                }
+
+                if (envelope.MessageKind
+                    == ApiWireMessageKind.Withdrawal)
+                {
+                    ApiProviderWithdrawal withdrawal;
+
+                    if (ApiDiscoveryWireProtocol.TryParseWithdrawal(
+                            payload,
+                            out withdrawal
+                        ))
+                    {
+                        HandleWithdrawal(withdrawal);
+                    }
+
+                    return;
+                }
+
+                if (envelope.MessageKind
+                    != ApiWireMessageKind.Announcement
+                    || IsConnected)
+                {
+                    return;
+                }
 
                 ApiAnnouncement announcement;
 
@@ -377,6 +435,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 {
                     return;
                 }
+
                 
                 if (!ApiProtocolInfo.IsWireProtocolCompatible(
                         announcement.WireProtocolVersion
@@ -462,13 +521,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ApiProviderWithdrawal withdrawal
         )
         {
-            if (!ApiProtocolInfo.IsWireProtocolCompatible(
-                    withdrawal.WireProtocolVersion
-                ))
-            {
-                return;
-            }
-            
             if (!string.Equals(
                     Requirement.ApiId,
                     withdrawal.ApiId,

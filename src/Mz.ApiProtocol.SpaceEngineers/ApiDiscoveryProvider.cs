@@ -18,6 +18,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
         private bool _isDisposed;
 
         /// <summary>
+        /// Occurs when a mod requests this API using an incompatible wire
+        /// protocol.
+        /// </summary>
+        /// <remarks>
+        /// Subscriber failures are captured in <see cref="LastError"/> and do not
+        /// escape through the shared mod-message handler.
+        /// </remarks>
+        public event EventHandler<ApiWireIncompatibilityEventArgs> WireIncompatibilityObserved;
+
+        
+        /// <summary>
         /// Gets the mod-message channel used for discovery.
         /// </summary>
         public long ChannelId { get; }
@@ -46,7 +57,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Gets the last unexpected lifecycle or message-processing error.
         /// </summary>
         public Exception LastError { get; private set; }
-
+        
         /// <summary>
         /// Creates a provider with a generated provider-instance identity.
         /// </summary>
@@ -303,28 +314,56 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             try
             {
-                ApiDiscoveryRequest request;
+                ApiWireEnvelope envelope;
 
-                if (!ApiDiscoveryWireProtocol.TryParseRequest(
-                    payload,
-                    out request
-                ))
-                {
-                    return;
-                }
-                
-                if (!ApiProtocolInfo.IsWireProtocolCompatible(
-                        request.WireProtocolVersion
+                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(
+                        payload,
+                        out envelope
                     ))
                 {
                     return;
                 }
 
+                if (envelope.MessageKind
+                    != ApiWireMessageKind.Request)
+                {
+                    return;
+                }
+
                 if (!string.Equals(
-                    Descriptor.ApiId,
-                    request.ApiId,
-                    StringComparison.Ordinal
-                ))
+                        Descriptor.ApiId,
+                        envelope.ApiId,
+                        StringComparison.Ordinal
+                    ))
+                {
+                    return;
+                }
+
+                ApiWireCompatibilityStatus wireCompatibility =
+                    ApiProtocolInfo.EvaluateWireProtocol(
+                        envelope.WireProtocolVersion
+                    );
+
+                if (wireCompatibility
+                    != ApiWireCompatibilityStatus.Compatible)
+                {
+                    LastError = RaiseEvent(
+                        WireIncompatibilityObserved,
+                        new ApiWireIncompatibilityEventArgs(
+                            envelope,
+                            wireCompatibility
+                        )
+                    );
+
+                    return;
+                }
+
+                ApiDiscoveryRequest request;
+
+                if (!ApiDiscoveryWireProtocol.TryParseRequest(
+                        payload,
+                        out request
+                    ))
                 {
                     return;
                 }
@@ -346,6 +385,36 @@ namespace Mz.ApiProtocol.SpaceEngineers
             {
                 LastError = exception;
             }
+        }
+        
+        private Exception RaiseEvent<TEventArgs>(
+            EventHandler<TEventArgs> handler,
+            TEventArgs eventArgs
+        )
+            where TEventArgs : EventArgs
+        {
+            if (handler == null)
+                return null;
+
+            Exception firstError = null;
+            Delegate[] subscribers = handler.GetInvocationList();
+
+            foreach (var subscriberItem in subscribers)
+            {
+                try
+                {
+                    var subscriber = (EventHandler<TEventArgs>)subscriberItem;
+
+                    subscriber(this, eventArgs);
+                }
+                catch (Exception exception)
+                {
+                    if (firstError == null)
+                        firstError = exception;
+                }
+            }
+
+            return firstError;
         }
 
         private void ThrowIfDisposed()
