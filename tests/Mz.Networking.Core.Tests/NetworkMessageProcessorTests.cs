@@ -22,6 +22,7 @@ namespace Mz.Networking.Tests
                     envelope,
                     222UL,
                     true,
+                    false,
                     delegate(NetworkReceiveContext context)
                     {
                         observedContext = context;
@@ -59,6 +60,7 @@ namespace Mz.Networking.Tests
                     envelope,
                     999UL,
                     false,
+                    true,
                     delegate
                     {
                     }
@@ -88,6 +90,7 @@ namespace Mz.Networking.Tests
                     envelope,
                     444UL,
                     true,
+                    false,
                     delegate(NetworkReceiveContext context)
                     {
                         context.RelayMode =

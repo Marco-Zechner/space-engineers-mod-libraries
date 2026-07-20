@@ -94,23 +94,6 @@ namespace Mz.Networking
         }
 
         /// <summary>
-        /// Processes a received envelope using compatibility trust assumptions.
-        /// </summary>
-        public bool Receive(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            out NetworkReceiveContext context
-        )
-        {
-            return Receive(
-                envelope,
-                transportSenderId,
-                !_transport.IsServer,
-                out context
-            );
-        }
-
-        /// <summary>
         /// Processes an envelope received from the concrete transport.
         /// </summary>
         public bool Receive(

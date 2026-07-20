@@ -109,6 +109,7 @@ namespace Mz.Networking.Tests
                             new byte[] { 4 }
                         ),
                         200UL,
+                        false,
                         out NetworkReceiveContext context
                     );
 
@@ -155,6 +156,7 @@ namespace Mz.Networking.Tests
                         new byte[] { 5 }
                     ),
                     200UL,
+                    false,
                     out NetworkReceiveContext context
                 );
             }
@@ -185,6 +187,7 @@ namespace Mz.Networking.Tests
                         new byte[0]
                     ),
                     200UL,
+                    false,
                     out NetworkReceiveContext context
                 );
 

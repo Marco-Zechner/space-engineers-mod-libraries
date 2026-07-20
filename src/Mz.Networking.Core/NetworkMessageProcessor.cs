@@ -8,25 +8,6 @@ namespace Mz.Networking
     /// </summary>
     public static class NetworkMessageProcessor
     {
-        /// <summary>
-        /// Validates a received envelope using compatibility assumptions and
-        /// invokes its application handler.
-        /// </summary>
-        public static NetworkReceiveContext Process(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            bool isServer,
-            Action<NetworkReceiveContext> handler
-        )
-        {
-            return Process(
-                envelope,
-                transportSenderId,
-                isServer,
-                !isServer,
-                handler
-            );
-        }
 
         /// <summary>
         /// Validates a received envelope and invokes its application handler.

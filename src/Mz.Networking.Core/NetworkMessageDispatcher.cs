@@ -61,25 +61,6 @@ namespace Mz.Networking
         }
 
         /// <summary>
-        /// Attempts to dispatch using compatibility trust assumptions.
-        /// </summary>
-        public bool TryDispatch(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            bool isServer,
-            out NetworkReceiveContext context
-        )
-        {
-            return TryDispatch(
-                envelope,
-                transportSenderId,
-                isServer,
-                !isServer,
-                out context
-            );
-        }
-
-        /// <summary>
         /// Attempts to dispatch a received envelope to its registered handler.
         /// </summary>
         public bool TryDispatch(
