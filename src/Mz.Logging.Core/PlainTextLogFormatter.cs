@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 namespace Mz.Logging
@@ -56,7 +56,10 @@ namespace Mz.Logging
                     return "CRITICAL";
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(level));
+                    throw new ArgumentException(
+                        "The log level is outside the supported range.",
+                        nameof(level)
+                    );
             }
         }
     }

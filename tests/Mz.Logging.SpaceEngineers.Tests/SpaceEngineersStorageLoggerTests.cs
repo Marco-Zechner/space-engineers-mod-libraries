@@ -213,7 +213,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
         }
 
         [Fact]
-        public void Flush_AfterDispose_ThrowsObjectDisposedException()
+        public void Flush_AfterDispose_ThrowsInvalidOperationException()
         {
             var factory = new RecordingStorageWriterFactory();
 
@@ -228,7 +228,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
 
             logging.Dispose();
 
-            Assert.Throws<ObjectDisposedException>(
+            Assert.Throws<InvalidOperationException>(
                 delegate
                 {
                     logging.Flush();
@@ -237,7 +237,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
         }
 
         [Fact]
-        public void LoggerWrite_AfterDispose_ThrowsObjectDisposedException()
+        public void LoggerWrite_AfterDispose_ThrowsInvalidOperationException()
         {
             var factory = new RecordingStorageWriterFactory();
 
@@ -252,7 +252,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
 
             logging.Dispose();
 
-            Assert.Throws<ObjectDisposedException>(
+            Assert.Throws<InvalidOperationException>(
                 delegate
                 {
                     logging.Logger.Info("Too late.");
@@ -471,7 +471,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     SpaceEngineersStorageLogger.CreateWorld(

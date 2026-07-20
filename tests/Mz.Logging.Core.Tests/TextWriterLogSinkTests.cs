@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using Xunit;
@@ -189,7 +189,7 @@ namespace Mz.Logging.Tests
         }
 
         [Fact]
-        public void Write_AfterDispose_ThrowsObjectDisposedException()
+        public void Write_AfterDispose_ThrowsInvalidOperationException()
         {
             var sink = new TextWriterLogSink(
                 new RecordingTextWriter(),
@@ -198,7 +198,7 @@ namespace Mz.Logging.Tests
 
             sink.Dispose();
 
-            Assert.Throws<ObjectDisposedException>(
+            Assert.Throws<InvalidOperationException>(
                 delegate
                 {
                     sink.Write(CreateEntry());
@@ -207,7 +207,7 @@ namespace Mz.Logging.Tests
         }
 
         [Fact]
-        public void Flush_AfterDispose_ThrowsObjectDisposedException()
+        public void Flush_AfterDispose_ThrowsInvalidOperationException()
         {
             var sink = new TextWriterLogSink(
                 new RecordingTextWriter(),
@@ -216,7 +216,7 @@ namespace Mz.Logging.Tests
 
             sink.Dispose();
 
-            Assert.Throws<ObjectDisposedException>(
+            Assert.Throws<InvalidOperationException>(
                 delegate
                 {
                     sink.Flush();
@@ -227,7 +227,7 @@ namespace Mz.Logging.Tests
         private static LogEntry CreateEntry()
         {
             return new LogEntry(
-                DateTimeOffset.UtcNow,
+                DateTime.UtcNow,
                 LogLevel.Information,
                 "CommandAPI",
                 "Example message.",

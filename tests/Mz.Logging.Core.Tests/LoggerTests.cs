@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -86,7 +86,7 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     new Logger(
@@ -103,14 +103,14 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var timestamp = new DateTimeOffset(
+            var timestamp = new DateTime(
                 2026,
                 7,
                 19,
-                20,
+                18,
                 30,
                 0,
-                TimeSpan.FromHours(2)
+                DateTimeKind.Utc
             );
 
             var expectedException = new InvalidOperationException(
@@ -136,7 +136,7 @@ namespace Mz.Logging.Tests
             var entry = Assert.Single(sink.Entries);
 
             Assert.Equal(
-                timestamp.ToUniversalTime(),
+                timestamp,
                 entry.TimestampUtc
             );
 
@@ -178,7 +178,7 @@ namespace Mz.Logging.Tests
                 delegate
                 {
                     clockWasRead = true;
-                    return DateTimeOffset.UtcNow;
+                    return DateTime.UtcNow;
                 }
             );
 
@@ -216,7 +216,7 @@ namespace Mz.Logging.Tests
         [Theory]
         [InlineData(-1)]
         [InlineData(6)]
-        public void Write_InvalidLevel_ThrowsArgumentOutOfRangeException(
+        public void Write_InvalidLevel_ThrowsArgumentException(
             int numericLevel
         )
         {
@@ -228,7 +228,7 @@ namespace Mz.Logging.Tests
                 LogLevel.Information
             );
 
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     logger.Write(
@@ -281,7 +281,7 @@ namespace Mz.Logging.Tests
                 LogLevel.Information
             );
 
-            Assert.Throws<ArgumentOutOfRangeException>(
+            Assert.Throws<ArgumentException>(
                 delegate
                 {
                     logger.MinimumLevel = (LogLevel)numericLevel;

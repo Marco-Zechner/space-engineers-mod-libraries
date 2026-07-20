@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace Mz.Logging
@@ -96,8 +96,8 @@ namespace Mz.Logging
         {
             if (_isDisposed)
             {
-                throw new ObjectDisposedException(
-                    nameof(TextWriterLogSink)
+                throw new InvalidOperationException(
+                    "The text-writer log sink has been disposed."
                 );
             }
         }
