@@ -20,5 +20,6 @@
   <Folder Name="/validation/">
     <Project Path="validation/Mz.ApiProtocol.SourceCopyValidation/Mz.ApiProtocol.SourceCopyValidation.csproj" />
     <Project Path="validation/Mz.Logging.SourceCopyValidation/Mz.Logging.SourceCopyValidation.csproj" />
+    <Project Path="validation/Mz.Networking.SourceCopyValidation/Mz.Networking.SourceCopyValidation.csproj" />
   </Folder>
 </Solution>
