@@ -87,6 +87,16 @@ namespace Mz.Networking
             );
         }
 
+        internal NetworkEnvelope WithRelay(bool isRelay)
+        {
+            return new NetworkEnvelope(
+                MessageType,
+                OriginalSenderId,
+                isRelay,
+                _payload
+            );
+        }
+
         private static byte[] CopyPayload(byte[] payload)
         {
             var copy = new byte[payload.Length];
