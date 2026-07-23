@@ -73,15 +73,11 @@ namespace Mz.SemanticVersioning
 
             SemanticVersion version;
 
-            if (!TryParse(value, out version))
-            {
-                throw new FormatException(
-                    "Semantic version must use the format major.minor.patch " +
-                    "with three non-negative decimal integer components."
-                );
-            }
-
-            return version;
+            if (TryParse(value, out version)) 
+                return version;
+            throw new FormatException(
+                "Semantic version must use the format major.minor.patch with three non-negative decimal integer components."
+            );
         }
 
         /// <summary>
@@ -92,10 +88,7 @@ namespace Mz.SemanticVersioning
         /// Receives the parsed version, or null when parsing fails.
         /// </param>
         /// <returns>True when parsing succeeds; otherwise false.</returns>
-        public static bool TryParse(
-            string value,
-            out SemanticVersion version
-        )
+        public static bool TryParse(string value, out SemanticVersion version)
         {
             version = null;
 
@@ -149,10 +142,9 @@ namespace Mz.SemanticVersioning
 
             var minorComparison = Minor.CompareTo(other.Minor);
 
-            if (minorComparison != 0)
-                return minorComparison;
-
-            return Patch.CompareTo(other.Patch);
+            return minorComparison != 0 
+                ? minorComparison 
+                : Patch.CompareTo(other.Patch);
         }
 
         /// <summary>
@@ -174,10 +166,7 @@ namespace Mz.SemanticVersioning
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as SemanticVersion);
-        }
+        public override bool Equals(object obj) => Equals(obj as SemanticVersion);
 
         /// <inheritdoc />
         public override int GetHashCode()
@@ -186,9 +175,9 @@ namespace Mz.SemanticVersioning
             {
                 var hashCode = 17;
 
-                hashCode = (hashCode * 31) + Major;
-                hashCode = (hashCode * 31) + Minor;
-                hashCode = (hashCode * 31) + Patch;
+                hashCode = Major + hashCode * 31;
+                hashCode = Minor + hashCode * 31;
+                hashCode = Patch + hashCode * 31;
 
                 return hashCode;
             }
@@ -198,16 +187,7 @@ namespace Mz.SemanticVersioning
         /// Returns the normalized major.minor.patch representation.
         /// </summary>
         /// <returns>The normalized version string.</returns>
-        public override string ToString()
-        {
-            return string.Format(
-                CultureInfo.InvariantCulture,
-                "{0}.{1}.{2}",
-                Major,
-                Minor,
-                Patch
-            );
-        }
+        public override string ToString() => string.Format(CultureInfo.InvariantCulture, $"{Major}.{Minor}.{Patch}");
 
         /// <summary>
         /// Determines whether two semantic versions are equal.
@@ -215,10 +195,7 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the versions are equal; otherwise, false.</returns>
-        public static bool operator ==(
-            SemanticVersion left,
-            SemanticVersion right
-        )
+        public static bool operator ==(SemanticVersion left, SemanticVersion right)
         {
             if (ReferenceEquals(left, right))
                 return true;
@@ -235,13 +212,7 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the versions are not equal; otherwise, false.</returns>
-        public static bool operator !=(
-            SemanticVersion left,
-            SemanticVersion right
-        )
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(SemanticVersion left, SemanticVersion right) => !(left == right);
 
         /// <summary>
         /// Determines whether the first version is less than the second version.
@@ -249,13 +220,7 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the first version is less than the second version; otherwise, false.</returns>
-        public static bool operator <(
-            SemanticVersion left,
-            SemanticVersion right
-        )
-        {
-            return Compare(left, right) < 0;
-        }
+        public static bool operator <(SemanticVersion left, SemanticVersion right) => Compare(left, right) < 0;
 
         /// <summary>
         /// Determines whether the first version is less than or equal to the second version.
@@ -263,13 +228,7 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the first version is less than or equal to the second version; otherwise, false.</returns>
-        public static bool operator <=(
-            SemanticVersion left,
-            SemanticVersion right
-        )
-        {
-            return Compare(left, right) <= 0;
-        }
+        public static bool operator <=(SemanticVersion left, SemanticVersion right) => Compare(left, right) <= 0;
 
         /// <summary>
         /// Determines whether the first version is greater than the second version.
@@ -277,13 +236,7 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the first version is greater than the second version; otherwise, false.</returns>
-        public static bool operator >(
-            SemanticVersion left,
-            SemanticVersion right
-        )
-        {
-            return Compare(left, right) > 0;
-        }
+        public static bool operator >(SemanticVersion left, SemanticVersion right) => Compare(left, right) > 0;
 
         /// <summary>
         /// Determines whether the first version is greater than or equal to the second version.
@@ -291,18 +244,9 @@ namespace Mz.SemanticVersioning
         /// <param name="left">The first version to compare.</param>
         /// <param name="right">The second version to compare.</param>
         /// <returns>true if the first version is greater than or equal to the second version; otherwise, false.</returns>
-        public static bool operator >=(
-            SemanticVersion left,
-            SemanticVersion right
-        )
-        {
-            return Compare(left, right) >= 0;
-        }
+        public static bool operator >=(SemanticVersion left, SemanticVersion right) => Compare(left, right) >= 0;
 
-        private static int Compare(
-            SemanticVersion left,
-            SemanticVersion right
-        )
+        private static int Compare(SemanticVersion left, SemanticVersion right)
         {
             if (ReferenceEquals(left, right))
                 return 0;
@@ -316,22 +260,14 @@ namespace Mz.SemanticVersioning
             return left.CompareTo(right);
         }
 
-        private static bool TryParseComponent(
-            string value,
-            out int component
-        )
+        private static bool TryParseComponent(string value, out int component)
         {
             component = 0;
 
             if (string.IsNullOrEmpty(value))
                 return false;
 
-            return int.TryParse(
-                value,
-                NumberStyles.None,
-                CultureInfo.InvariantCulture,
-                out component
-            );
+            return int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out component);
         }
     }
 }

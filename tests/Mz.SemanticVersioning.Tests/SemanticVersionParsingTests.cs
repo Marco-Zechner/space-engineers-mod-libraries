@@ -54,26 +54,12 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData("1.2 .3")]
         [InlineData("1.2. 3")]
         [InlineData("1.2.2147483648")]
-        public void Parse_InvalidVersion_ThrowsFormatException(string input)
-        {
-            Assert.Throws<FormatException>(
-                delegate
-                {
-                    SemanticVersion.Parse(input);
-                }
-            );
-        }
+        public void Parse_InvalidVersion_ThrowsFormatException(string input) 
+            => Assert.Throws<FormatException>(() => SemanticVersion.Parse(input));
 
         [Fact]
-        public void Parse_Null_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    SemanticVersion.Parse(null);
-                }
-            );
-        }
+        public void Parse_Null_ThrowsArgumentNullException() 
+            => Assert.Throws<ArgumentNullException>(() => SemanticVersion.Parse(null));
 
         [Theory]
         [InlineData(null)]
@@ -96,10 +82,7 @@ namespace Mz.SemanticVersioning.Tests
         [Fact]
         public void TryParse_ValidVersion_ReturnsTrueAndVersion()
         {
-            var success = SemanticVersion.TryParse(
-                "  10.20.30  ",
-                out var version
-            );
+            var success = SemanticVersion.TryParse("  10.20.30  ", out var version);
 
             Assert.True(success);
             Assert.NotNull(version);

@@ -20,18 +20,10 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(0, -1, 0, "minor")]
         [InlineData(0, 0, -1, "patch")]
         public void Constructor_NegativeComponent_ThrowsArgumentException(
-            int major,
-            int minor,
-            int patch,
-            string expectedParameterName
+            int major, int minor, int patch, string expectedParameterName
         )
         {
-            var exception = Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    new SemanticVersion(major, minor, patch);
-                }
-            );
+            var exception = Assert.Throws<ArgumentException>(() => new SemanticVersion(major, minor, patch));
 
             Assert.Equal(expectedParameterName, exception.ParamName);
         }
@@ -51,11 +43,7 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(2, 2, 3)]
         [InlineData(1, 3, 3)]
         [InlineData(1, 2, 4)]
-        public void Equals_DifferentComponent_ReturnsFalse(
-            int major,
-            int minor,
-            int patch
-        )
+        public void Equals_DifferentComponent_ReturnsFalse(int major, int minor, int patch)
         {
             var left = new SemanticVersion(1, 2, 3);
             var right = new SemanticVersion(major, minor, patch);
@@ -70,6 +58,7 @@ namespace Mz.SemanticVersioning.Tests
             var version = new SemanticVersion(1, 2, 3);
 
             Assert.False(version.Equals(null));
+            // ReSharper disable once SuspiciousTypeConversion.Global
             Assert.False(version.Equals("1.2.3"));
         }
 
@@ -87,25 +76,12 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(1, 1, 9, 1, 2, 0)]
         [InlineData(1, 2, 3, 1, 2, 4)]
         public void CompareTo_LowerVersion_ReturnsNegative(
-            int leftMajor,
-            int leftMinor,
-            int leftPatch,
-            int rightMajor,
-            int rightMinor,
-            int rightPatch
+            int leftMajor, int leftMinor, int leftPatch,
+            int rightMajor, int rightMinor, int rightPatch
         )
         {
-            var left = new SemanticVersion(
-                leftMajor,
-                leftMinor,
-                leftPatch
-            );
-
-            var right = new SemanticVersion(
-                rightMajor,
-                rightMinor,
-                rightPatch
-            );
+            var left = new SemanticVersion(leftMajor, leftMinor, leftPatch);
+            var right = new SemanticVersion(rightMajor, rightMinor, rightPatch);
 
             Assert.True(left.CompareTo(right) < 0);
         }
@@ -115,25 +91,12 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(1, 2, 0, 1, 1, 9)]
         [InlineData(1, 2, 4, 1, 2, 3)]
         public void CompareTo_HigherVersion_ReturnsPositive(
-            int leftMajor,
-            int leftMinor,
-            int leftPatch,
-            int rightMajor,
-            int rightMinor,
-            int rightPatch
+            int leftMajor, int leftMinor, int leftPatch,
+            int rightMajor, int rightMinor, int rightPatch
         )
         {
-            var left = new SemanticVersion(
-                leftMajor,
-                leftMinor,
-                leftPatch
-            );
-
-            var right = new SemanticVersion(
-                rightMajor,
-                rightMinor,
-                rightPatch
-            );
+            var left = new SemanticVersion(leftMajor, leftMinor, leftPatch);
+            var right = new SemanticVersion(rightMajor, rightMinor, rightPatch);
 
             Assert.True(left.CompareTo(right) > 0);
         }
