@@ -31,8 +31,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// One failing subscriber does not prevent later subscribers from
         /// receiving the event.
         /// </remarks>
-        public event Action<ApiProviderObservedEventArgs>
-            ProviderObserved;
+        public event Action<ApiProviderObservedEventArgs> ProviderObserved;
 
         /// <summary>
         /// Occurs after a compatible provider connection has been accepted.
@@ -60,8 +59,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Subscriber failures are captured in <see cref="LastError"/> and do not
         /// escape through the shared mod-message handler.
         /// </remarks>
-        public event Action<ApiWireIncompatibilityEventArgs>
-            WireIncompatibilityObserved;
+        public event Action<ApiWireIncompatibilityEventArgs> WireIncompatibilityObserved;
         
         /// <summary>
         /// Gets the consumer and its API dependency declaration.
@@ -71,13 +69,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <summary>
         /// Gets the API requirement declared by the consumer.
         /// </summary>
-        public ApiRequirement Requirement
-        {
-            get
-            {
-                return Dependency.Requirement;
-            }
-        }
+        public ApiRequirement Requirement => Dependency.Requirement;
 
         /// <summary>
         /// Gets whether the consumer is currently listening for provider
@@ -88,13 +80,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <summary>
         /// Gets whether a compatible provider has been accepted.
         /// </summary>
-        public bool IsConnected
-        {
-            get
-            {
-                return Connection != null;
-            }
-        }
+        public bool IsConnected => Connection != null;
 
         /// <summary>
         /// Gets the accepted provider connection, or null when no compatible
@@ -111,13 +97,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// An incompatible response does not resolve the request because
         /// another provider may still respond compatibly.
         /// </remarks>
-        public Guid PendingCorrelationId
-        {
-            get
-            {
-                return _pendingCorrelationId;
-            }
-        }
+        public Guid PendingCorrelationId => _pendingCorrelationId;
 
         /// <summary>
         /// Gets the most recently observed provider descriptor for the
@@ -129,11 +109,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Gets the compatibility result for the most recently observed
         /// provider for the requested API.
         /// </summary>
-        public ApiCompatibilityStatus? LastCompatibilityStatus
-        {
-            get;
-            private set;
-        }
+        public ApiCompatibilityStatus? LastCompatibilityStatus { get; private set; }
 
         /// <summary>
         /// Gets the last unexpected processing, transport, or subscriber
@@ -154,24 +130,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Thrown when <paramref name="messageBus"/> or
         /// <paramref name="dependency"/> is null.
         /// </exception>
-        public ApiDiscoveryConsumer(
-            IModMessageBus messageBus,
-            ApiDependencyDescriptor dependency
-        )
+        public ApiDiscoveryConsumer(IModMessageBus messageBus, ApiDependencyDescriptor dependency)
         {
             if (messageBus == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(messageBus)
-                );
-            }
+                throw new ArgumentNullException(nameof(messageBus));
 
             if (dependency == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(dependency)
-                );
-            }
+                throw new ArgumentNullException(nameof(dependency));
 
             _messageBus = messageBus;
             Dependency = dependency;
@@ -194,11 +159,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             if (IsStarted)
                 return;
 
-            _subscription = new ModMessageSubscription(
-                _messageBus,
-                ApiProtocolChannels.Discovery,
-                HandleMessage
-            );
+            _subscription = new ModMessageSubscription(_messageBus, ApiProtocolChannels.Discovery, HandleMessage);
 
             IsStarted = true;
         }
@@ -220,28 +181,20 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Thrown when the consumer has not been started or already has an
         /// accepted connection.
         /// </exception>
+        // ReSharper disable once MemberCanBePrivate.Global
         public Guid RequestDiscovery()
         {
             ThrowIfDisposed();
             EnsureStarted();
 
             if (IsConnected)
-            {
-                throw new InvalidOperationException(
-                    "The API discovery consumer is already connected. "
-                    + "Call Rediscover to replace the current connection."
-                );
-            }
+                throw new InvalidOperationException("The API discovery consumer is already connected. Call Rediscover to replace the current connection.");
 
             var correlationId = Guid.NewGuid();
             _pendingCorrelationId = correlationId;
             LastError = null;
             
-            object payload =
-                ApiDiscoveryWireProtocol.CreateRequest(
-                    Dependency,
-                    correlationId
-                );
+            var payload = ApiDiscoveryWireProtocol.CreateRequest(Dependency, correlationId);
 
             try
             {
@@ -273,9 +226,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         {
             ThrowIfDisposed();
 
-            return DisconnectInternal(
-                ApiDisconnectReason.ConsumerRequested
-            );
+            return DisconnectInternal(ApiDisconnectReason.ConsumerRequested);
         }
 
         /// <summary>
@@ -300,9 +251,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ThrowIfDisposed();
             EnsureStarted();
 
-            DisconnectInternal(
-                ApiDisconnectReason.RediscoveryRequested
-            );
+            DisconnectInternal(ApiDisconnectReason.RediscoveryRequested);
 
             return RequestDiscovery();
         }
@@ -315,6 +264,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// Repeated calls while already stopped have no effect. The consumer
         /// may be started again after being stopped.
         /// </remarks>
+        // ReSharper disable once MemberCanBePrivate.Global
         public void Stop()
         {
             if (_isDisposed || !IsStarted)
@@ -326,9 +276,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             IsStarted = false;
             _pendingCorrelationId = Guid.Empty;
 
-            DisconnectInternal(
-                ApiDisconnectReason.ConsumerStopped
-            );
+            DisconnectInternal(ApiDisconnectReason.ConsumerStopped);
 
             LastObservedProvider = null;
             LastCompatibilityStatus = null;
@@ -355,134 +303,73 @@ namespace Mz.ApiProtocol.SpaceEngineers
             {
                 ApiWireEnvelope envelope;
 
-                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(
-                        payload,
-                        out envelope
-                    ))
-                {
+                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(payload, out envelope))
                     return;
-                }
 
-                if (!string.Equals(
-                        Requirement.ApiId,
-                        envelope.ApiId,
-                        StringComparison.Ordinal
-                    ))
-                {
+                if (!string.Equals(Requirement.ApiId, envelope.ApiId, StringComparison.Ordinal))
                     return;
-                }
 
-                ApiWireCompatibilityStatus wireCompatibility =
-                    ApiProtocolInfo.EvaluateWireProtocol(
-                        envelope.WireProtocolVersion
-                    );
+                ApiWireCompatibilityStatus wireCompatibility = ApiProtocolInfo.EvaluateWireProtocol(envelope.WireProtocolVersion);
 
-                if (wireCompatibility
-                    != ApiWireCompatibilityStatus.Compatible)
+                if (wireCompatibility != ApiWireCompatibilityStatus.Compatible)
                 {
                     LastError = RaiseEvent(
                         WireIncompatibilityObserved,
-                        new ApiWireIncompatibilityEventArgs(
-                            envelope,
-                            wireCompatibility
-                        )
+                        new ApiWireIncompatibilityEventArgs(envelope, wireCompatibility)
                     );
 
                     return;
                 }
 
-                if (envelope.MessageKind
-                    == ApiWireMessageKind.Withdrawal)
+                if (envelope.MessageKind == ApiWireMessageKind.Withdrawal)
                 {
                     ApiProviderWithdrawal withdrawal;
 
-                    if (ApiDiscoveryWireProtocol.TryParseWithdrawal(
-                            payload,
-                            out withdrawal
-                        ))
-                    {
+                    if (ApiDiscoveryWireProtocol.TryParseWithdrawal(payload, out withdrawal))
                         HandleWithdrawal(withdrawal);
-                    }
 
                     return;
                 }
 
-                if (envelope.MessageKind
-                    != ApiWireMessageKind.Announcement
-                    || IsConnected)
-                {
+                if (envelope.MessageKind != ApiWireMessageKind.Announcement || IsConnected)
                     return;
-                }
 
                 ApiAnnouncement announcement;
 
-                if (!ApiDiscoveryWireProtocol.TryParseAnnouncement(
-                        payload,
-                        out announcement
-                    ))
-                {
+                if (!ApiDiscoveryWireProtocol.TryParseAnnouncement(payload, out announcement))
                     return;
-                }
 
                 
-                if (!ApiProtocolInfo.IsWireProtocolCompatible(
-                        announcement.WireProtocolVersion
-                    ))
-                {
+                if (!ApiProtocolInfo.IsWireProtocolCompatible(announcement.WireProtocolVersion))
                     return;
-                }
 
-                if (!string.Equals(
-                    Requirement.ApiId,
-                    announcement.Descriptor.ApiId,
-                    StringComparison.Ordinal
-                ))
-                {
+                if (!string.Equals(Requirement.ApiId, announcement.Descriptor.ApiId, StringComparison.Ordinal))
                     return;
-                }
 
-                if (announcement.CorrelationId != Guid.Empty
-                    && announcement.CorrelationId
-                    != _pendingCorrelationId)
-                {
+                if (announcement.CorrelationId != Guid.Empty && announcement.CorrelationId != _pendingCorrelationId)
                     return;
-                }
 
-                var compatibility =
-                    Requirement.Evaluate(
-                        announcement.Descriptor
-                    );
+                var compatibility = Requirement.Evaluate(announcement.Descriptor);
 
                 LastObservedProvider = announcement.Descriptor;
                 LastCompatibilityStatus = compatibility;
 
                 var observedError = RaiseEvent(
                     ProviderObserved,
-                    new ApiProviderObservedEventArgs(
-                        announcement,
-                        compatibility
-                    )
+                    new ApiProviderObservedEventArgs(announcement, compatibility)
                 );
 
-                if (compatibility
-                    != ApiCompatibilityStatus.Compatible)
+                if (compatibility != ApiCompatibilityStatus.Compatible)
                 {
                     LastError = observedError;
                     return;
                 }
 
-                var endpointCopy =
-                    new Dictionary<string, Delegate>(
-                        StringComparer.Ordinal
-                    );
+                //TODO: ehhhh...
+                var endpointCopy = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 
-                foreach (
-                    var pair
-                    in announcement.Endpoints
-                )
-                {
+                foreach (var pair in announcement.Endpoints)
                     endpointCopy.Add(pair.Key, pair.Value);
-                }
 
                 var connection = new ApiConnection(announcement);
 
@@ -491,10 +378,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
                 var connectedError = RaiseEvent(
                     Connected,
-                    new ApiConnectedEventArgs(
-                        connection,
-                        announcement.CorrelationId
-                    )
+                    new ApiConnectedEventArgs(connection, announcement.CorrelationId)
                 );
 
                 LastError = observedError ?? connectedError;
@@ -505,18 +389,10 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
         }
         
-        private void HandleWithdrawal(
-            ApiProviderWithdrawal withdrawal
-        )
+        private void HandleWithdrawal(ApiProviderWithdrawal withdrawal)
         {
-            if (!string.Equals(
-                    Requirement.ApiId,
-                    withdrawal.ApiId,
-                    StringComparison.Ordinal
-                ))
-            {
+            if (!string.Equals(Requirement.ApiId, withdrawal.ApiId, StringComparison.Ordinal))
                 return;
-            }
 
             ApiConnection connection = Connection;
 
@@ -526,20 +402,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
             if (connection.ProviderInstanceId == Guid.Empty)
                 return;
 
-            if (connection.ProviderInstanceId
-                != withdrawal.ProviderInstanceId)
-            {
+            if (connection.ProviderInstanceId != withdrawal.ProviderInstanceId)
                 return;
-            }
 
-            DisconnectInternal(
-                ApiDisconnectReason.ProviderWithdrawn
-            );
+            DisconnectInternal(ApiDisconnectReason.ProviderWithdrawn);
         }
 
-        private bool DisconnectInternal(
-            ApiDisconnectReason reason
-        )
+        private bool DisconnectInternal(ApiDisconnectReason reason)
         {
             var previousConnection = Connection;
 
@@ -551,19 +420,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             LastError = RaiseEvent(
                 Disconnected,
-                new ApiDisconnectedEventArgs(
-                    previousConnection,
-                    reason
-                )
+                new ApiDisconnectedEventArgs(previousConnection, reason)
             );
 
             return true;
         }
 
-        private Exception RaiseEvent<TEventArgs>(
-            Action<TEventArgs> handler,
-            TEventArgs eventArgs
-        )
+        private Exception RaiseEvent<TEventArgs>(Action<TEventArgs> handler, TEventArgs eventArgs)
         {
             if (handler == null)
                 return null;
@@ -571,12 +434,11 @@ namespace Mz.ApiProtocol.SpaceEngineers
             Exception firstError = null;
             var subscribers = handler.GetInvocationList();
 
-            for (var index = 0; index < subscribers.Length; index++)
+            foreach (var subscriberItem in subscribers)
             {
                 try
                 {
-                    var subscriber =
-                        (Action<TEventArgs>)subscribers[index];
+                    var subscriber = (Action<TEventArgs>)subscriberItem;
 
                     subscriber(eventArgs);
                 }
@@ -593,21 +455,13 @@ namespace Mz.ApiProtocol.SpaceEngineers
         private void EnsureStarted()
         {
             if (!IsStarted)
-            {
-                throw new InvalidOperationException(
-                    "The API discovery consumer has not been started."
-                );
-            }
+                throw new InvalidOperationException("The API discovery consumer has not been started.");
         }
 
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
-            {
-                throw new InvalidOperationException(
-                    "The API discovery consumer has been disposed."
-                );
-            }
+                throw new InvalidOperationException("The API discovery consumer has been disposed.");
         }
     }
 }
