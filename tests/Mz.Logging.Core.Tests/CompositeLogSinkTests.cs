@@ -7,41 +7,19 @@ namespace Mz.Logging.Tests
     public sealed class CompositeLogSinkTests
     {
         [Fact]
-        public void Constructor_NullArray_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    new CompositeLogSink(null!);
-                }
-            );
-        }
+        public void Constructor_NullArray_ThrowsArgumentNullException() 
+            => Assert.Throws<ArgumentNullException>(() => new CompositeLogSink(null!));
 
         [Fact]
-        public void Constructor_EmptyArray_ThrowsArgumentException()
-        {
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    new CompositeLogSink();
-                }
-            );
-        }
+        public void Constructor_EmptyArray_ThrowsArgumentException() 
+            => Assert.Throws<ArgumentException>(() => new CompositeLogSink());
 
         [Fact]
         public void Constructor_NullElement_ThrowsArgumentException()
         {
             var sink = new RecordingSink();
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    new CompositeLogSink(
-                        sink,
-                        null!
-                    );
-                }
-            );
+            Assert.Throws<ArgumentException>(() => new CompositeLogSink(sink, null!));
         }
 
         [Fact]
@@ -50,69 +28,35 @@ namespace Mz.Logging.Tests
             var first = new RecordingSink();
             var second = new RecordingSink();
 
-            var composite = new CompositeLogSink(
-                first,
-                second
-            );
+            var composite = new CompositeLogSink(first, second);
 
             var entry = CreateEntry();
 
             composite.Write(entry);
 
-            Assert.Same(
-                entry,
-                Assert.Single(first.Entries)
-            );
+            Assert.Same(entry, Assert.Single(first.Entries));
 
-            Assert.Same(
-                entry,
-                Assert.Single(second.Entries)
-            );
+            Assert.Same(entry, Assert.Single(second.Entries));
         }
+
+        private static readonly string[] Expected1 = ["first", "second", "third"];
 
         [Fact]
         public void Write_DispatchesInRegistrationOrder()
         {
             var calls = new List<string>();
 
-            var first = new CallbackSink(
-                delegate
-                {
-                    calls.Add("first");
-                }
-            );
+            var first = new CallbackSink(_ => calls.Add("first"));
 
-            var second = new CallbackSink(
-                delegate
-                {
-                    calls.Add("second");
-                }
-            );
+            var second = new CallbackSink(_ => calls.Add("second"));
 
-            var third = new CallbackSink(
-                delegate
-                {
-                    calls.Add("third");
-                }
-            );
+            var third = new CallbackSink(_ => calls.Add("third"));
 
-            var composite = new CompositeLogSink(
-                first,
-                second,
-                third
-            );
+            var composite = new CompositeLogSink(first, second, third);
 
             composite.Write(CreateEntry());
 
-            Assert.Equal(
-                new[]
-                {
-                    "first",
-                    "second",
-                    "third"
-                },
-                calls
-            );
+            Assert.Equal(Expected1, calls);
         }
 
         [Fact]
@@ -121,10 +65,7 @@ namespace Mz.Logging.Tests
             var original = new RecordingSink();
             var replacement = new RecordingSink();
 
-            ILogSink[] sinks =
-            {
-                original
-            };
+            ILogSink[] sinks = [original];
 
             var composite = new CompositeLogSink(sinks);
 
@@ -142,93 +83,43 @@ namespace Mz.Logging.Tests
             var sink = new RecordingSink();
             var composite = new CompositeLogSink(sink);
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    composite.Write(null!);
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => composite.Write(null!));
         }
+
+        private static readonly string[] Expected2 = ["failing"];
 
         [Fact]
         public void Write_SinkFailurePropagatesAndStopsDispatch()
         {
             var calls = new List<string>();
 
-            var failing = new CallbackSink(
-                delegate
-                {
-                    calls.Add("failing");
+            var failing = new CallbackSink(_ =>
+            {
+                calls.Add("failing");
+                throw new InvalidOperationException("Sink failed.");
+            });
 
-                    throw new InvalidOperationException(
-                        "Sink failed."
-                    );
-                }
-            );
+            var later = new CallbackSink(_ => calls.Add("later"));
 
-            var later = new CallbackSink(
-                delegate
-                {
-                    calls.Add("later");
-                }
-            );
+            var composite = new CompositeLogSink(failing, later);
 
-            var composite = new CompositeLogSink(
-                failing,
-                later
-            );
-
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    composite.Write(CreateEntry());
-                }
-            );
-
-            Assert.Equal(
-                new[]
-                {
-                    "failing"
-                },
-                calls
-            );
+            Assert.Throws<InvalidOperationException>(() => composite.Write(CreateEntry()));
+            Assert.Equal(Expected2, calls);
         }
 
-        private static LogEntry CreateEntry()
-        {
-            return new LogEntry(
-                DateTime.UtcNow,
-                LogLevel.Information,
-                "CommandAPI",
-                "Example message.",
-                null
-            );
-        }
+        private static LogEntry CreateEntry() 
+            => new(DateTime.UtcNow, LogLevel.Information, "CommandAPI", "Example message.", null);
 
         private sealed class RecordingSink : ILogSink
         {
-            public List<LogEntry> Entries { get; } =
-                new List<LogEntry>();
+            public List<LogEntry> Entries { get; } = [];
 
-            public void Write(LogEntry entry)
-            {
-                Entries.Add(entry);
-            }
+            public void Write(LogEntry entry) => Entries.Add(entry);
         }
 
-        private sealed class CallbackSink : ILogSink
+        private sealed class CallbackSink(Action<LogEntry> callback) : ILogSink
         {
-            private readonly Action<LogEntry> _callback;
-
-            public CallbackSink(Action<LogEntry> callback)
-            {
-                _callback = callback;
-            }
-
-            public void Write(LogEntry entry)
-            {
-                _callback(entry);
-            }
+            public void Write(LogEntry entry) => callback(entry);
         }
     }
 }

@@ -12,15 +12,7 @@ namespace Mz.Logging.Tests
         {
             var formatter = new ConstantFormatter("formatted");
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    new TextWriterLogSink(
-                        null!,
-                        formatter
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => new TextWriterLogSink(null!, formatter));
         }
 
         [Fact]
@@ -28,15 +20,7 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    new TextWriterLogSink(
-                        writer,
-                        null!
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => new TextWriterLogSink(writer, null!));
         }
 
         [Fact]
@@ -45,22 +29,13 @@ namespace Mz.Logging.Tests
             var writer = new RecordingTextWriter();
             var formatter = new ConstantFormatter("formatted entry");
 
-            using (var sink = new TextWriterLogSink(
-                writer,
-                formatter,
-                true
-            ))
-            {
-                var entry = CreateEntry();
+            using var sink = new TextWriterLogSink(writer, formatter, true);
+            var entry = CreateEntry();
 
-                sink.Write(entry);
+            sink.Write(entry);
 
-                Assert.Same(entry, formatter.LastEntry);
-                Assert.Equal(
-                    "formatted entry\n",
-                    writer.Content
-                );
-            }
+            Assert.Same(entry, formatter.LastEntry);
+            Assert.Equal("formatted entry\n", writer.Content);
         }
 
         [Fact]
@@ -68,16 +43,10 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            using (var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted"),
-                true
-            ))
-            {
-                sink.Write(CreateEntry());
+            using var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"), true);
+            sink.Write(CreateEntry());
 
-                Assert.Equal(1, writer.FlushCount);
-            }
+            Assert.Equal(1, writer.FlushCount);
         }
 
         [Fact]
@@ -85,12 +54,7 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            using (var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted"),
-                true,
-                false
-            ))
+            using (var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"), true, false))
             {
                 sink.Write(CreateEntry());
 
@@ -104,18 +68,11 @@ namespace Mz.Logging.Tests
         public void Flush_FlushesUnderlyingWriter()
         {
             var writer = new RecordingTextWriter();
+            
+            using var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"), true, false);
+            sink.Flush();
 
-            using (var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted"),
-                true,
-                false
-            ))
-            {
-                sink.Flush();
-
-                Assert.Equal(1, writer.FlushCount);
-            }
+            Assert.Equal(1, writer.FlushCount);
         }
 
         [Fact]
@@ -123,10 +80,7 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted")
-            );
+            var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"));
 
             sink.Dispose();
 
@@ -139,11 +93,7 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted"),
-                true
-            );
+            var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"), true);
 
             sink.Dispose();
 
@@ -156,10 +106,7 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted")
-            );
+            var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"));
 
             sink.Dispose();
             sink.Dispose();
@@ -173,130 +120,64 @@ namespace Mz.Logging.Tests
         {
             var writer = new RecordingTextWriter();
 
-            using (var sink = new TextWriterLogSink(
-                writer,
-                new ConstantFormatter("formatted"),
-                true
-            ))
-            {
-                Assert.Throws<ArgumentNullException>(
-                    delegate
-                    {
-                        sink.Write(null!);
-                    }
-                );
-            }
+            using var sink = new TextWriterLogSink(writer, new ConstantFormatter("formatted"), true);
+            
+            Assert.Throws<ArgumentNullException>(() => sink.Write(null!));
         }
 
         [Fact]
         public void Write_AfterDispose_ThrowsInvalidOperationException()
         {
-            var sink = new TextWriterLogSink(
-                new RecordingTextWriter(),
-                new ConstantFormatter("formatted")
-            );
+            var sink = new TextWriterLogSink(new RecordingTextWriter(), new ConstantFormatter("formatted"));
 
             sink.Dispose();
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    sink.Write(CreateEntry());
-                }
-            );
+            Assert.Throws<InvalidOperationException>(() => sink.Write(CreateEntry()));
         }
 
         [Fact]
         public void Flush_AfterDispose_ThrowsInvalidOperationException()
         {
-            var sink = new TextWriterLogSink(
-                new RecordingTextWriter(),
-                new ConstantFormatter("formatted")
-            );
+            var sink = new TextWriterLogSink(new RecordingTextWriter(), new ConstantFormatter("formatted"));
 
             sink.Dispose();
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    sink.Flush();
-                }
-            );
+            Assert.Throws<InvalidOperationException>(sink.Flush);
         }
 
-        private static LogEntry CreateEntry()
-        {
-            return new LogEntry(
-                DateTime.UtcNow,
-                LogLevel.Information,
-                "CommandAPI",
-                "Example message.",
-                null
-            );
-        }
+        private static LogEntry CreateEntry() 
+            => new(DateTime.UtcNow, LogLevel.Information, "CommandAPI", "Example message.", null);
 
-        private sealed class ConstantFormatter : ILogFormatter
+        private sealed class ConstantFormatter(string result) : ILogFormatter
         {
-            private readonly string _result;
-
             public LogEntry? LastEntry { get; private set; }
-
-            public ConstantFormatter(string result)
-            {
-                _result = result;
-            }
 
             public string Format(LogEntry entry)
             {
                 LastEntry = entry;
-                return _result;
+                return result;
             }
         }
 
         private sealed class RecordingTextWriter : TextWriter
         {
-            private readonly StringBuilder _content =
-                new StringBuilder();
+            private readonly StringBuilder _content = new();
 
-            public override Encoding Encoding
-            {
-                get
-                {
-                    return Encoding.UTF8;
-                }
-            }
+            public override Encoding Encoding => Encoding.UTF8;
 
-            public string Content
-            {
-                get
-                {
-                    return _content.ToString();
-                }
-            }
+            public string Content => _content.ToString();
 
             public int FlushCount { get; private set; }
 
             public int DisposeCount { get; private set; }
 
-            public RecordingTextWriter()
-            {
-                NewLine = "\n";
-            }
+            public RecordingTextWriter() => NewLine = "\n";
 
-            public override void Write(char value)
-            {
-                _content.Append(value);
-            }
+            public override void Write(char value) => _content.Append(value);
 
-            public override void Write(string? value)
-            {
-                _content.Append(value);
-            }
+            public override void Write(string? value) => _content.Append(value);
 
-            public override void Flush()
-            {
-                FlushCount++;
-            }
+            public override void Flush() => FlushCount++;
 
             protected override void Dispose(bool disposing)
             {

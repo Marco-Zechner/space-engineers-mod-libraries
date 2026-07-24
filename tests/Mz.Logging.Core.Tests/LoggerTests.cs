@@ -11,11 +11,7 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "  CommandAPI  ",
-                sink,
-                LogLevel.Warning
-            );
+            var logger = new Logger("  CommandAPI  ", sink, LogLevel.Warning);
 
             Assert.Equal("CommandAPI", logger.Source);
             Assert.Equal(LogLevel.Warning, logger.MinimumLevel);
@@ -25,77 +21,34 @@ namespace Mz.Logging.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidSource_ThrowsArgumentException(
-            string? source
-        )
+        public void Constructor_InvalidSource_ThrowsArgumentException(string? source)
         {
             var sink = new RecordingSink();
 
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
-                {
-                    new Logger(
-                        source!,
-                        sink,
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.ThrowsAny<ArgumentException>(() => new Logger(source!, sink, LogLevel.Information));
         }
 
         [Fact]
-        public void Constructor_NullSink_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    new Logger(
-                        "CommandAPI",
-                        null!,
-                        LogLevel.Information
-                    );
-                }
-            );
-        }
+        public void Constructor_NullSink_ThrowsArgumentNullException() 
+            => Assert.Throws<ArgumentNullException>(() => new Logger("CommandAPI", null!, LogLevel.Information));
 
         [Fact]
         public void Constructor_NullClock_ThrowsArgumentNullException()
         {
             var sink = new RecordingSink();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    new Logger(
-                        "CommandAPI",
-                        sink,
-                        LogLevel.Information,
-                        null!
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => new Logger("CommandAPI", sink, LogLevel.Information, null!));
         }
 
         [Theory]
         [InlineData(-1)]
         [InlineData(6)]
         [InlineData(100)]
-        public void Constructor_InvalidMinimumLevel_Throws(
-            int numericLevel
-        )
+        public void Constructor_InvalidMinimumLevel_Throws(int numericLevel)
         {
             var sink = new RecordingSink();
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    new Logger(
-                        "CommandAPI",
-                        sink,
-                        (LogLevel)numericLevel
-                    );
-                }
-            );
+            Assert.Throws<ArgumentException>(() => new Logger("CommandAPI", sink, (LogLevel)numericLevel));
         }
 
         [Fact]
@@ -103,42 +56,17 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var timestamp = new DateTime(
-                2026,
-                7,
-                19,
-                18,
-                30,
-                0,
-                DateTimeKind.Utc
-            );
+            var timestamp = new DateTime(2026, 7, 19, 18, 30, 0, DateTimeKind.Utc);
 
-            var expectedException = new InvalidOperationException(
-                "Example failure"
-            );
+            var expectedException = new InvalidOperationException("Example failure");
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Information,
-                delegate
-                {
-                    return timestamp;
-                }
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Information, () => timestamp);
 
-            logger.Write(
-                LogLevel.Error,
-                "Command failed.",
-                expectedException
-            );
+            logger.Write(LogLevel.Error, "Command failed.", expectedException);
 
             var entry = Assert.Single(sink.Entries);
 
-            Assert.Equal(
-                timestamp,
-                entry.TimestampUtc
-            );
+            Assert.Equal(timestamp, entry.TimestampUtc);
 
             Assert.Equal(LogLevel.Error, entry.Level);
             Assert.Equal("CommandAPI", entry.Source);
@@ -151,16 +79,9 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Warning
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Warning);
 
-            logger.Write(
-                LogLevel.Warning,
-                "Warning message."
-            );
+            logger.Write(LogLevel.Warning, "Warning message.");
 
             Assert.Single(sink.Entries);
         }
@@ -171,21 +92,12 @@ namespace Mz.Logging.Tests
             var sink = new RecordingSink();
             var clockWasRead = false;
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Warning,
-                delegate
-                {
-                    clockWasRead = true;
-                    return DateTime.UtcNow;
-                }
-            );
-
-            logger.Write(
-                LogLevel.Information,
-                "Filtered message."
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Warning, () => {
+                clockWasRead = true;
+                return DateTime.UtcNow;
+            });
+            
+            logger.Write(LogLevel.Information, "Filtered message.");
 
             Assert.Empty(sink.Entries);
             Assert.False(clockWasRead);
@@ -196,47 +108,21 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Information
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Information);
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    logger.Write(
-                        LogLevel.Information,
-                        null!
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => logger.Write(LogLevel.Information, null!));
         }
 
         [Theory]
         [InlineData(-1)]
         [InlineData(6)]
-        public void Write_InvalidLevel_ThrowsArgumentException(
-            int numericLevel
-        )
+        public void Write_InvalidLevel_ThrowsArgumentException(int numericLevel)
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Information
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Information);
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    logger.Write(
-                        (LogLevel)numericLevel,
-                        "Message"
-                    );
-                }
-            );
+            Assert.Throws<ArgumentException>(() => logger.Write((LogLevel)numericLevel, "Message"));
         }
 
         [Fact]
@@ -244,23 +130,13 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Warning
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Warning);
 
-            logger.Write(
-                LogLevel.Information,
-                "Initially filtered."
-            );
+            logger.Write(LogLevel.Information, "Initially filtered.");
 
             logger.MinimumLevel = LogLevel.Information;
 
-            logger.Write(
-                LogLevel.Information,
-                "Now enabled."
-            );
+            logger.Write(LogLevel.Information, "Now enabled.");
 
             var entry = Assert.Single(sink.Entries);
             Assert.Equal("Now enabled.", entry.Message);
@@ -269,35 +145,20 @@ namespace Mz.Logging.Tests
         [Theory]
         [InlineData(-1)]
         [InlineData(6)]
-        public void MinimumLevel_InvalidValue_Throws(
-            int numericLevel
-        )
+        public void MinimumLevel_InvalidValue_Throws(int numericLevel)
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Information
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Information);
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    logger.MinimumLevel = (LogLevel)numericLevel;
-                }
-            );
+            Assert.Throws<ArgumentException>(() => logger.MinimumLevel = (LogLevel)numericLevel);
         }
 
         private sealed class RecordingSink : ILogSink
         {
-            public List<LogEntry> Entries { get; } =
-                new List<LogEntry>();
+            public List<LogEntry> Entries { get; } = new();
 
-            public void Write(LogEntry entry)
-            {
-                Entries.Add(entry);
-            }
+            public void Write(LogEntry entry) => Entries.Add(entry);
         }
     }
 }

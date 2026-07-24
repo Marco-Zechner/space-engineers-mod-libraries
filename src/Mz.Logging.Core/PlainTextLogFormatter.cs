@@ -25,12 +25,10 @@ namespace Mz.Logging
                 entry.Message
             );
 
-            if (entry.Exception == null)
-                return formatted;
-
-            return formatted
-                   + Environment.NewLine
-                   + entry.Exception;
+            if (entry.Exception != null)
+                formatted += Environment.NewLine + entry.Exception;
+            
+            return formatted;
         }
 
         private static string GetLevelName(LogLevel level)
@@ -56,10 +54,7 @@ namespace Mz.Logging
                     return "CRITICAL";
 
                 default:
-                    throw new ArgumentException(
-                        "The log level is outside the supported range.",
-                        nameof(level)
-                    );
+                    throw new ArgumentException("The log level is outside the supported range.", nameof(level));
             }
         }
     }

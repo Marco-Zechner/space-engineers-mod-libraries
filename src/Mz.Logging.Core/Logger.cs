@@ -14,6 +14,7 @@ namespace Mz.Logging
         /// <summary>
         /// Gets the source attached to entries produced by this logger.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public string Source { get; }
 
         /// <summary>
@@ -39,19 +40,8 @@ namespace Mz.Logging
         /// <param name="source">The source attached to entries produced by this logger.</param>
         /// <param name="sink">The sink to which enabled entries are dispatched.</param>
         /// <param name="minimumLevel">The minimum severity dispatched to the sink.</param>
-        public Logger(
-            string source,
-            ILogSink sink,
-            LogLevel minimumLevel
-        )
-            : this(
-                source,
-                sink,
-                minimumLevel,
-                GetUtcNow
-            )
-        {
-        }
+        public Logger(string source, ILogSink sink, LogLevel minimumLevel) 
+            : this(source, sink, minimumLevel, GetUtcNow) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Logger"/> class.
@@ -60,12 +50,8 @@ namespace Mz.Logging
         /// <param name="sink">The sink to which enabled entries are dispatched.</param>
         /// <param name="minimumLevel">The minimum severity dispatched to the sink.</param>
         /// <param name="utcNow">A function that returns the current UTC time.</param>
-        public Logger(
-            string source,
-            ILogSink sink,
-            LogLevel minimumLevel,
-            Func<DateTime> utcNow
-        )
+        // ReSharper disable once MemberCanBePrivate.Global
+        public Logger(string source, ILogSink sink, LogLevel minimumLevel, Func<DateTime> utcNow)
         {
             if (string.IsNullOrWhiteSpace(source))
                 throw new ArgumentException("A logger source is required.", nameof(source));
@@ -87,6 +73,7 @@ namespace Mz.Logging
         /// <summary>
         /// Determines whether an entry at the given level would be written.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public bool IsEnabled(LogLevel level)
         {
             ValidateLevel(level, nameof(level));
@@ -96,77 +83,44 @@ namespace Mz.Logging
         /// <summary>
         /// Writes a trace-level message.
         /// </summary>
-        public void Trace(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Trace, message, exception);
-        }
+        public void Trace(string message, Exception exception = null) 
+            => Write(LogLevel.Trace, message, exception);
 
         /// <summary>
         /// Writes a debug-level message.
         /// </summary>
-        public void Debug(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Debug, message, exception);
-        }
+        public void Debug(string message, Exception exception = null) 
+            => Write(LogLevel.Debug, message, exception);
 
         /// <summary>
         /// Writes an information-level message.
         /// </summary>
-        public void Info(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Information, message, exception);
-        }
+        public void Info(string message, Exception exception = null) 
+            => Write(LogLevel.Information, message, exception);
 
         /// <summary>
         /// Writes a warning-level message.
         /// </summary>
-        public void Warning(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Warning, message, exception);
-        }
+        public void Warning(string message, Exception exception = null) 
+            => Write(LogLevel.Warning, message, exception);
 
         /// <summary>
         /// Writes an error-level message.
         /// </summary>
-        public void Error(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Error, message, exception);
-        }
+        public void Error(string message, Exception exception = null) 
+            => Write(LogLevel.Error, message, exception);
 
         /// <summary>
         /// Writes a critical-level message.
         /// </summary>
-        public void Critical(
-            string message,
-            Exception exception = null
-        )
-        {
-            Write(LogLevel.Critical, message, exception);
-        }
+        public void Critical(string message, Exception exception = null) 
+            => Write(LogLevel.Critical, message, exception);
 
         /// <summary>
         /// Creates and dispatches a log entry when its level is enabled.
         /// </summary>
-        public void Write(
-            LogLevel level,
-            string message,
-            Exception exception = null
-        )
+        // ReSharper disable once MemberCanBePrivate.Global
+        public void Write(LogLevel level, string message, Exception exception = null)
         {
             ValidateLevel(level, nameof(level));
 
@@ -176,32 +130,15 @@ namespace Mz.Logging
             if (!IsEnabled(level))
                 return;
 
-            var entry = new LogEntry(
-                _utcNow(),
-                level,
-                Source,
-                message,
-                exception
-            );
-
-            _sink.Write(entry);
+            _sink.Write(new LogEntry(_utcNow(), level, Source, message, exception));
         }
 
-        private static DateTime GetUtcNow()
-        {
-            return DateTime.UtcNow;
-        }
+        private static DateTime GetUtcNow() => DateTime.UtcNow;
 
-        private static void ValidateLevel(
-            LogLevel level,
-            string parameterName
-        )
+        private static void ValidateLevel(LogLevel level, string parameterName)
         {
             if (level < LogLevel.Trace || level > LogLevel.Critical)
-                throw new ArgumentException(
-                    "The log level is outside the supported range.",
-                    parameterName
-                );
+                throw new ArgumentException("The log level is outside the supported range.", parameterName);
         }
     }
 }

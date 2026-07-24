@@ -11,11 +11,7 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Trace
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Trace);
 
             logger.Trace("Trace message.");
             logger.Debug("Debug message.");
@@ -26,36 +22,12 @@ namespace Mz.Logging.Tests
 
             Assert.Collection(
                 sink.Entries,
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Trace,
-                    "Trace message."
-                ),
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Debug,
-                    "Debug message."
-                ),
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Information,
-                    "Information message."
-                ),
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Warning,
-                    "Warning message."
-                ),
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Error,
-                    "Error message."
-                ),
-                entry => AssertEntry(
-                    entry,
-                    LogLevel.Critical,
-                    "Critical message."
-                )
+                entry => AssertEntry(entry, LogLevel.Trace, "Trace message."),
+                entry => AssertEntry(entry, LogLevel.Debug, "Debug message."),
+                entry => AssertEntry(entry, LogLevel.Information, "Information message."),
+                entry => AssertEntry(entry, LogLevel.Warning, "Warning message."),
+                entry => AssertEntry(entry, LogLevel.Error, "Error message."),
+                entry => AssertEntry(entry, LogLevel.Critical, "Critical message.")
             );
         }
 
@@ -64,28 +36,16 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Trace
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Trace);
 
-            var exception = new InvalidOperationException(
-                "Example failure"
-            );
+            var exception = new InvalidOperationException("Example failure");
 
-            logger.Error(
-                "Command execution failed.",
-                exception
-            );
+            logger.Error("Command execution failed.", exception);
 
             var entry = Assert.Single(sink.Entries);
 
             Assert.Equal(LogLevel.Error, entry.Level);
-            Assert.Equal(
-                "Command execution failed.",
-                entry.Message
-            );
+            Assert.Equal("Command execution failed.", entry.Message);
 
             Assert.Same(exception, entry.Exception);
         }
@@ -95,11 +55,7 @@ namespace Mz.Logging.Tests
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Warning
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Warning);
 
             logger.Trace("Filtered trace.");
             logger.Debug("Filtered debug.");
@@ -119,17 +75,11 @@ namespace Mz.Logging.Tests
         [InlineData(3)]
         [InlineData(4)]
         [InlineData(5)]
-        public void IsEnabled_UsesConfiguredThreshold(
-            int numericLevel
-        )
+        public void IsEnabled_UsesConfiguredThreshold(int numericLevel)
         {
             var sink = new RecordingSink();
 
-            var logger = new Logger(
-                "CommandAPI",
-                sink,
-                LogLevel.Warning
-            );
+            var logger = new Logger("CommandAPI", sink, LogLevel.Warning);
 
             var level = (LogLevel)numericLevel;
             var expected = level >= LogLevel.Warning;
@@ -137,11 +87,7 @@ namespace Mz.Logging.Tests
             Assert.Equal(expected, logger.IsEnabled(level));
         }
 
-        private static void AssertEntry(
-            LogEntry entry,
-            LogLevel expectedLevel,
-            string expectedMessage
-        )
+        private static void AssertEntry(LogEntry entry, LogLevel expectedLevel, string expectedMessage)
         {
             Assert.Equal(expectedLevel, entry.Level);
             Assert.Equal(expectedMessage, entry.Message);
@@ -149,13 +95,9 @@ namespace Mz.Logging.Tests
 
         private sealed class RecordingSink : ILogSink
         {
-            public List<LogEntry> Entries { get; } =
-                new List<LogEntry>();
+            public List<LogEntry> Entries { get; } = [];
 
-            public void Write(LogEntry entry)
-            {
-                Entries.Add(entry);
-            }
+            public void Write(LogEntry entry) => Entries.Add(entry);
         }
     }
 }

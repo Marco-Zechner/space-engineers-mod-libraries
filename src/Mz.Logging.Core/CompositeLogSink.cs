@@ -21,24 +21,14 @@ namespace Mz.Logging
                 throw new ArgumentNullException(nameof(sinks));
 
             if (sinks.Length == 0)
-            {
-                throw new ArgumentException(
-                    "At least one log sink is required.",
-                    nameof(sinks)
-                );
-            }
+                throw new ArgumentException("At least one log sink is required.", nameof(sinks));
 
             _sinks = new ILogSink[sinks.Length];
 
             for (var index = 0; index < sinks.Length; index++)
             {
                 if (sinks[index] == null)
-                {
-                    throw new ArgumentException(
-                        "The sink collection cannot contain null.",
-                        nameof(sinks)
-                    );
-                }
+                    throw new ArgumentException("The sink collection cannot contain null.", nameof(sinks));
 
                 _sinks[index] = sinks[index];
             }

@@ -43,31 +43,18 @@ namespace Mz.Logging
         /// <exception cref="ArgumentException">Thrown when the log level is not defined.</exception>
         /// <exception cref="ArgumentException">Thrown when the log source is invalid.</exception>
         /// <exception cref="ArgumentNullException">Thrown when the log message is null.</exception>
-        public LogEntry(
-            DateTime timestamp,
-            LogLevel level,
-            string source,
-            string message,
-            Exception exception
-        )
+        public LogEntry(DateTime timestamp, LogLevel level, string source, string message, Exception exception)
         {
             if (!IsDefinedLevel(level))
-                throw new ArgumentException(
-                    "The log level is outside the supported range.",
-                    nameof(level)
-                );
+                throw new ArgumentException("The log level is outside the supported range.", nameof(level));
 
             if (string.IsNullOrWhiteSpace(source))
-                throw new ArgumentException(
-                    "A log source is required.",
-                    nameof(source)
-                );
+                throw new ArgumentException("A log source is required.", nameof(source));
 
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
 
-            TimestampUtc =
-                timestamp.Kind == DateTimeKind.Utc
+            TimestampUtc = timestamp.Kind == DateTimeKind.Utc
                     ? timestamp
                     : timestamp.ToUniversalTime();
             Level = level;
@@ -76,10 +63,7 @@ namespace Mz.Logging
             Exception = exception;
         }
 
-        private static bool IsDefinedLevel(LogLevel level)
-        {
-            return level >= LogLevel.Trace
-                   && level <= LogLevel.Critical;
-        }
+        private static bool IsDefinedLevel(LogLevel level) 
+            => level >= LogLevel.Trace && level <= LogLevel.Critical;
     }
 }

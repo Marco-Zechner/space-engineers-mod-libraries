@@ -6,9 +6,7 @@ namespace Mz.Logging
     /// <summary>
     /// Writes formatted log entries to a text writer.
     /// </summary>
-    public sealed class TextWriterLogSink :
-        ILogSink,
-        IDisposable
+    public sealed class TextWriterLogSink : ILogSink, IDisposable
     {
         private readonly TextWriter _writer;
         private readonly ILogFormatter _formatter;
@@ -25,12 +23,7 @@ namespace Mz.Logging
         /// <param name="leaveOpen">Whether to leave the writer open after disposing this sink.</param>
         /// <param name="flushAfterWrite">Whether to flush the writer after each write operation.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="writer"/> or <paramref name="formatter"/> is null.</exception>
-        public TextWriterLogSink(
-            TextWriter writer,
-            ILogFormatter formatter,
-            bool leaveOpen = false,
-            bool flushAfterWrite = true
-        )
+        public TextWriterLogSink(TextWriter writer, ILogFormatter formatter, bool leaveOpen = false, bool flushAfterWrite = true)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer));
@@ -95,11 +88,7 @@ namespace Mz.Logging
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
-            {
-                throw new InvalidOperationException(
-                    "The text-writer log sink has been disposed."
-                );
-            }
+                throw new InvalidOperationException("The text-writer log sink has been disposed.");
         }
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using Mz.Logging;
 using Xunit;
 
 namespace Mz.Logging.SpaceEngineers.Tests
@@ -13,25 +12,20 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging = SpaceEngineersStorageLogger.CreateLocal(
+            using var logging = SpaceEngineersStorageLogger.CreateLocal(
                 factory,
                 new ConstantFormatter("formatted"),
                 "  CommandAPI.log  ",
                 typeof(SpaceEngineersStorageLoggerTests),
                 "CommandAPI",
                 LogLevel.Information
-            ))
-            {
-                Assert.Equal(StorageCall.Local, factory.LastCall);
-                Assert.Equal("CommandAPI.log", factory.LastFileName);
+            );
+            Assert.Equal(StorageCall.Local, factory.LastCall);
+            Assert.Equal("CommandAPI.log", factory.LastFileName);
 
-                Assert.Equal(
-                    typeof(SpaceEngineersStorageLoggerTests),
-                    factory.LastCallingType
-                );
+            Assert.Equal(typeof(SpaceEngineersStorageLoggerTests), factory.LastCallingType);
 
-                Assert.Equal(1, factory.OpenCount);
-            }
+            Assert.Equal(1, factory.OpenCount);
         }
 
         [Fact]
@@ -39,25 +33,20 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging = SpaceEngineersStorageLogger.CreateWorld(
+            using var logging = SpaceEngineersStorageLogger.CreateWorld(
                 factory,
                 new ConstantFormatter("formatted"),
                 "  CommandAPI.log  ",
                 typeof(SpaceEngineersStorageLoggerTests),
                 "CommandAPI",
                 LogLevel.Information
-            ))
-            {
-                Assert.Equal(StorageCall.World, factory.LastCall);
-                Assert.Equal("CommandAPI.log", factory.LastFileName);
+            );
+            Assert.Equal(StorageCall.World, factory.LastCall);
+            Assert.Equal("CommandAPI.log", factory.LastFileName);
 
-                Assert.Equal(
-                    typeof(SpaceEngineersStorageLoggerTests),
-                    factory.LastCallingType
-                );
+            Assert.Equal(typeof(SpaceEngineersStorageLoggerTests), factory.LastCallingType);
 
-                Assert.Equal(1, factory.OpenCount);
-            }
+            Assert.Equal(1, factory.OpenCount);
         }
 
         [Fact]
@@ -65,24 +54,18 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging =
-                   SpaceEngineersStorageLogger.CreateGlobalUnsafe(
-                       factory,
-                       new ConstantFormatter("formatted"),
-                       "  Mz.CommandAPI.log  ",
-                       "CommandAPI",
-                       LogLevel.Information
-                   ))
-            {
-                Assert.Equal(StorageCall.Global, factory.LastCall);
-                Assert.Equal(
-                    "Mz.CommandAPI.log",
-                    factory.LastFileName
-                );
+            using var logging = SpaceEngineersStorageLogger.CreateGlobalUnsafe(
+                factory,
+                new ConstantFormatter("formatted"),
+                "  Mz.CommandAPI.log  ",
+                "CommandAPI",
+                LogLevel.Information
+            );
+            Assert.Equal(StorageCall.Global, factory.LastCall);
+            Assert.Equal("Mz.CommandAPI.log", factory.LastFileName);
 
-                Assert.Null(factory.LastCallingType);
-                Assert.Equal(1, factory.OpenCount);
-            }
+            Assert.Null(factory.LastCallingType);
+            Assert.Equal(1, factory.OpenCount);
         }
 
         [Fact]
@@ -90,22 +73,17 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging = SpaceEngineersStorageLogger.CreateLocal(
+            using var logging = SpaceEngineersStorageLogger.CreateLocal(
                 factory,
                 new ConstantFormatter("formatted entry"),
                 "CommandAPI.log",
                 typeof(SpaceEngineersStorageLoggerTests),
                 "CommandAPI",
                 LogLevel.Information
-            ))
-            {
-                logging.Logger.Info("Original message.");
+            );
+            logging.Logger.Info("Original message.");
 
-                Assert.Equal(
-                    "formatted entry\n",
-                    factory.Writer.Content
-                );
-            }
+            Assert.Equal("formatted entry\n", factory.Writer.Content);
         }
 
         [Fact]
@@ -113,19 +91,17 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging = SpaceEngineersStorageLogger.CreateWorld(
+            using var logging = SpaceEngineersStorageLogger.CreateWorld(
                 factory,
                 new ConstantFormatter("formatted"),
                 "CommandAPI.log",
                 typeof(SpaceEngineersStorageLoggerTests),
                 "CommandAPI",
                 LogLevel.Information
-            ))
-            {
-                logging.Logger.Info("Message.");
+            );
+            logging.Logger.Info("Message.");
 
-                Assert.Equal(1, factory.Writer.FlushCount);
-            }
+            Assert.Equal(1, factory.Writer.FlushCount);
         }
 
         [Fact]
@@ -133,22 +109,16 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging =
-                   SpaceEngineersStorageLogger.CreateGlobalUnsafe(
-                       factory,
-                       new ConstantFormatter("formatted"),
-                       "Mz.CommandAPI.log",
-                       "  CommandAPI  ",
-                       LogLevel.Warning
-                   ))
-            {
-                Assert.Equal("CommandAPI", logging.Logger.Source);
+            using var logging = SpaceEngineersStorageLogger.CreateGlobalUnsafe(
+                factory,
+                new ConstantFormatter("formatted"),
+                "Mz.CommandAPI.log",
+                "  CommandAPI  ",
+                LogLevel.Warning
+            );
+            Assert.Equal("CommandAPI", logging.Logger.Source);
 
-                Assert.Equal(
-                    LogLevel.Warning,
-                    logging.Logger.MinimumLevel
-                );
-            }
+            Assert.Equal(LogLevel.Warning, logging.Logger.MinimumLevel);
         }
 
         [Fact]
@@ -156,19 +126,17 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            using (var logging = SpaceEngineersStorageLogger.CreateLocal(
+            using var logging = SpaceEngineersStorageLogger.CreateLocal(
                 factory,
                 new ConstantFormatter("formatted"),
                 "CommandAPI.log",
                 typeof(SpaceEngineersStorageLoggerTests),
                 "CommandAPI",
                 LogLevel.Information
-            ))
-            {
-                logging.Flush();
+            );
+            logging.Flush();
 
-                Assert.Equal(1, factory.Writer.FlushCount);
-            }
+            Assert.Equal(1, factory.Writer.FlushCount);
         }
 
         [Fact]
@@ -217,8 +185,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            var logging =
-                SpaceEngineersStorageLogger.CreateGlobalUnsafe(
+            var logging = SpaceEngineersStorageLogger.CreateGlobalUnsafe(
                     factory,
                     new ConstantFormatter("formatted"),
                     "Mz.CommandAPI.log",
@@ -228,12 +195,7 @@ namespace Mz.Logging.SpaceEngineers.Tests
 
             logging.Dispose();
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    logging.Flush();
-                }
-            );
+            Assert.Throws<InvalidOperationException>(logging.Flush);
         }
 
         [Fact]
@@ -252,37 +214,25 @@ namespace Mz.Logging.SpaceEngineers.Tests
 
             logging.Dispose();
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    logging.Logger.Info("Too late.");
-                }
-            );
+            Assert.Throws<InvalidOperationException>(() => logging.Logger.Info("Too late."));
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void CreateLocal_InvalidFileName_DoesNotOpenWriter(
-            string? fileName
-        )
+        public void CreateLocal_InvalidFileName_DoesNotOpenWriter(string? fileName)
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateLocal(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        fileName!,
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.ThrowsAny<ArgumentException>(() => SpaceEngineersStorageLogger.CreateLocal(
+                factory,
+                new ConstantFormatter("formatted"),
+                fileName!,
+                typeof(SpaceEngineersStorageLoggerTests),
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -291,25 +241,18 @@ namespace Mz.Logging.SpaceEngineers.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void CreateWorld_InvalidFileName_DoesNotOpenWriter(
-            string? fileName
-        )
+        public void CreateWorld_InvalidFileName_DoesNotOpenWriter(string? fileName)
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateWorld(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        fileName!,
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.ThrowsAny<ArgumentException>(() => SpaceEngineersStorageLogger.CreateWorld(
+                factory,
+                new ConstantFormatter("formatted"),
+                fileName!,
+                typeof(SpaceEngineersStorageLoggerTests),
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -318,24 +261,17 @@ namespace Mz.Logging.SpaceEngineers.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void CreateGlobalUnsafe_InvalidFileName_DoesNotOpenWriter(
-            string? fileName
-        )
+        public void CreateGlobalUnsafe_InvalidFileName_DoesNotOpenWriter(string? fileName)
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateGlobalUnsafe(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        fileName!,
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.ThrowsAny<ArgumentException>(() => SpaceEngineersStorageLogger.CreateGlobalUnsafe(
+                factory,
+                new ConstantFormatter("formatted"),
+                fileName!,
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -345,19 +281,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateLocal(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        "CommandAPI.log",
-                        null!,
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => SpaceEngineersStorageLogger.CreateLocal(
+                factory,
+                new ConstantFormatter("formatted"),
+                "CommandAPI.log",
+                null!,
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -367,19 +298,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateWorld(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        "CommandAPI.log",
-                        null!,
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => SpaceEngineersStorageLogger.CreateWorld(
+                factory,
+                new ConstantFormatter("formatted"),
+                "CommandAPI.log",
+                null!,
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -387,19 +313,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         [Fact]
         public void CreateLocal_NullFactory_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateLocal(
-                        null!,
-                        new ConstantFormatter("formatted"),
-                        "CommandAPI.log",
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => SpaceEngineersStorageLogger.CreateLocal(
+                null!,
+                new ConstantFormatter("formatted"),
+                "CommandAPI.log",
+                typeof(SpaceEngineersStorageLoggerTests),
+                "CommandAPI",
+                LogLevel.Information
+            ));
         }
 
         [Fact]
@@ -407,19 +328,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateWorld(
-                        factory,
-                        null!,
-                        "CommandAPI.log",
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => SpaceEngineersStorageLogger.CreateWorld(
+                factory,
+                null!,
+                "CommandAPI.log",
+                typeof(SpaceEngineersStorageLoggerTests),
+                "CommandAPI",
+                LogLevel.Information
+            ));
 
             Assert.Equal(0, factory.OpenCount);
         }
@@ -429,18 +345,13 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new NullStorageWriterFactory();
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateGlobalUnsafe(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        "Mz.CommandAPI.log",
-                        "CommandAPI",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<InvalidOperationException>(() => SpaceEngineersStorageLogger.CreateGlobalUnsafe(
+                factory,
+                new ConstantFormatter("formatted"),
+                "Mz.CommandAPI.log",
+                "CommandAPI",
+                LogLevel.Information
+            ));
         }
 
         [Fact]
@@ -448,19 +359,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateLocal(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        "CommandAPI.log",
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "   ",
-                        LogLevel.Information
-                    );
-                }
-            );
+            Assert.Throws<ArgumentException>(() => SpaceEngineersStorageLogger.CreateLocal(
+                factory,
+                new ConstantFormatter("formatted"),
+                "CommandAPI.log",
+                typeof(SpaceEngineersStorageLoggerTests),
+                "   ",
+                LogLevel.Information
+            ));
 
             Assert.Equal(1, factory.OpenCount);
             Assert.Equal(1, factory.Writer.DisposeCount);
@@ -471,19 +377,14 @@ namespace Mz.Logging.SpaceEngineers.Tests
         {
             var factory = new RecordingStorageWriterFactory();
 
-            Assert.Throws<ArgumentException>(
-                delegate
-                {
-                    SpaceEngineersStorageLogger.CreateWorld(
-                        factory,
-                        new ConstantFormatter("formatted"),
-                        "CommandAPI.log",
-                        typeof(SpaceEngineersStorageLoggerTests),
-                        "CommandAPI",
-                        (LogLevel)100
-                    );
-                }
-            );
+            Assert.Throws<ArgumentException>(() => SpaceEngineersStorageLogger.CreateWorld(
+                factory,
+                new ConstantFormatter("formatted"),
+                "CommandAPI.log",
+                typeof(SpaceEngineersStorageLoggerTests),
+                "CommandAPI",
+                (LogLevel)100
+            ));
 
             Assert.Equal(1, factory.OpenCount);
             Assert.Equal(1, factory.Writer.DisposeCount);
@@ -497,11 +398,9 @@ namespace Mz.Logging.SpaceEngineers.Tests
             Global
         }
 
-        private sealed class RecordingStorageWriterFactory :
-            IStorageWriterFactory
+        private sealed class RecordingStorageWriterFactory : IStorageWriterFactory
         {
-            public RecordingTextWriter Writer { get; } =
-                new RecordingTextWriter();
+            public RecordingTextWriter Writer { get; } = new();
 
             public StorageCall LastCall { get; private set; }
 
@@ -511,50 +410,25 @@ namespace Mz.Logging.SpaceEngineers.Tests
 
             public int OpenCount { get; private set; }
 
-            public TextWriter OpenLocal(
-                string fileName,
-                Type callingType
-            )
+            public TextWriter OpenLocal(string fileName, Type callingType)
             {
-                Record(
-                    StorageCall.Local,
-                    fileName,
-                    callingType
-                );
-
+                Record(StorageCall.Local, fileName, callingType);
                 return Writer;
             }
 
-            public TextWriter OpenWorld(
-                string fileName,
-                Type callingType
-            )
+            public TextWriter OpenWorld(string fileName, Type callingType)
             {
-                Record(
-                    StorageCall.World,
-                    fileName,
-                    callingType
-                );
-
+                Record(StorageCall.World, fileName, callingType);
                 return Writer;
             }
 
             public TextWriter OpenGlobal(string fileName)
             {
-                Record(
-                    StorageCall.Global,
-                    fileName,
-                    null
-                );
-
+                Record(StorageCall.Global, fileName, null);
                 return Writer;
             }
 
-            private void Record(
-                StorageCall call,
-                string fileName,
-                Type? callingType
-            )
+            private void Record(StorageCall call, string fileName, Type? callingType)
             {
                 OpenCount++;
                 LastCall = call;
@@ -563,90 +437,39 @@ namespace Mz.Logging.SpaceEngineers.Tests
             }
         }
 
-        private sealed class NullStorageWriterFactory :
-            IStorageWriterFactory
+        private sealed class NullStorageWriterFactory : IStorageWriterFactory
         {
-            public TextWriter OpenLocal(
-                string fileName,
-                Type callingType
-            )
-            {
-                return null!;
-            }
+            public TextWriter OpenLocal(string fileName, Type callingType) => null!;
 
-            public TextWriter OpenWorld(
-                string fileName,
-                Type callingType
-            )
-            {
-                return null!;
-            }
+            public TextWriter OpenWorld(string fileName, Type callingType) => null!;
 
-            public TextWriter OpenGlobal(string fileName)
-            {
-                return null!;
-            }
+            public TextWriter OpenGlobal(string fileName) => null!;
         }
 
-        private sealed class ConstantFormatter : ILogFormatter
+        private sealed class ConstantFormatter(string formatted) : ILogFormatter
         {
-            private readonly string _formatted;
-
-            public ConstantFormatter(string formatted)
-            {
-                _formatted = formatted;
-            }
-
-            public string Format(LogEntry entry)
-            {
-                return _formatted;
-            }
+            public string Format(LogEntry entry) => formatted;
         }
 
         private sealed class RecordingTextWriter : TextWriter
         {
-            private readonly StringBuilder _content =
-                new StringBuilder();
+            private readonly StringBuilder _content = new();
 
-            public override Encoding Encoding
-            {
-                get
-                {
-                    return Encoding.UTF8;
-                }
-            }
+            public override Encoding Encoding => Encoding.UTF8;
 
-            public string Content
-            {
-                get
-                {
-                    return _content.ToString();
-                }
-            }
+            public string Content => _content.ToString();
 
             public int FlushCount { get; private set; }
 
             public int DisposeCount { get; private set; }
 
-            public RecordingTextWriter()
-            {
-                NewLine = "\n";
-            }
+            public RecordingTextWriter() => NewLine = "\n";
 
-            public override void Write(char value)
-            {
-                _content.Append(value);
-            }
+            public override void Write(char value) => _content.Append(value);
 
-            public override void Write(string? value)
-            {
-                _content.Append(value);
-            }
+            public override void Write(string? value) => _content.Append(value);
 
-            public override void Flush()
-            {
-                FlushCount++;
-            }
+            public override void Flush() => FlushCount++;
 
             protected override void Dispose(bool disposing)
             {

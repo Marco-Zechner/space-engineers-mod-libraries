@@ -12,38 +12,18 @@ namespace Mz.Logging.Tests
         [InlineData(LogLevel.Warning, "WARN")]
         [InlineData(LogLevel.Error, "ERROR")]
         [InlineData(LogLevel.Critical, "CRITICAL")]
-        public void Format_UsesExpectedLevelName(
-            LogLevel level,
-            string expectedName
-        )
+        public void Format_UsesExpectedLevelName(LogLevel level, string expectedName)
         {
             var formatter = new PlainTextLogFormatter();
 
             var entry = new LogEntry(
-                new DateTime(
-                    2026,
-                    7,
-                    19,
-                    18,
-                    30,
-                    0,
-                    DateTimeKind.Utc
-                ),
-                level,
-                "CommandAPI",
-                "Example message.",
-                null
+                new DateTime(2026, 7, 19, 18, 30, 0, DateTimeKind.Utc),
+                level, "CommandAPI", "Example message.", null
             );
 
             var result = formatter.Format(entry);
 
-            Assert.Equal(
-                "2026-07-19T18:30:00.000Z "
-                + "["
-                + expectedName
-                + "] [CommandAPI] Example message.",
-                result
-            );
+            Assert.Equal($"2026-07-19T18:30:00.000Z [{expectedName}] [CommandAPI] Example message.", result);
         }
 
         [Fact]
@@ -51,33 +31,16 @@ namespace Mz.Logging.Tests
         {
             var formatter = new PlainTextLogFormatter();
 
-            var exception = new InvalidOperationException(
-                "Example failure."
-            );
+            var exception = new InvalidOperationException("Example failure.");
 
             var entry = new LogEntry(
-                new DateTime(
-                    2026,
-                    7,
-                    19,
-                    18,
-                    30,
-                    0,
-                    DateTimeKind.Utc
-                ),
-                LogLevel.Error,
-                "CommandAPI",
-                "Command failed.",
-                exception
+                new DateTime(2026, 7, 19, 18, 30, 0, DateTimeKind.Utc),
+                LogLevel.Error, "CommandAPI", "Command failed.", exception
             );
 
             var result = formatter.Format(entry);
 
-            var expected =
-                "2026-07-19T18:30:00.000Z "
-                + "[ERROR] [CommandAPI] Command failed."
-                + Environment.NewLine
-                + exception;
+            var expected = $"2026-07-19T18:30:00.000Z [ERROR] [CommandAPI] Command failed.{Environment.NewLine}{exception}";
 
             Assert.Equal(expected, result);
         }
@@ -88,27 +51,13 @@ namespace Mz.Logging.Tests
             var formatter = new PlainTextLogFormatter();
 
             var entry = new LogEntry(
-                new DateTime(
-                    1970,
-                    1,
-                    1,
-                    0,
-                    0,
-                    0,
-                    DateTimeKind.Utc
-                ),
-                LogLevel.Information,
-                "CommandAPI",
-                " first line\nsecond line ",
-                null
+                new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                LogLevel.Information, "CommandAPI", " first line\nsecond line ", null
             );
 
             var result = formatter.Format(entry);
-
-            Assert.EndsWith(
-                "[INFO] [CommandAPI]  first line\nsecond line ",
-                result
-            );
+            
+            Assert.EndsWith("[INFO] [CommandAPI]  first line\nsecond line ", result);
         }
 
         [Fact]
@@ -116,12 +65,7 @@ namespace Mz.Logging.Tests
         {
             var formatter = new PlainTextLogFormatter();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    formatter.Format(null!);
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => formatter.Format(null!));
         }
     }
 }
