@@ -25,33 +25,18 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="validation"/> is compatible.
         /// </exception>
-        public ApiEndpointContractException(
-            ApiEndpointContractValidation validation
-        )
-            : base(CreateMessage(validation))
+        public ApiEndpointContractException(ApiEndpointContractValidation validation) : base(CreateMessage(validation))
         {
             Validation = validation;
         }
 
-        private static string CreateMessage(
-            ApiEndpointContractValidation validation
-        )
+        private static string CreateMessage(ApiEndpointContractValidation validation)
         {
             if (validation == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(validation)
-                );
-            }
+                throw new ArgumentNullException(nameof(validation));
 
             if (validation.IsCompatible)
-            {
-                throw new ArgumentException(
-                    "A compatible validation cannot produce an endpoint "
-                    + "contract exception.",
-                    nameof(validation)
-                );
-            }
+                throw new ArgumentException("A compatible validation cannot produce an endpoint contract exception.", nameof(validation));
 
             return validation.ToString();
         }

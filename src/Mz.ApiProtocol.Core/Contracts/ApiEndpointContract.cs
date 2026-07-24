@@ -11,6 +11,7 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the required endpoint definitions.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public IReadOnlyList<ApiEndpointRequirement> Requirements { get; }
 
         /// <summary>
@@ -26,52 +27,27 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when a requirement is null or endpoint names are duplicated.
         /// </exception>
-        public ApiEndpointContract(
-            IEnumerable<ApiEndpointRequirement> requirements
-        )
+        public ApiEndpointContract(IEnumerable<ApiEndpointRequirement> requirements)
         {
             if (requirements == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(requirements)
-                );
-            }
+                throw new ArgumentNullException(nameof(requirements));
 
-            var copy =
-                new List<ApiEndpointRequirement>();
+            var copy = new List<ApiEndpointRequirement>();
 
-            var names = new HashSet<string>(
-                StringComparer.Ordinal
-            );
+            var names = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (
-                ApiEndpointRequirement requirement
-                in requirements
-            )
+            foreach (var requirement in requirements)
             {
                 if (requirement == null)
-                {
-                    throw new ArgumentException(
-                        "Endpoint requirements cannot contain null values.",
-                        nameof(requirements)
-                    );
-                }
+                    throw new ArgumentException("Endpoint requirements cannot contain null values.", nameof(requirements));
 
                 if (!names.Add(requirement.Name))
-                {
-                    throw new ArgumentException(
-                        "Endpoint requirement names must be unique.",
-                        nameof(requirements)
-                    );
-                }
+                    throw new ArgumentException("Endpoint requirement names must be unique.", nameof(requirements));
 
                 copy.Add(requirement);
             }
 
-            Requirements =
-                new ReadOnlyListView<ApiEndpointRequirement>(
-                    copy
-                );
+            Requirements = new ReadOnlyListView<ApiEndpointRequirement>(copy);
         }
 
         /// <summary>
@@ -84,17 +60,12 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="connection"/> is null.
         /// </exception>
-        public ApiEndpointContractValidation Validate(
-            ApiConnection connection
-        )
+        // ReSharper disable once MemberCanBePrivate.Global
+        public ApiEndpointContractValidation Validate(ApiConnection connection)
         {
             if (connection == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(connection)
-                );
-            }
-
+                throw new ArgumentNullException(nameof(connection));
+            
             return Validate(connection.Endpoints);
         }
 
@@ -108,59 +79,31 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="endpoints"/> is null.
         /// </exception>
-        public ApiEndpointContractValidation Validate(
-            IReadOnlyDictionary<string, Delegate> endpoints
-        )
+        // ReSharper disable once MemberCanBePrivate.Global
+        public ApiEndpointContractValidation Validate(IReadOnlyDictionary<string, Delegate> endpoints)
         {
             if (endpoints == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(endpoints)
-                );
-            }
+                throw new ArgumentNullException(nameof(endpoints));
 
-            var issues =
-                new List<ApiEndpointContractIssue>();
+            var issues = new List<ApiEndpointContractIssue>();
 
             foreach (var requirement in Requirements)
             {
                 Delegate endpoint;
 
-                if (!endpoints.TryGetValue(
-                        requirement.Name,
-                        out endpoint
-                    ))
+                if (!endpoints.TryGetValue(requirement.Name, out endpoint))
                 {
-                    issues.Add(
-                        new ApiEndpointContractIssue(
-                            requirement,
-                            ApiEndpointContractIssueKind
-                                .MissingEndpoint,
-                            null
-                        )
-                    );
-
+                    issues.Add(new ApiEndpointContractIssue(requirement, ApiEndpointContractIssueKind.MissingEndpoint, null));
                     continue;
                 }
 
-                Type actualType = endpoint.GetType();
+                var actualType = endpoint.GetType();
 
                 if (actualType != requirement.DelegateType)
-                {
-                    issues.Add(
-                        new ApiEndpointContractIssue(
-                            requirement,
-                            ApiEndpointContractIssueKind
-                                .WrongDelegateType,
-                            actualType
-                        )
-                    );
-                }
+                    issues.Add(new ApiEndpointContractIssue(requirement, ApiEndpointContractIssueKind.WrongDelegateType, actualType));
             }
 
-            return new ApiEndpointContractValidation(
-                issues
-            );
+            return new ApiEndpointContractValidation(issues);
         }
 
         /// <summary>
@@ -175,19 +118,12 @@ namespace Mz.ApiProtocol
         /// <exception cref="ApiEndpointContractException">
         /// Thrown when one or more endpoint requirements are not satisfied.
         /// </exception>
-        public void EnsureCompatible(
-            ApiConnection connection
-        )
+        public void EnsureCompatible(ApiConnection connection)
         {
-            ApiEndpointContractValidation validation =
-                Validate(connection);
+            var validation = Validate(connection);
 
             if (!validation.IsCompatible)
-            {
-                throw new ApiEndpointContractException(
-                    validation
-                );
-            }
+                throw new ApiEndpointContractException(validation);
         }
     }
 }

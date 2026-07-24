@@ -5,6 +5,7 @@ namespace Mz.ApiProtocol
     /// <summary>
     /// Describes one endpoint required by an API contract.
     /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class ApiEndpointRequirement
     {
         /// <summary>
@@ -32,25 +33,13 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="delegateType"/> is null.
         /// </exception>
-        public ApiEndpointRequirement(
-            string name,
-            Type delegateType
-        )
+        public ApiEndpointRequirement(string name, Type delegateType)
         {
             if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException(
-                    "An endpoint name is required.",
-                    nameof(name)
-                );
-            }
+                throw new ArgumentException("An endpoint name is required.", nameof(name));
 
             if (delegateType == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(delegateType)
-                );
-            }
+                throw new ArgumentNullException(nameof(delegateType));
 
             Name = name.Trim();
             DelegateType = delegateType;
@@ -62,9 +51,6 @@ namespace Mz.ApiProtocol
         /// <returns>
         /// The endpoint name and required delegate type.
         /// </returns>
-        public override string ToString()
-        {
-            return Name + ": " + DelegateType.FullName;
-        }
+        public override string ToString() => $"{Name}: {DelegateType.FullName}";
     }
 }

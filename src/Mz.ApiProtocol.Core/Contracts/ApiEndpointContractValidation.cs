@@ -12,52 +12,30 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets whether every endpoint requirement was satisfied.
         /// </summary>
-        public bool IsCompatible
-        {
-            get
-            {
-                return Issues.Count == 0;
-            }
-        }
+        public bool IsCompatible => Issues.Count == 0;
 
         /// <summary>
         /// Gets the endpoint contract issues.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public IReadOnlyList<ApiEndpointContractIssue> Issues { get; }
 
-        internal ApiEndpointContractValidation(
-            IList<ApiEndpointContractIssue> issues
-        )
+        internal ApiEndpointContractValidation(IList<ApiEndpointContractIssue> issues)
         {
             if (issues == null)
+                throw new ArgumentNullException(nameof(issues));
+
+            var copy = new List<ApiEndpointContractIssue>();
+
+            foreach (var issue in issues)
             {
-                throw new ArgumentNullException(
-                    nameof(issues)
-                );
-            }
-
-            var copy =
-                new List<ApiEndpointContractIssue>();
-
-            for (int index = 0; index < issues.Count; index++)
-            {
-                ApiEndpointContractIssue issue = issues[index];
-
                 if (issue == null)
-                {
-                    throw new ArgumentException(
-                        "Validation issues cannot contain null values.",
-                        nameof(issues)
-                    );
-                }
+                    throw new ArgumentException("Validation issues cannot contain null values.", nameof(issues));
 
                 copy.Add(issue);
             }
 
-            Issues =
-                new ReadOnlyListView<ApiEndpointContractIssue>(
-                    copy
-                );
+            Issues = new ReadOnlyListView<ApiEndpointContractIssue>(copy);
         }
 
         /// <summary>
@@ -68,20 +46,14 @@ namespace Mz.ApiProtocol
         /// </returns>
         public override string ToString()
         {
-            if (IsCompatible)
-                return "The endpoint contract is compatible.";
+            if (IsCompatible) return "The endpoint contract is compatible.";
 
             var builder = new StringBuilder();
 
-            builder.Append(
-                "The endpoint contract is incompatible."
-            );
+            builder.Append("The endpoint contract is incompatible.");
 
             foreach (var issue in Issues)
-            {
-                builder.Append(" ");
-                builder.Append(issue);
-            }
+                builder.Append(" ").Append(issue);
 
             return builder.ToString();
         }

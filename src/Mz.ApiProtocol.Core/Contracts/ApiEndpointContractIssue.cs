@@ -44,49 +44,19 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when the actual type is inconsistent with the issue kind.
         /// </exception>
-        public ApiEndpointContractIssue(
-            ApiEndpointRequirement requirement,
-            ApiEndpointContractIssueKind kind,
-            Type actualDelegateType
-        )
+        public ApiEndpointContractIssue(ApiEndpointRequirement requirement, ApiEndpointContractIssueKind kind, Type actualDelegateType)
         {
             if (requirement == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(requirement)
-                );
-            }
+                throw new ArgumentNullException(nameof(requirement));
 
-            if (kind < ApiEndpointContractIssueKind.MissingEndpoint
-                || kind
-                    > ApiEndpointContractIssueKind.WrongDelegateType)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(kind)
-                );
-            }
+            if (kind < ApiEndpointContractIssueKind.MissingEndpoint || kind > ApiEndpointContractIssueKind.WrongDelegateType) 
+                throw new ArgumentException("The value is outside the supported range.", nameof(kind));
 
-            if (kind
-                    == ApiEndpointContractIssueKind.MissingEndpoint
-                && actualDelegateType != null)
-            {
-                throw new ArgumentException(
-                    "A missing endpoint cannot have an actual delegate "
-                    + "type.",
-                    nameof(actualDelegateType)
-                );
-            }
+            if (kind == ApiEndpointContractIssueKind.MissingEndpoint && actualDelegateType != null)
+                throw new ArgumentException("A missing endpoint cannot have an actual delegate type.", nameof(actualDelegateType));
 
-            if (kind
-                    == ApiEndpointContractIssueKind.WrongDelegateType
-                && actualDelegateType == null)
-            {
-                throw new ArgumentException(
-                    "A wrong-type issue requires the actual delegate type.",
-                    nameof(actualDelegateType)
-                );
-            }
+            if (kind == ApiEndpointContractIssueKind.WrongDelegateType && actualDelegateType == null)
+                throw new ArgumentException("A wrong-type issue requires the actual delegate type.", nameof(actualDelegateType));
 
             Requirement = requirement;
             Kind = kind;
@@ -99,23 +69,10 @@ namespace Mz.ApiProtocol
         /// <returns>A diagnostic issue description.</returns>
         public override string ToString()
         {
-            if (Kind
-                == ApiEndpointContractIssueKind.MissingEndpoint)
-            {
-                return "Missing endpoint '"
-                    + Requirement.Name
-                    + "' with required type "
-                    + Requirement.DelegateType.FullName
-                    + ".";
-            }
+            if (Kind == ApiEndpointContractIssueKind.MissingEndpoint)
+                return $"Missing endpoint '{Requirement.Name}' with required type {Requirement.DelegateType.FullName}.";
 
-            return "Endpoint '"
-                + Requirement.Name
-                + "' has delegate type "
-                + ActualDelegateType.FullName
-                + " but requires "
-                + Requirement.DelegateType.FullName
-                + ".";
+            return $"Endpoint '{Requirement.Name}' has delegate type {ActualDelegateType.FullName} but requires {Requirement.DelegateType.FullName}.";
         }
     }
 }
