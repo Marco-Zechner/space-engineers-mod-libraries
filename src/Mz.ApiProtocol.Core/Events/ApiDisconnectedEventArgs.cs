@@ -32,26 +32,13 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="reason"/> is not a defined reason.
         /// </exception>
-        public ApiDisconnectedEventArgs(
-            ApiConnection previousConnection,
-            ApiDisconnectReason reason
-        )
+        public ApiDisconnectedEventArgs(ApiConnection previousConnection, ApiDisconnectReason reason)
         {
             if (previousConnection == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(previousConnection)
-                );
-            }
+                throw new ArgumentNullException(nameof(previousConnection));
 
-            if (reason < ApiDisconnectReason.ConsumerRequested
-                || reason > ApiDisconnectReason.ProviderWithdrawn)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(reason)
-                );
-            }
+            if (reason < ApiDisconnectReason.ConsumerRequested || reason > ApiDisconnectReason.ProviderWithdrawn)
+                throw new ArgumentException("The value is outside the supported range.", nameof(reason));
 
             PreviousConnection = previousConnection;
             Reason = reason;

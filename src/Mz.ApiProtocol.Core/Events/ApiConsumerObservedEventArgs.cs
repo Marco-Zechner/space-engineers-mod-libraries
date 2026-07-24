@@ -11,29 +11,18 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the parsed discovery request.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public ApiDiscoveryRequest Request { get; }
 
         /// <summary>
         /// Gets the mod requesting the API.
         /// </summary>
-        public ApiModIdentity Consumer
-        {
-            get
-            {
-                return Request.Dependency.Consumer;
-            }
-        }
+        public ApiModIdentity Consumer => Request.Dependency.Consumer;
 
         /// <summary>
         /// Gets the consumer's API dependency declaration.
         /// </summary>
-        public ApiDependencyDescriptor Dependency
-        {
-            get
-            {
-                return Request.Dependency;
-            }
-        }
+        public ApiDependencyDescriptor Dependency => Request.Dependency;
 
         /// <summary>
         /// Gets the compatibility result between the provider API version and
@@ -44,35 +33,17 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the wire-protocol version used by the consumer.
         /// </summary>
-        public SemanticVersion ConsumerWireProtocolVersion
-        {
-            get
-            {
-                return Request.WireProtocolVersion;
-            }
-        }
+        public SemanticVersion ConsumerWireProtocolVersion => Request.WireProtocolVersion;
 
         /// <summary>
         /// Gets the protocol-library version embedded by the consumer.
         /// </summary>
-        public SemanticVersion ConsumerLibraryVersion
-        {
-            get
-            {
-                return Request.LibraryVersion;
-            }
-        }
+        public SemanticVersion ConsumerLibraryVersion => Request.LibraryVersion;
 
         /// <summary>
         /// Gets the discovery request correlation identifier.
         /// </summary>
-        public Guid CorrelationId
-        {
-            get
-            {
-                return Request.CorrelationId;
-            }
-        }
+        public Guid CorrelationId => Request.CorrelationId;
 
         /// <summary>
         /// Creates consumer-observation event data.
@@ -89,28 +60,13 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="compatibilityStatus"/> is undefined.
         /// </exception>
-        public ApiConsumerObservedEventArgs(
-            ApiDiscoveryRequest request,
-            ApiCompatibilityStatus compatibilityStatus
-        )
+        public ApiConsumerObservedEventArgs(ApiDiscoveryRequest request, ApiCompatibilityStatus compatibilityStatus)
         {
             if (request == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(request)
-                );
-            }
+                throw new ArgumentNullException(nameof(request));
 
-            if (compatibilityStatus
-                    < ApiCompatibilityStatus.Compatible
-                || compatibilityStatus
-                    > ApiCompatibilityStatus.ProviderTooNew)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(compatibilityStatus)
-                );
-            }
+            if (compatibilityStatus < ApiCompatibilityStatus.Compatible || compatibilityStatus > ApiCompatibilityStatus.ProviderTooNew)
+                throw new ArgumentException("The value is outside the supported range.", nameof(compatibilityStatus));
 
             Request = request;
             CompatibilityStatus = compatibilityStatus;

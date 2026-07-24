@@ -53,39 +53,19 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when the compatibility status is undefined.
         /// </exception>
-        public ApiProviderObservedEventArgs(
-            ApiAnnouncement announcement,
-            ApiCompatibilityStatus compatibilityStatus
-        )
+        public ApiProviderObservedEventArgs(ApiAnnouncement announcement, ApiCompatibilityStatus compatibilityStatus)
         {
             if (announcement == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(announcement)
-                );
-            }
+                throw new ArgumentNullException(nameof(announcement));
 
-            if (compatibilityStatus
-                    < ApiCompatibilityStatus.Compatible
-                || compatibilityStatus
-                    > ApiCompatibilityStatus.ProviderTooNew)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(compatibilityStatus)
-                );
-            }
+            if (compatibilityStatus < ApiCompatibilityStatus.Compatible || compatibilityStatus > ApiCompatibilityStatus.ProviderTooNew)
+                throw new ArgumentException("The value is outside the supported range.", nameof(compatibilityStatus));
 
             Provider = announcement.Provider;
             Descriptor = announcement.Descriptor;
             CompatibilityStatus = compatibilityStatus;
-
-            ProviderWireProtocolVersion =
-                announcement.WireProtocolVersion;
-
-            ProviderLibraryVersion =
-                announcement.LibraryVersion;
-
+            ProviderWireProtocolVersion = announcement.WireProtocolVersion;
+            ProviderLibraryVersion = announcement.LibraryVersion;
             CorrelationId = announcement.CorrelationId;
         }
     }

@@ -33,10 +33,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="connection"/> is null.
         /// </exception>
-        public ApiConnectedEventArgs(
-            ApiConnection connection,
-            Guid correlationId
-        )
+        public ApiConnectedEventArgs(ApiConnection connection, Guid correlationId)
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
