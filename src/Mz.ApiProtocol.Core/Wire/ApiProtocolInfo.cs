@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -15,7 +15,11 @@ namespace Mz.ApiProtocol
         /// Different library versions may communicate when their wire
         /// protocol versions are compatible.
         /// </remarks>
-        public static SemanticVersion LibraryVersion { get; } = new SemanticVersion(0, 2, 0);
+        public static SemanticVersion LibraryVersion { get; } =
+            new SemanticVersion(
+                LibraryVersionFile.Major,
+                LibraryVersionFile.Minor,
+                LibraryVersionFile.Patch);
 
         /// <summary>
         /// Gets the wire-protocol version emitted by this implementation.
