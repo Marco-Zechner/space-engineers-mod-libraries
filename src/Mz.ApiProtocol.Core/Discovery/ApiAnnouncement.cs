@@ -73,31 +73,17 @@ namespace Mz.ApiProtocol
         /// invalid.
         /// </exception>
         public ApiAnnouncement(
-            ApiModIdentity provider,
-            ApiDescriptor descriptor,
-            Guid providerInstanceId,
-            Guid correlationId,
+            ApiModIdentity provider, ApiDescriptor descriptor, Guid providerInstanceId, Guid correlationId, 
             IDictionary<string, Delegate> endpoints
-        )
-            : this(
-                provider,
-                descriptor,
-                providerInstanceId,
-                correlationId,
-                ApiProtocolInfo.WireProtocolVersion,
-                ApiProtocolInfo.LibraryVersion,
-                endpoints
-            )
-        {
-        }
+        ) : this(
+            provider, descriptor, providerInstanceId, correlationId, 
+            ApiProtocolInfo.WireProtocolVersion, ApiProtocolInfo.LibraryVersion,
+            endpoints
+        ) { }
 
         internal ApiAnnouncement(
-            ApiModIdentity provider,
-            ApiDescriptor descriptor,
-            Guid providerInstanceId,
-            Guid correlationId,
-            SemanticVersion wireProtocolVersion,
-            SemanticVersion libraryVersion,
+            ApiModIdentity provider, ApiDescriptor descriptor, Guid providerInstanceId, Guid correlationId,
+            SemanticVersion wireProtocolVersion, SemanticVersion libraryVersion,
             IDictionary<string, Delegate> endpoints
         )
         {
@@ -108,26 +94,13 @@ namespace Mz.ApiProtocol
                 throw new ArgumentNullException(nameof(descriptor));
 
             if (providerInstanceId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "A provider requires a non-empty instance identifier.",
-                    nameof(providerInstanceId)
-                );
-            }
+                throw new ArgumentException("A provider requires a non-empty instance identifier.", nameof(providerInstanceId));
 
             if (wireProtocolVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(wireProtocolVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(wireProtocolVersion));
 
             if (libraryVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(libraryVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(libraryVersion));
 
             if (endpoints == null)
                 throw new ArgumentNullException(nameof(endpoints));
@@ -141,52 +114,27 @@ namespace Mz.ApiProtocol
             Endpoints = CopyEndpoints(endpoints);
         }
 
-        private static IReadOnlyDictionary<string, Delegate>
-            CopyEndpoints(
-                IDictionary<string, Delegate> endpoints
-            )
+        private static IReadOnlyDictionary<string, Delegate> CopyEndpoints(IDictionary<string, Delegate> endpoints)
         {
-            var copy = new Dictionary<string, Delegate>(
-                StringComparer.Ordinal
-            );
+            var copy = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 
-            foreach (
-                KeyValuePair<string, Delegate> pair
-                in endpoints
-            )
+            foreach (var pair in endpoints)
             {
                 if (string.IsNullOrWhiteSpace(pair.Key))
-                {
-                    throw new ArgumentException(
-                        "API endpoint names cannot be empty.",
-                        nameof(endpoints)
-                    );
-                }
+                    throw new ArgumentException("API endpoint names cannot be empty.", nameof(endpoints));
 
                 if (pair.Value == null)
-                {
-                    throw new ArgumentException(
-                        "API endpoints cannot contain null delegates.",
-                        nameof(endpoints)
-                    );
-                }
+                    throw new ArgumentException("API endpoints cannot contain null delegates.", nameof(endpoints));
 
-                string normalizedName = pair.Key.Trim();
+                var normalizedName = pair.Key.Trim();
 
                 if (copy.ContainsKey(normalizedName))
-                {
-                    throw new ArgumentException(
-                        "API endpoint names must be unique after trimming.",
-                        nameof(endpoints)
-                    );
-                }
+                    throw new ArgumentException("API endpoint names must be unique after trimming.", nameof(endpoints));
 
                 copy.Add(normalizedName, pair.Value);
             }
 
-            return new ReadOnlyDictionaryView<string, Delegate>(
-                copy
-            );
+            return new ReadOnlyDictionaryView<string, Delegate>(copy);
         }
     }
 }

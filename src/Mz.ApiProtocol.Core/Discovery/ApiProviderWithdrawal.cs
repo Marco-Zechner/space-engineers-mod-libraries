@@ -49,62 +49,27 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when the API or provider-instance identity is empty.
         /// </exception>
-        public ApiProviderWithdrawal(
-            ApiModIdentity provider,
-            string apiId,
-            Guid providerInstanceId
-        )
-            : this(
-                provider,
-                apiId,
-                providerInstanceId,
-                ApiProtocolInfo.WireProtocolVersion,
-                ApiProtocolInfo.LibraryVersion
-            )
-        {
-        }
+        public ApiProviderWithdrawal(ApiModIdentity provider, string apiId, Guid providerInstanceId)
+            : this(provider, apiId, providerInstanceId, ApiProtocolInfo.WireProtocolVersion, ApiProtocolInfo.LibraryVersion) { }
 
-        internal ApiProviderWithdrawal(
-            ApiModIdentity provider,
-            string apiId,
-            Guid providerInstanceId,
-            SemanticVersion wireProtocolVersion,
-            SemanticVersion libraryVersion
+        internal ApiProviderWithdrawal(ApiModIdentity provider, string apiId, Guid providerInstanceId,
+            SemanticVersion wireProtocolVersion, SemanticVersion libraryVersion
         )
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
 
             if (string.IsNullOrWhiteSpace(apiId))
-            {
-                throw new ArgumentException(
-                    "An API identifier is required.",
-                    nameof(apiId)
-                );
-            }
+                throw new ArgumentException("An API identifier is required.", nameof(apiId));
 
             if (providerInstanceId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "A provider withdrawal requires a non-empty "
-                    + "provider instance identifier.",
-                    nameof(providerInstanceId)
-                );
-            }
+                throw new ArgumentException("A provider withdrawal requires a non-empty provider instance identifier.", nameof(providerInstanceId));
 
             if (wireProtocolVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(wireProtocolVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(wireProtocolVersion));
 
             if (libraryVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(libraryVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(libraryVersion));
 
             Provider = provider;
             ApiId = apiId.Trim();

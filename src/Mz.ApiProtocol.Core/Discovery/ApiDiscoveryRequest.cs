@@ -16,13 +16,7 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the requested API identifier.
         /// </summary>
-        public string ApiId
-        {
-            get
-            {
-                return Dependency.Requirement.ApiId;
-            }
-        }
+        public string ApiId => Dependency.Requirement.ApiId;
 
         /// <summary>
         /// Gets the request correlation identifier.
@@ -54,55 +48,24 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="correlationId"/> is empty.
         /// </exception>
-        public ApiDiscoveryRequest(
-            ApiDependencyDescriptor dependency,
-            Guid correlationId
-        )
-            : this(
-                dependency,
-                correlationId,
-                ApiProtocolInfo.WireProtocolVersion,
-                ApiProtocolInfo.LibraryVersion
-            )
-        {
-        }
+        public ApiDiscoveryRequest(ApiDependencyDescriptor dependency, Guid correlationId) 
+            : this(dependency, correlationId, ApiProtocolInfo.WireProtocolVersion, ApiProtocolInfo.LibraryVersion) { }
 
-        internal ApiDiscoveryRequest(
-            ApiDependencyDescriptor dependency,
-            Guid correlationId,
-            SemanticVersion wireProtocolVersion,
-            SemanticVersion libraryVersion
+        internal ApiDiscoveryRequest(ApiDependencyDescriptor dependency, Guid correlationId, 
+            SemanticVersion wireProtocolVersion, SemanticVersion libraryVersion
         )
         {
             if (dependency == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(dependency)
-                );
-            }
+                throw new ArgumentNullException(nameof(dependency));
 
             if (correlationId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "A discovery request requires a non-empty "
-                    + "correlation identifier.",
-                    nameof(correlationId)
-                );
-            }
+                throw new ArgumentException("A discovery request requires a non-empty correlation identifier.", nameof(correlationId));
 
             if (wireProtocolVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(wireProtocolVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(wireProtocolVersion));
 
             if (libraryVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(libraryVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(libraryVersion));
 
             Dependency = dependency;
             CorrelationId = correlationId;
