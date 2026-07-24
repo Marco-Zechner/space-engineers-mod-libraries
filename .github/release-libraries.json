@@ -1,0 +1,34 @@
+{
+  "apiprotocol": {
+    "displayName": "Mz.ApiProtocol",
+    "sourceDirectories": [
+      "src/Mz.SemanticVersioning",
+      "src/Mz.ApiProtocol.Core",
+      "src/Mz.ApiProtocol.SpaceEngineers"
+    ],
+    "testProjectPrefix": "Mz.ApiProtocol."
+  },
+  "logging": {
+    "displayName": "Mz.Logging",
+    "sourceDirectories": [
+      "src/Mz.Logging.Core",
+      "src/Mz.Logging.SpaceEngineers"
+    ],
+    "testProjectPrefix": "Mz.Logging."
+  },
+  "networking": {
+    "displayName": "Mz.Networking",
+    "sourceDirectories": [
+      "src/Mz.Networking.Core",
+      "src/Mz.Networking.SpaceEngineers"
+    ],
+    "testProjectPrefix": "Mz.Networking."
+  },
+  "semanticversioning": {
+    "displayName": "Mz.SemanticVersioning",
+    "sourceDirectories": [
+      "src/Mz.SemanticVersioning"
+    ],
+    "testProjectPrefix": "Mz.SemanticVersioning."
+  }
+}
