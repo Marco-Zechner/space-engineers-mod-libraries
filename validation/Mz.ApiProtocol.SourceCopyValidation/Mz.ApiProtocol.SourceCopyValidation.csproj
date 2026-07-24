@@ -39,4 +39,7 @@
             <Private>false</Private>
         </Reference>
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Mz.ApiProtocol.Core\Mz.ApiProtocol.Core.csproj" />
+    </ItemGroup>
 </Project>

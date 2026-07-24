@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Mz.ApiProtocol;
 
 namespace Mz.ApiProtocol.SpaceEngineers
 {
