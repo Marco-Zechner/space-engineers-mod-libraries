@@ -51,39 +51,20 @@ namespace Mz.ApiProtocol
         public ApiConnection(ApiAnnouncement announcement)
         {
             if (announcement == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(announcement)
-                );
-            }
+                throw new ArgumentNullException(nameof(announcement));
 
             Provider = announcement.Provider;
             Descriptor = announcement.Descriptor;
-            ProviderInstanceId =
-                announcement.ProviderInstanceId;
+            ProviderInstanceId = announcement.ProviderInstanceId;
+            ProviderWireProtocolVersion = announcement.WireProtocolVersion;
+            ProviderLibraryVersion = announcement.LibraryVersion;
 
-            ProviderWireProtocolVersion =
-                announcement.WireProtocolVersion;
+            var copy = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 
-            ProviderLibraryVersion =
-                announcement.LibraryVersion;
-
-            var copy = new Dictionary<string, Delegate>(
-                StringComparer.Ordinal
-            );
-
-            foreach (
-                KeyValuePair<string, Delegate> pair
-                in announcement.Endpoints
-            )
-            {
+            foreach (var pair in announcement.Endpoints)
                 copy.Add(pair.Key, pair.Value);
-            }
 
-            Endpoints =
-                new ReadOnlyDictionaryView<string, Delegate>(
-                    copy
-                );
+            Endpoints = new ReadOnlyDictionaryView<string, Delegate>(copy);
         }
 
         /// <summary>
@@ -105,26 +86,13 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when the endpoint name is empty.
         /// </exception>
-        public bool TryGetEndpoint<TDelegate>(
-            string endpointName,
-            out TDelegate endpoint
-        )
-            where TDelegate : class
+        public bool TryGetEndpoint<TDelegate>(string endpointName, out TDelegate endpoint) where TDelegate : class
         {
             if (string.IsNullOrWhiteSpace(endpointName))
-            {
-                throw new ArgumentException(
-                    "An endpoint name is required.",
-                    nameof(endpointName)
-                );
-            }
+                throw new ArgumentException("An endpoint name is required.", nameof(endpointName));
 
             Delegate value;
-
-            if (!Endpoints.TryGetValue(
-                endpointName.Trim(),
-                out value
-            ))
+            if (!Endpoints.TryGetValue(endpointName.Trim(), out value))
             {
                 endpoint = null;
                 return false;
