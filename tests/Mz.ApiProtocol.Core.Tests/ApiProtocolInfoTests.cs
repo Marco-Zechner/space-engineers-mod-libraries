@@ -10,7 +10,7 @@ namespace Mz.ApiProtocol.Tests
         public void CurrentVersions_AreDefined()
         {
             Assert.Equal(
-                new SemanticVersion(0, 1, 0),
+                new SemanticVersion(0, 2, 0),
                 ApiProtocolInfo.LibraryVersion
             );
 

@@ -17,8 +17,9 @@
             Include="..\..\src\Mz.SemanticVersioning\*.cs"
             Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
         <Compile
-            Include="..\..\src\Mz.ApiProtocol.Core\*.cs"
-            Link="Libraries\Mz.ApiProtocol.Core\%(Filename)%(Extension)" />
+            Include="..\..\src\Mz.ApiProtocol.Core\**\*.cs"
+            Exclude="..\..\src\Mz.ApiProtocol.Core\bin\**\*;..\..\src\Mz.ApiProtocol.Core\obj\**\*"
+            Link="Libraries\Mz.ApiProtocol.Core\%(RecursiveDir)%(Filename)%(Extension)" />
         <Compile
             Include="..\..\src\Mz.ApiProtocol.SpaceEngineers\*.cs"
             Link="Libraries\Mz.ApiProtocol.SpaceEngineers\%(Filename)%(Extension)" />
@@ -38,8 +39,5 @@
             <HintPath>$(SpaceEngineersBin64)\VRage.Game.dll</HintPath>
             <Private>false</Private>
         </Reference>
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\..\src\Mz.ApiProtocol.Core\Mz.ApiProtocol.Core.csproj" />
     </ItemGroup>
 </Project>

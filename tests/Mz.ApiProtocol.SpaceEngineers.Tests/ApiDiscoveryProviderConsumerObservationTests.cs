@@ -7,7 +7,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 {
     public sealed class ApiDiscoveryProviderConsumerObservationTests
     {
-        private const long ChannelId = 918273645L;
+        private const long ChannelId = ApiProtocolChannels.Discovery;
 
         [Fact]
         public void CompatibleRequest_RaisesObservationAndResponds()
@@ -254,7 +254,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryProvider(
                 bus,
-                ChannelId,
                 new ApiModIdentity(
                     "Mz.CommandApiMod",
                     "Command API",

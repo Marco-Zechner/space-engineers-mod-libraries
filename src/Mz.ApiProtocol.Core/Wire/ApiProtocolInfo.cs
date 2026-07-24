@@ -9,7 +9,7 @@ namespace Mz.ApiProtocol
     public static class ApiProtocolInfo
     {
         private static readonly SemanticVersion CurrentLibraryVersion =
-            new SemanticVersion(0, 1, 0);
+            new SemanticVersion(0, 2, 0);
 
         private static readonly SemanticVersion CurrentWireVersion =
             new SemanticVersion(1, 0, 0);

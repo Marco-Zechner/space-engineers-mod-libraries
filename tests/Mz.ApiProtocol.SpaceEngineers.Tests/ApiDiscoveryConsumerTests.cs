@@ -7,7 +7,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 {
     public sealed class ApiDiscoveryConsumerTests
     {
-        private const long ChannelId = 918273645L;
+        private const long ChannelId = ApiProtocolChannels.Discovery;
 
         [Fact]
         public void ProviderFirst_RequestDiscoveryConnectsConsumer()
@@ -267,7 +267,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryConsumer(
                 bus,
-                ChannelId,
                 CreateDependency()
             );
         }
@@ -299,7 +298,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryProvider(
                 bus,
-                ChannelId,
                 CreateProviderIdentity(),
                 CreateDescriptor(version),
                 CreateEndpoints()
