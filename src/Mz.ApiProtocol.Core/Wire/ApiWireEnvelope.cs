@@ -67,50 +67,24 @@ namespace Mz.ApiProtocol
         /// Thrown when <paramref name="apiId"/> is empty.
         /// </exception>
         public ApiWireEnvelope(
-            ApiWireMessageKind messageKind,
-            ApiModIdentity participant,
-            SemanticVersion wireProtocolVersion,
-            SemanticVersion libraryVersion,
-            string apiId
+            ApiWireMessageKind messageKind, ApiModIdentity participant, 
+            SemanticVersion wireProtocolVersion, SemanticVersion libraryVersion, string apiId
         )
         {
-            if (messageKind < ApiWireMessageKind.Request
-                || messageKind > ApiWireMessageKind.Withdrawal)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(messageKind)
-                );
-            }
+            if (messageKind < ApiWireMessageKind.Request || messageKind > ApiWireMessageKind.Withdrawal)
+                throw new ArgumentException("The value is outside the supported range.", nameof(messageKind));
 
             if (participant == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(participant)
-                );
-            }
+                throw new ArgumentNullException(nameof(participant));
 
             if (wireProtocolVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(wireProtocolVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(wireProtocolVersion));
 
             if (libraryVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(libraryVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(libraryVersion));
 
             if (string.IsNullOrWhiteSpace(apiId))
-            {
-                throw new ArgumentException(
-                    "An API identifier is required.",
-                    nameof(apiId)
-                );
-            }
+                throw new ArgumentException("An API identifier is required.", nameof(apiId));
 
             MessageKind = messageKind;
             Participant = participant;

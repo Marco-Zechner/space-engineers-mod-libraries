@@ -8,12 +8,6 @@ namespace Mz.ApiProtocol
     /// </summary>
     public static class ApiProtocolInfo
     {
-        private static readonly SemanticVersion CurrentLibraryVersion =
-            new SemanticVersion(0, 2, 0);
-
-        private static readonly SemanticVersion CurrentWireVersion =
-            new SemanticVersion(1, 0, 0);
-
         /// <summary>
         /// Gets the version of the embedded protocol-library implementation.
         /// </summary>
@@ -21,24 +15,12 @@ namespace Mz.ApiProtocol
         /// Different library versions may communicate when their wire
         /// protocol versions are compatible.
         /// </remarks>
-        public static SemanticVersion LibraryVersion
-        {
-            get
-            {
-                return CurrentLibraryVersion;
-            }
-        }
+        public static SemanticVersion LibraryVersion { get; } = new SemanticVersion(0, 2, 0);
 
         /// <summary>
         /// Gets the wire-protocol version emitted by this implementation.
         /// </summary>
-        public static SemanticVersion WireProtocolVersion
-        {
-            get
-            {
-                return CurrentWireVersion;
-            }
-        }
+        public static SemanticVersion WireProtocolVersion { get; } = new SemanticVersion(1, 0, 0);
 
         /// <summary>
         /// Evaluates a remote wire-protocol version.
@@ -57,28 +39,16 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="remoteVersion"/> is null.
         /// </exception>
-        public static ApiWireCompatibilityStatus EvaluateWireProtocol(
-            SemanticVersion remoteVersion
-        )
+        public static ApiWireCompatibilityStatus EvaluateWireProtocol(SemanticVersion remoteVersion)
         {
             if (remoteVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(remoteVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(remoteVersion));
 
-            if (remoteVersion.Major
-                < WireProtocolVersion.Major)
-            {
+            if (remoteVersion.Major < WireProtocolVersion.Major)
                 return ApiWireCompatibilityStatus.RemoteTooOld;
-            }
 
-            if (remoteVersion.Major
-                > WireProtocolVersion.Major)
-            {
+            if (remoteVersion.Major > WireProtocolVersion.Major)
                 return ApiWireCompatibilityStatus.RemoteTooNew;
-            }
 
             return ApiWireCompatibilityStatus.Compatible;
         }
@@ -92,12 +62,7 @@ namespace Mz.ApiProtocol
         /// <returns>
         /// True when the versions can communicate; otherwise false.
         /// </returns>
-        public static bool IsWireProtocolCompatible(
-            SemanticVersion remoteVersion
-        )
-        {
-            return EvaluateWireProtocol(remoteVersion)
-                == ApiWireCompatibilityStatus.Compatible;
-        }
+        public static bool IsWireProtocolCompatible(SemanticVersion remoteVersion) 
+            => EvaluateWireProtocol(remoteVersion) == ApiWireCompatibilityStatus.Compatible;
     }
 }
