@@ -21,8 +21,9 @@
             Exclude="..\..\src\Mz.ApiProtocol.Core\bin\**\*;..\..\src\Mz.ApiProtocol.Core\obj\**\*"
             Link="Libraries\Mz.ApiProtocol.Core\%(RecursiveDir)%(Filename)%(Extension)" />
         <Compile
-            Include="..\..\src\Mz.ApiProtocol.SpaceEngineers\*.cs"
-            Link="Libraries\Mz.ApiProtocol.SpaceEngineers\%(Filename)%(Extension)" />
+            Include="..\..\src\Mz.ApiProtocol.SpaceEngineers\**\*.cs"
+            Exclude="..\..\src\Mz.ApiProtocol.SpaceEngineers\bin\**\*;..\..\src\Mz.ApiProtocol.SpaceEngineers\obj\**\*"
+            Link="Libraries\Mz.ApiProtocol.SpaceEngineers\%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference
