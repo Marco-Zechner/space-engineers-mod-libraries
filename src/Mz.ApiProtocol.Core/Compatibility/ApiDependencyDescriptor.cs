@@ -54,12 +54,7 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="kind"/> is not defined.
         /// </exception>
-        public ApiDependencyDescriptor(
-            ApiModIdentity consumer,
-            ApiRequirement requirement,
-            ApiDependencyKind kind,
-            string featureDescription
-        )
+        public ApiDependencyDescriptor(ApiModIdentity consumer, ApiRequirement requirement, ApiDependencyKind kind, string featureDescription)
         {
             if (consumer == null)
                 throw new ArgumentNullException(nameof(consumer));
@@ -67,21 +62,14 @@ namespace Mz.ApiProtocol
             if (requirement == null)
                 throw new ArgumentNullException(nameof(requirement));
 
-            if (kind < ApiDependencyKind.Required
-                || kind > ApiDependencyKind.Optional)
-            {
-                throw new ArgumentException(
-                    "The value is outside the supported range.",
-                    nameof(kind)
-                );
-            }
+            if (kind < ApiDependencyKind.Required || kind > ApiDependencyKind.Optional)
+                throw new ArgumentException("The value is outside the supported range.", nameof(kind));
 
             Consumer = consumer;
             Requirement = requirement;
             Kind = kind;
 
-            FeatureDescription =
-                string.IsNullOrWhiteSpace(featureDescription)
+            FeatureDescription = string.IsNullOrWhiteSpace(featureDescription)
                     ? string.Empty
                     : featureDescription.Trim();
         }
@@ -89,23 +77,11 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets whether a compatible provider is mandatory.
         /// </summary>
-        public bool IsRequired
-        {
-            get
-            {
-                return Kind == ApiDependencyKind.Required;
-            }
-        }
+        public bool IsRequired => Kind == ApiDependencyKind.Required;
 
         /// <summary>
         /// Gets whether the consuming mod may continue without the API.
         /// </summary>
-        public bool IsOptional
-        {
-            get
-            {
-                return Kind == ApiDependencyKind.Optional;
-            }
-        }
+        public bool IsOptional => Kind == ApiDependencyKind.Optional;
     }
 }
