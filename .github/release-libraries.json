@@ -1,34 +1,39 @@
 {
   "apiprotocol": {
-    "displayName": "Mz.ApiProtocol",
+    "packageId": "Mz.ApiProtocol",
     "sourceDirectories": [
-      "src/Mz.SemanticVersioning",
       "src/Mz.ApiProtocol.Core",
       "src/Mz.ApiProtocol.SpaceEngineers"
     ],
+    "dependencies": {
+      "Mz.SemanticVersioning": "0.1.0"
+    },
     "testProjectPrefix": "Mz.ApiProtocol."
   },
   "logging": {
-    "displayName": "Mz.Logging",
+    "packageId": "Mz.Logging",
     "sourceDirectories": [
       "src/Mz.Logging.Core",
       "src/Mz.Logging.SpaceEngineers"
     ],
+    "dependencies": {},
     "testProjectPrefix": "Mz.Logging."
   },
   "networking": {
-    "displayName": "Mz.Networking",
+    "packageId": "Mz.Networking",
     "sourceDirectories": [
       "src/Mz.Networking.Core",
       "src/Mz.Networking.SpaceEngineers"
     ],
+    "dependencies": {},
     "testProjectPrefix": "Mz.Networking."
   },
   "semanticversioning": {
-    "displayName": "Mz.SemanticVersioning",
+    "packageId": "Mz.SemanticVersioning",
     "sourceDirectories": [
       "src/Mz.SemanticVersioning"
     ],
+    "dependencies": {},
     "testProjectPrefix": "Mz.SemanticVersioning."
   }
 }

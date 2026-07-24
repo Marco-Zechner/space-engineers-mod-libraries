@@ -3,10 +3,10 @@ name: Library Releases
 on:
   push:
     tags:
-      - "apiprotocol/v*-r*"
-      - "logging/v*-r*"
-      - "networking/v*-r*"
-      - "semanticversioning/v*-r*"
+      - "apiprotocol/v*"
+      - "logging/v*"
+      - "networking/v*"
+      - "semanticversioning/v*"
 
 permissions:
   contents: write
@@ -30,7 +30,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Test and create source bundle
+      - name: Test and create SELibs package
         id: bundle
         shell: pwsh
         run: |
@@ -43,25 +43,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $releaseArguments = @(
-              "release",
-              "create",
-              "${{ github.ref_name }}",
-              "${{ steps.bundle.outputs.asset_path }}",
-              "${{ steps.bundle.outputs.checksum_path }}",
-              "--verify-tag",
-              "--latest=false",
-              "--title",
-              "${{ steps.bundle.outputs.release_title }}",
-              "--notes-file",
-              "${{ steps.bundle.outputs.release_notes_path }}"
-          )
-
-          if ("${{ steps.bundle.outputs.is_prerelease }}" -eq "true") {
-              $releaseArguments += "--prerelease"
-          }
-
-          & gh @releaseArguments
+          & gh release create `
+              "${{ github.ref_name }}" `
+              "${{ steps.bundle.outputs.manifest_path }}" `
+              "${{ steps.bundle.outputs.component_path }}" `
+              --verify-tag `
+              --latest=false `
+              --title "${{ steps.bundle.outputs.release_title }}" `
+              --notes-file "${{ steps.bundle.outputs.release_notes_path }}"
 
           if ($LASTEXITCODE -ne 0) {
               throw "GitHub release creation failed."
