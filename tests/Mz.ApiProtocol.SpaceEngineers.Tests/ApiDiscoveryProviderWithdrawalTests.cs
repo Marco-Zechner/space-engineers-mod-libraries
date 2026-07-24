@@ -7,7 +7,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 {
     public sealed class ApiDiscoveryProviderWithdrawalTests
     {
-        private const long ChannelId = 918273645L;
+        private const long ChannelId = ApiProtocolChannels.Discovery;
 
         [Fact]
         public void ProviderAnnouncement_ContainsStableInstanceIdentity()
@@ -125,7 +125,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryProvider(
                 bus,
-                ChannelId,
                 CreateProviderIdentity(),
                 CreateDescriptor(),
                 providerInstanceId,
@@ -139,7 +138,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryConsumer(
                 bus,
-                ChannelId,
                 CreateDependency()
             );
         }

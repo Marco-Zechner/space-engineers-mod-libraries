@@ -7,7 +7,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 {
     public sealed class ApiWireIncompatibilityDiagnosticsTests
     {
-        private const long ChannelId = 918273645L;
+        private const long ChannelId = ApiProtocolChannels.Discovery;
 
         [Fact]
         public void Provider_IncompatibleRequest_RaisesDiagnostic()
@@ -119,7 +119,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryProvider(
                 bus,
-                ChannelId,
                 new ApiModIdentity(
                     "Mz.CommandApiMod",
                     "Command API",
@@ -139,7 +138,6 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             return new ApiDiscoveryConsumer(
                 bus,
-                ChannelId,
                 new ApiDependencyDescriptor(
                     new ApiModIdentity(
                         "Mz.ConsumerMod",

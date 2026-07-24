@@ -64,11 +64,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
             WireIncompatibilityObserved;
         
         /// <summary>
-        /// Gets the mod-message channel used for discovery.
-        /// </summary>
-        public long ChannelId { get; }
-
-        /// <summary>
         /// Gets the consumer and its API dependency declaration.
         /// </summary>
         public ApiDependencyDescriptor Dependency { get; }
@@ -152,10 +147,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <param name="messageBus">
         /// The mod-message transport used for discovery.
         /// </param>
-        /// <param name="channelId">
-        /// The shared discovery channel known by providers and consumers of
-        /// this API.
-        /// </param>
         /// <param name="dependency">
         /// The API identity and supported provider versions.
         /// </param>
@@ -165,7 +156,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </exception>
         public ApiDiscoveryConsumer(
             IModMessageBus messageBus,
-            long channelId,
             ApiDependencyDescriptor dependency
         )
         {
@@ -184,7 +174,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
 
             _messageBus = messageBus;
-            ChannelId = channelId;
             Dependency = dependency;
         }
 
@@ -207,7 +196,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             _subscription = new ModMessageSubscription(
                 _messageBus,
-                ChannelId,
+                ApiProtocolChannels.Discovery,
                 HandleMessage
             );
 
@@ -256,7 +245,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             try
             {
-                _messageBus.Send(ChannelId, payload);
+                _messageBus.Send(ApiProtocolChannels.Discovery, payload);
             }
             catch (Exception exception)
             {

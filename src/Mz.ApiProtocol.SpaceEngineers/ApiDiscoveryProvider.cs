@@ -39,11 +39,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ConsumerObserved;
         
         /// <summary>
-        /// Gets the mod-message channel used for discovery.
-        /// </summary>
-        public long ChannelId { get; }
-        
-        /// <summary>
         /// Gets the mod providing the API.
         /// </summary>
         public ApiModIdentity Provider { get; }
@@ -74,9 +69,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <param name="messageBus">
         /// The mod-message transport used for discovery.
         /// </param>
-        /// <param name="channelId">
-        /// The shared API discovery channel.
-        /// </param>
         /// <param name="provider">
         /// The mod providing the API.
         /// </param>
@@ -88,14 +80,12 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </param>
         public ApiDiscoveryProvider(
             IModMessageBus messageBus,
-            long channelId,
             ApiModIdentity provider,
             ApiDescriptor descriptor,
             IDictionary<string, Delegate> endpoints
         )
             : this(
                 messageBus,
-                channelId,
                 provider,
                 descriptor,
                 Guid.NewGuid(),
@@ -109,9 +99,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </summary>
         /// <param name="messageBus">
         /// The mod-message transport used for discovery.
-        /// </param>
-        /// <param name="channelId">
-        /// The shared API discovery channel.
         /// </param>
         /// <param name="provider">
         /// The mod providing the API.
@@ -133,7 +120,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// </exception>
         public ApiDiscoveryProvider(
             IModMessageBus messageBus,
-            long channelId,
             ApiModIdentity provider,
             ApiDescriptor descriptor,
             Guid providerInstanceId,
@@ -164,7 +150,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
             );
 
             _messageBus = messageBus;
-            ChannelId = channelId;
             Provider = validated.Provider;
             Descriptor = validated.Descriptor;
             ProviderInstanceId = providerInstanceId;
@@ -197,7 +182,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
             var subscription = new ModMessageSubscription(
                 _messageBus,
-                ChannelId,
+                ApiProtocolChannels.Discovery,
                 HandleMessage
             );
 
@@ -239,7 +224,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
 
             _messageBus.Send(
-                ChannelId,
+                ApiProtocolChannels.Discovery,
                 ApiDiscoveryWireProtocol.CreateAnnouncement(
                     Provider,
                     Descriptor,
@@ -271,7 +256,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 try
                 {
                     _messageBus.Send(
-                        ChannelId,
+                        ApiProtocolChannels.Discovery,
                         ApiDiscoveryWireProtocol.CreateWithdrawal(
                             Provider,
                             Descriptor.ApiId,
@@ -399,7 +384,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 }
 
                 _messageBus.Send(
-                    ChannelId,
+                    ApiProtocolChannels.Discovery,
                     ApiDiscoveryWireProtocol.CreateAnnouncement(
                         Provider,
                         Descriptor,
