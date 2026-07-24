@@ -21,18 +21,10 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates an API descriptor.
         /// </summary>
-        public ApiDescriptor(
-            string apiId,
-            SemanticVersion version
-        )
+        public ApiDescriptor(string apiId, SemanticVersion version)
         {
             if (string.IsNullOrWhiteSpace(apiId))
-            {
-                throw new ArgumentException(
-                    "An API identifier is required.",
-                    nameof(apiId)
-                );
-            }
+                throw new ArgumentException("An API identifier is required.", nameof(apiId));
 
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
@@ -44,9 +36,6 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Returns the API identifier and provider version.
         /// </summary>
-        public override string ToString()
-        {
-            return ApiId + " " + Version;
-        }
+        public override string ToString() => $"{ApiId} {Version}";
     }
 }

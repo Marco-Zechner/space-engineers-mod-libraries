@@ -20,25 +20,13 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates an API requirement.
         /// </summary>
-        public ApiRequirement(
-            string apiId,
-            ApiVersionRange supportedVersions
-        )
+        public ApiRequirement(string apiId, ApiVersionRange supportedVersions)
         {
             if (string.IsNullOrWhiteSpace(apiId))
-            {
-                throw new ArgumentException(
-                    "An API identifier is required.",
-                    nameof(apiId)
-                );
-            }
+                throw new ArgumentException("An API identifier is required.", nameof(apiId));
 
             if (supportedVersions == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(supportedVersions)
-                );
-            }
+                throw new ArgumentNullException(nameof(supportedVersions));
 
             ApiId = apiId.Trim();
             SupportedVersions = supportedVersions;
@@ -47,32 +35,19 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Evaluates an API provider against this requirement.
         /// </summary>
-        public ApiCompatibilityStatus Evaluate(
-            ApiDescriptor provider
-        )
+        public ApiCompatibilityStatus Evaluate(ApiDescriptor provider)
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
 
-            if (!string.Equals(
-                ApiId,
-                provider.ApiId,
-                StringComparison.Ordinal
-            ))
-            {
-                return ApiCompatibilityStatus.DifferentApi;
-            }
-
-            return SupportedVersions.Evaluate(provider.Version);
+            return string.Equals(ApiId, provider.ApiId, StringComparison.Ordinal) 
+                ? SupportedVersions.Evaluate(provider.Version) 
+                : ApiCompatibilityStatus.DifferentApi;
         }
 
         /// <summary>
         /// Determines whether an API provider satisfies this requirement.
         /// </summary>
-        public bool IsSatisfiedBy(ApiDescriptor provider)
-        {
-            return Evaluate(provider)
-                == ApiCompatibilityStatus.Compatible;
-        }
+        public bool IsSatisfiedBy(ApiDescriptor provider) => Evaluate(provider) == ApiCompatibilityStatus.Compatible;
     }
 }

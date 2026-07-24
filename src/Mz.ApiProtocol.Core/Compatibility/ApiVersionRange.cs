@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Mz.SemanticVersioning;
 
 namespace Mz.ApiProtocol
@@ -22,27 +23,13 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Creates a supported version range.
         /// </summary>
-        public ApiVersionRange(
-            SemanticVersion minimumInclusive,
-            SemanticVersion maximumExclusive
-        )
+        public ApiVersionRange(SemanticVersion minimumInclusive, SemanticVersion maximumExclusive)
         {
             if (minimumInclusive == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(minimumInclusive)
-                );
-            }
+                throw new ArgumentNullException(nameof(minimumInclusive));
 
-            if (maximumExclusive != null
-                && maximumExclusive <= minimumInclusive)
-            {
-                throw new ArgumentException(
-                    "The exclusive maximum must be greater "
-                    + "than the inclusive minimum.",
-                    nameof(maximumExclusive)
-                );
-            }
+            if (maximumExclusive != null && maximumExclusive <= minimumInclusive)
+                throw new ArgumentException("The exclusive maximum must be greater than the inclusive minimum.", nameof(maximumExclusive));
 
             MinimumInclusive = minimumInclusive;
             MaximumExclusive = maximumExclusive;
@@ -56,32 +43,22 @@ namespace Mz.ApiProtocol
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
 
-            return Evaluate(version)
-                == ApiCompatibilityStatus.Compatible;
+            return Evaluate(version) == ApiCompatibilityStatus.Compatible;
         }
 
         /// <summary>
         /// Evaluates a provider version against this range.
         /// </summary>
-        public ApiCompatibilityStatus Evaluate(
-            SemanticVersion providerVersion
-        )
+        public ApiCompatibilityStatus Evaluate(SemanticVersion providerVersion)
         {
             if (providerVersion == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(providerVersion)
-                );
-            }
+                throw new ArgumentNullException(nameof(providerVersion));
 
             if (providerVersion < MinimumInclusive)
                 return ApiCompatibilityStatus.ProviderTooOld;
 
-            if (MaximumExclusive != null
-                && providerVersion >= MaximumExclusive)
-            {
+            if (MaximumExclusive != null && providerVersion >= MaximumExclusive)
                 return ApiCompatibilityStatus.ProviderTooNew;
-            }
 
             return ApiCompatibilityStatus.Compatible;
         }
@@ -89,16 +66,9 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Returns the range using mathematical interval notation.
         /// </summary>
-        public override string ToString()
-        {
-            if (MaximumExclusive == null)
-                return "[" + MinimumInclusive + ", infinity)";
-
-            return "["
-                + MinimumInclusive
-                + ", "
-                + MaximumExclusive
-                + ")";
-        }
+        public override string ToString() =>
+            MaximumExclusive == null 
+                ? $"[{MinimumInclusive}, infinity)" 
+                : $"[{MinimumInclusive}, {MaximumExclusive})";
     }
 }

@@ -47,27 +47,13 @@ namespace Mz.ApiProtocol
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="version"/> is null.
         /// </exception>
-        public ApiModIdentity(
-            string id,
-            string displayName,
-            SemanticVersion version
-        )
+        public ApiModIdentity(string id, string displayName, SemanticVersion version)
         {
             if (string.IsNullOrWhiteSpace(id))
-            {
-                throw new ArgumentException(
-                    "A stable mod identifier is required.",
-                    nameof(id)
-                );
-            }
+                throw new ArgumentException("A stable mod identifier is required.", nameof(id));
 
             if (string.IsNullOrWhiteSpace(displayName))
-            {
-                throw new ArgumentException(
-                    "A mod display name is required.",
-                    nameof(displayName)
-                );
-            }
+                throw new ArgumentException("A mod display name is required.", nameof(displayName));
 
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
@@ -83,13 +69,6 @@ namespace Mz.ApiProtocol
         /// <returns>
         /// The display name, stable identifier, and mod version.
         /// </returns>
-        public override string ToString()
-        {
-            return DisplayName
-                + " ("
-                + Id
-                + ") "
-                + Version;
-        }
+        public override string ToString() => $"{DisplayName} ({Id}) {Version}";
     }
 }
