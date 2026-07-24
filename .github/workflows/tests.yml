@@ -1,0 +1,143 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    name: Discover test projects
+    runs-on: windows-latest
+
+    outputs:
+      matrix: ${{ steps.projects.outputs.matrix }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Discover portable tests
+        id: projects
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $allProjects = @(
+              Get-ChildItem `
+                  -Path "tests" `
+                  -Recurse `
+                  -File `
+                  -Filter "*.csproj" |
+                  Where-Object {
+                      $_.BaseName -like "*.Tests"
+                  } |
+                  Sort-Object FullName
+          )
+
+          $projects = @(
+              $allProjects |
+              Where-Object {
+                  $_.BaseName -notlike "*.SpaceEngineers.Tests"
+              }
+          )
+
+          if ($projects.Count -eq 0) {
+              throw "No portable test projects were found."
+          }
+
+          $include = foreach ($project in $projects) {
+              $relativePath = [System.IO.Path]::GetRelativePath(
+                  $env:GITHUB_WORKSPACE,
+                  $project.FullName
+              ).Replace("\", "/")
+
+              $displayName = $project.BaseName -replace "\.Tests$", ""
+
+              $id = (
+                  $displayName.ToLowerInvariant() `
+                      -replace "[^a-z0-9]+", "-"
+              ).Trim("-")
+
+              @{
+                  name = $displayName
+                  id = $id
+                  project = $relativePath
+              }
+          }
+
+          $matrix = @{
+              include = @($include)
+          } | ConvertTo-Json -Compress -Depth 4
+
+          "matrix=$matrix" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Portable test projects:"
+          $projects | ForEach-Object {
+              Write-Host "  $($_.FullName)"
+          }
+
+          $skipped = @(
+              $allProjects |
+              Where-Object {
+                  $_.BaseName -like "*.SpaceEngineers.Tests"
+              }
+          )
+
+          if ($skipped.Count -gt 0) {
+              Write-Host ""
+              Write-Host "Skipped Space Engineers test projects:"
+              $skipped | ForEach-Object {
+                  Write-Host "  $($_.FullName)"
+              }
+          }
+
+  test:
+    name: ${{ matrix.name }}
+    needs: discover
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          dotnet test "${{ matrix.project }}" `
+              --configuration Release `
+              --nologo `
+              --verbosity normal `
+              --logger "trx;LogFileName=${{ matrix.id }}.trx" `
+              --results-directory "TestResults/${{ matrix.id }}"
