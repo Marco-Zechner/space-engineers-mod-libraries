@@ -1,28 +1,33 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string] $Tag,
+    [string]$Tag,
 
     [Parameter(Mandatory = $true)]
-    [string] $OutputDirectory
+    [string]$OutputDirectory,
+
+    [switch]$SkipTests
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 
 function Write-Utf8WithoutBom {
     param(
         [Parameter(Mandatory = $true)]
-        [string] $Path,
+        [string]$Path,
 
         [Parameter(Mandatory = $true)]
-        [string] $Text
+        [AllowEmptyString()]
+        [string]$Text
     )
 
     $encoding = New-Object System.Text.UTF8Encoding($false)
+    $normalized = $Text.Replace("`r`n", "`n").Replace("`r", "`n")
 
     [System.IO.File]::WriteAllText(
         $Path,
-        $Text,
+        $normalized,
         $encoding
     )
 }
@@ -30,10 +35,10 @@ function Write-Utf8WithoutBom {
 function Write-GitHubOutput {
     param(
         [Parameter(Mandatory = $true)]
-        [string] $Name,
+        [string]$Name,
 
         [Parameter(Mandatory = $true)]
-        [string] $Value
+        [string]$Value
     )
 
     if ([string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
@@ -46,55 +51,98 @@ function Write-GitHubOutput {
     )
 }
 
-$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+function ConvertTo-DependencyMap {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Dependencies
+    )
 
+    $result = [ordered]@{}
+
+    foreach (
+        $property in @(
+            $Dependencies.PSObject.Properties |
+                Sort-Object Name
+        )
+    ) {
+        $packageId = [string]$property.Name
+        $version = [string]$property.Value
+
+        if ($packageId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
+            throw "Dependency package ID '$packageId' is invalid."
+        }
+
+        if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw (
+                "Dependency '$packageId' must use an exact numeric " +
+                "major.minor.patch version."
+            )
+        }
+
+        $result[$packageId] = $version
+    }
+
+    return $result
+}
+
+$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $scriptDirectory "..\..")
 )
 
-$manifestPath = Join-Path $repoRoot (
+$configurationPath = Join-Path `
+    $repoRoot `
     ".github\release-libraries.json"
-)
 
-if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
-    throw "Release manifest not found: $manifestPath"
+if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
+    throw "Release configuration not found: $configurationPath"
 }
 
-$tagPattern =
-    '^(?<slug>apiprotocol|logging|networking|semanticversioning)' +
-    '/v(?<version>[0-9]+\.[0-9]+\.[0-9]+' +
-    '(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?)' +
-    '-r(?<revision>[1-9][0-9]*)$'
+$tagPattern = (
+    '^(?<slug>[a-z0-9][a-z0-9-]*)/' +
+    'v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+)
 
 if ($Tag -notmatch $tagPattern) {
     throw (
         "Invalid release tag '$Tag'. Expected " +
-        "<library>/v<version>-r<revision>, for example " +
-        "apiprotocol/v0.2.0-r1."
+        "<library>/v<major.minor.patch>, for example " +
+        "apiprotocol/v0.2.0."
     )
 }
 
 $slug = $Matches["slug"].ToLowerInvariant()
 $version = $Matches["version"]
-$revision = [int]$Matches["revision"]
 
-$manifest = Get-Content `
-    -LiteralPath $manifestPath `
+$configuration = Get-Content `
+    -LiteralPath $configurationPath `
     -Raw |
     ConvertFrom-Json
 
-$libraryProperty = $manifest.PSObject.Properties[$slug]
+$libraryProperty = @(
+    $configuration.PSObject.Properties |
+        Where-Object {
+            $_.Name.Equals(
+                $slug,
+                [System.StringComparison]::OrdinalIgnoreCase
+            )
+        }
+)
 
-if ($libraryProperty -eq $null) {
-    throw "Library '$slug' is not declared in the release manifest."
+if ($libraryProperty.Count -ne 1) {
+    throw "Library '$slug' is not declared exactly once."
 }
 
-$library = $libraryProperty.Value
-$displayName = [string]$library.displayName
+$library = $libraryProperty[0].Value
+$packageId = [string]$library.packageId
 $testProjectPrefix = [string]$library.testProjectPrefix
 
-if ([string]::IsNullOrWhiteSpace($displayName)) {
-    throw "Library '$slug' has no display name."
+if ($packageId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
+    throw "Library '$slug' has invalid packageId '$packageId'."
+}
+
+if ([string]::IsNullOrWhiteSpace($testProjectPrefix)) {
+    throw "Library '$slug' has no testProjectPrefix."
 }
 
 $sourceDirectories = @($library.sourceDirectories)
@@ -103,13 +151,47 @@ if ($sourceDirectories.Count -eq 0) {
     throw "Library '$slug' has no source directories."
 }
 
-Write-Output "Library: $displayName"
+if ($null -eq $library.dependencies) {
+    throw "Library '$slug' must declare a dependencies object."
+}
+
+$dependencies = ConvertTo-DependencyMap `
+    -Dependencies $library.dependencies
+
+$folders = New-Object System.Collections.ArrayList
+$folderClaims = @{}
+
+foreach ($sourceRelativeValue in $sourceDirectories) {
+    $sourceRelative = [string]$sourceRelativeValue
+    $sourceDirectory = Join-Path `
+        $repoRoot `
+        $sourceRelative.Replace("/", "\")
+
+    if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
+        throw "Source directory not found: $sourceDirectory"
+    }
+
+    $folder = Split-Path -Leaf $sourceDirectory
+
+    if ($folder -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
+        throw "Source folder '$folder' is not a valid SELibs folder name."
+    }
+
+    $key = $folder.ToLowerInvariant()
+
+    if ($folderClaims.ContainsKey($key)) {
+        throw "Source folder '$folder' is declared more than once."
+    }
+
+    $folderClaims[$key] = $true
+    [void]$folders.Add($folder)
+}
+
+Write-Output "Package: $packageId"
 Write-Output "Version: $version"
-Write-Output "Release revision: $revision"
 Write-Output "Tag: $Tag"
 
 $testRoot = Join-Path $repoRoot "tests"
-
 $testProjects = @(
     Get-ChildItem `
         -LiteralPath $testRoot `
@@ -120,21 +202,21 @@ $testProjects = @(
             $_.BaseName.StartsWith(
                 $testProjectPrefix,
                 [System.StringComparison]::Ordinal
-            ) `
-                -and $_.BaseName.EndsWith(
-                    ".Tests",
-                    [System.StringComparison]::Ordinal
-                ) `
-                -and -not $_.BaseName.EndsWith(
-                    ".SpaceEngineers.Tests",
-                    [System.StringComparison]::Ordinal
-                )
+            ) -and
+            $_.BaseName.EndsWith(
+                ".Tests",
+                [System.StringComparison]::Ordinal
+            ) -and
+            -not $_.BaseName.EndsWith(
+                ".SpaceEngineers.Tests",
+                [System.StringComparison]::Ordinal
+            )
         } |
         Sort-Object FullName
 )
 
 if ($testProjects.Count -eq 0) {
-    throw "No portable test projects found for $displayName."
+    throw "No portable test projects found for $packageId."
 }
 
 Write-Output ""
@@ -144,18 +226,24 @@ foreach ($testProject in $testProjects) {
     Write-Output "  $($testProject.BaseName)"
 }
 
-foreach ($testProject in $testProjects) {
-    Write-Output ""
-    Write-Output "Running $($testProject.BaseName)"
+if (-not $SkipTests) {
+    foreach ($testProject in $testProjects) {
+        Write-Output ""
+        Write-Output "Running $($testProject.BaseName)"
 
-    & dotnet test $testProject.FullName `
-        --configuration Release `
-        --nologo `
-        --verbosity minimal
+        & dotnet test $testProject.FullName `
+            --configuration Release `
+            --nologo `
+            --verbosity minimal
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Tests failed: $($testProject.FullName)"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Tests failed: $($testProject.FullName)"
+        }
     }
+}
+else {
+    Write-Output ""
+    Write-Output "Portable tests were skipped by request."
 }
 
 $outputFull = [System.IO.Path]::GetFullPath($OutputDirectory)
@@ -172,18 +260,8 @@ New-Item `
     -Path $outputFull |
     Out-Null
 
-$safeVersion = $version -replace '[^0-9A-Za-z.-]', '_'
-
-$assetBaseName =
-    $displayName +
-    "-v" +
-    $safeVersion +
-    "-r" +
-    $revision +
-    "-source"
-
-$packageRoot = Join-Path $outputFull $assetBaseName
-$librariesRoot = Join-Path $packageRoot "Libraries"
+$stagingRoot = Join-Path $outputFull ".staging"
+$librariesRoot = Join-Path $stagingRoot "Libraries"
 
 New-Item `
     -ItemType Directory `
@@ -193,210 +271,197 @@ New-Item `
 
 $copiedFileCount = 0
 
-foreach ($sourceRelative in $sourceDirectories) {
-    $sourceDirectory = Join-Path $repoRoot (
-        ([string]$sourceRelative).Replace("/", "\")
-    )
+try {
+    foreach ($sourceRelativeValue in $sourceDirectories) {
+        $sourceRelative = [string]$sourceRelativeValue
+        $sourceDirectory = Join-Path `
+            $repoRoot `
+            $sourceRelative.Replace("/", "\")
 
-    if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
-        throw "Source directory not found: $sourceDirectory"
-    }
+        $destinationDirectory = Join-Path `
+            $librariesRoot `
+            (Split-Path -Leaf $sourceDirectory)
 
-    $destinationDirectory = Join-Path $librariesRoot (
-        Split-Path -Leaf $sourceDirectory
-    )
-
-    $sourceFiles = @(
-        Get-ChildItem `
-            -LiteralPath $sourceDirectory `
-            -Recurse `
-            -File `
-            -Filter "*.cs" |
-            Where-Object {
-                $_.FullName -notmatch '[\\/](bin|obj)[\\/]'
-            } |
-            Sort-Object FullName
-    )
-
-    if ($sourceFiles.Count -eq 0) {
-        throw "No C# source files found in: $sourceDirectory"
-    }
-
-    foreach ($sourceFile in $sourceFiles) {
-        $relativePath = $sourceFile.FullName.Substring(
-            $sourceDirectory.Length
-        ).TrimStart(
-            [System.IO.Path]::DirectorySeparatorChar,
-            [System.IO.Path]::AltDirectorySeparatorChar
+        $sourceFiles = @(
+            Get-ChildItem `
+                -LiteralPath $sourceDirectory `
+                -Recurse `
+                -File `
+                -Filter "*.cs" |
+                Where-Object {
+                    $_.FullName -notmatch '[\\/](bin|obj)[\\/]'
+                } |
+                Sort-Object FullName
         )
 
-        $destinationPath = Join-Path `
-            $destinationDirectory `
-            $relativePath
+        if ($sourceFiles.Count -eq 0) {
+            throw "No C# source files found in: $sourceDirectory"
+        }
 
-        $destinationParent = Split-Path -Parent $destinationPath
-
-        New-Item `
-            -ItemType Directory `
-            -Path $destinationParent `
-            -Force |
-            Out-Null
-
-        Copy-Item `
-            -LiteralPath $sourceFile.FullName `
-            -Destination $destinationPath
-
-        $copiedFileCount++
-    }
-}
-
-if ($copiedFileCount -eq 0) {
-    throw "The release bundle contains no source files."
-}
-
-$commit = (& git -C $repoRoot rev-parse HEAD)
-
-if ($LASTEXITCODE -ne 0) {
-    throw "Could not determine the release commit."
-}
-
-$readmeLines = @(
-    "$displayName source-copy release",
-    "",
-    "Library version: $version",
-    "Release revision: $revision",
-    "Tag: $Tag",
-    "Commit: $commit",
-    "",
-    "This archive contains source-copy libraries under Libraries/.",
-    "Copy the required library folders into the consuming mod project.",
-    "",
-    "This archive does not contain runtime DLL dependencies."
-)
-
-Write-Utf8WithoutBom `
-    -Path (Join-Path $packageRoot "README.txt") `
-    -Text (($readmeLines -join [Environment]::NewLine) + [Environment]::NewLine)
-
-$packagedFiles = @(
-    Get-ChildItem `
-        -LiteralPath $packageRoot `
-        -Recurse `
-        -File |
-        Sort-Object FullName |
-        ForEach-Object {
-            $_.FullName.Substring(
-                $packageRoot.Length
+        foreach ($sourceFile in $sourceFiles) {
+            $relativePath = $sourceFile.FullName.Substring(
+                $sourceDirectory.Length
             ).TrimStart(
                 [System.IO.Path]::DirectorySeparatorChar,
                 [System.IO.Path]::AltDirectorySeparatorChar
-            ).Replace("\", "/")
+            )
+
+            $destinationPath = Join-Path `
+                $destinationDirectory `
+                $relativePath
+
+            $destinationParent = Split-Path -Parent $destinationPath
+
+            New-Item `
+                -ItemType Directory `
+                -Path $destinationParent `
+                -Force |
+                Out-Null
+
+            Copy-Item `
+                -LiteralPath $sourceFile.FullName `
+                -Destination $destinationPath
+
+            $copiedFileCount++
         }
-)
+    }
 
-$metadata = [ordered]@{
-    library = $displayName
-    slug = $slug
-    version = $version
-    releaseRevision = $revision
-    tag = $Tag
-    commit = $commit
-    sourceDirectories = @($sourceDirectories)
-    files = @($packagedFiles)
-}
+    if ($copiedFileCount -eq 0) {
+        throw "The component archive contains no source files."
+    }
 
-Write-Utf8WithoutBom `
-    -Path (Join-Path $packageRoot "release.json") `
-    -Text (
-        ($metadata | ConvertTo-Json -Depth 6) +
-        [Environment]::NewLine
+    $assetBaseName = "$packageId-$version"
+    $componentName = "$assetBaseName-component.zip"
+    $manifestName = "$assetBaseName-package.json"
+    $componentPath = Join-Path $outputFull $componentName
+    $manifestPath = Join-Path $outputFull $manifestName
+
+    Compress-Archive `
+        -LiteralPath $librariesRoot `
+        -DestinationPath $componentPath `
+        -CompressionLevel Optimal
+
+    $componentHash = (
+        Get-FileHash `
+            -LiteralPath $componentPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    $packageManifest = [ordered]@{
+        schemaVersion = 1
+        id = $packageId
+        version = $version
+        dependencies = $dependencies
+        folders = @($folders | Sort-Object)
+        component = [ordered]@{
+            asset = $componentName
+            sha256 = $componentHash
+        }
+    }
+
+    Write-Utf8WithoutBom `
+        -Path $manifestPath `
+        -Text (
+            ($packageManifest | ConvertTo-Json -Depth 10) +
+            "`n"
+        )
+
+    $commit = (& git -C $repoRoot rev-parse HEAD)
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not determine the release commit."
+    }
+
+    $notesPath = Join-Path $outputFull "release-notes.md"
+    $notesLines = @(
+        "# $packageId $version",
+        "",
+        "SELibs source package generated from commit ``$commit``.",
+        "",
+        "## Package",
+        "",
+        "- ID: ``$packageId``",
+        "- Version: ``$version``",
+        "- Component: ``$componentName``",
+        "- SHA-256: ``$componentHash``",
+        "",
+        "## Included folders"
     )
 
-$notesPath = Join-Path $outputFull "release-notes.md"
+    foreach ($folder in @($folders | Sort-Object)) {
+        $notesLines += "- ``Libraries/$folder``"
+    }
 
-$notesLines = @(
-    "# $displayName $version (release $revision)",
-    "",
-    "Source-copy bundle generated from commit ``$commit``.",
-    "",
-    "## Validation",
-    "",
-    "Portable test projects executed:"
-)
-
-foreach ($testProject in $testProjects) {
-    $notesLines += "- ``$($testProject.BaseName)``"
-}
-
-$notesLines += @(
-    "",
-    "Space Engineers-specific tests and MDK source-copy validation are not",
-    "executed on GitHub-hosted runners because the required game assemblies",
-    "are not stored in this repository.",
-    "",
-    "## Asset",
-    "",
-    "The ZIP contains the relevant source-copy folders under ``Libraries/``."
-)
-
-Write-Utf8WithoutBom `
-    -Path $notesPath `
-    -Text (($notesLines -join [Environment]::NewLine) + [Environment]::NewLine)
-
-$zipPath = Join-Path $outputFull ($assetBaseName + ".zip")
-
-Compress-Archive `
-    -Path $packageRoot `
-    -DestinationPath $zipPath `
-    -CompressionLevel Optimal
-
-$hash = Get-FileHash `
-    -LiteralPath $zipPath `
-    -Algorithm SHA256
-
-$checksumPath = $zipPath + ".sha256"
-
-Write-Utf8WithoutBom `
-    -Path $checksumPath `
-    -Text (
-        $hash.Hash.ToLowerInvariant() +
-        "  " +
-        (Split-Path -Leaf $zipPath) +
-        [Environment]::NewLine
+    $notesLines += @(
+        "",
+        "## Exact dependencies"
     )
 
-$isPrerelease = $version.Contains("-")
+    if ($dependencies.Count -eq 0) {
+        $notesLines += "- None"
+    }
+    else {
+        foreach ($dependencyId in @($dependencies.Keys | Sort-Object)) {
+            $notesLines += (
+                "- ``$dependencyId`` ``$($dependencies[$dependencyId])``"
+            )
+        }
+    }
 
-$releaseTitle =
-    $displayName +
-    " " +
-    $version +
-    " (release " +
-    $revision +
-    ")"
+    $notesLines += @(
+        "",
+        "## Validation",
+        "",
+        "Portable test projects:"
+    )
 
-Write-GitHubOutput `
-    -Name "asset_path" `
-    -Value $zipPath
+    foreach ($testProject in $testProjects) {
+        $notesLines += "- ``$($testProject.BaseName)``"
+    }
 
-Write-GitHubOutput `
-    -Name "checksum_path" `
-    -Value $checksumPath
+    $notesLines += @(
+        "",
+        "Space Engineers-specific tests and MDK source-copy validation are not",
+        "executed on GitHub-hosted runners because the required game assemblies",
+        "are not stored in this repository."
+    )
 
-Write-GitHubOutput `
-    -Name "release_notes_path" `
-    -Value $notesPath
+    Write-Utf8WithoutBom `
+        -Path $notesPath `
+        -Text (($notesLines -join "`n") + "`n")
 
-Write-GitHubOutput `
-    -Name "release_title" `
-    -Value $releaseTitle
+    Write-GitHubOutput `
+        -Name "component_path" `
+        -Value $componentPath
 
-Write-GitHubOutput `
-    -Name "is_prerelease" `
-    -Value $isPrerelease.ToString().ToLowerInvariant()
+    Write-GitHubOutput `
+        -Name "manifest_path" `
+        -Value $manifestPath
 
-Write-Output ""
-Write-Output "Release bundle created:"
-Write-Output "  ZIP: $zipPath"
-Write-Output "  SHA256: $checksumPath"
-Write-Output "  Source files: $copiedFileCount"
+    Write-GitHubOutput `
+        -Name "release_notes_path" `
+        -Value $notesPath
+
+    Write-GitHubOutput `
+        -Name "release_title" `
+        -Value "$packageId $version"
+
+    Write-GitHubOutput `
+        -Name "is_prerelease" `
+        -Value "false"
+
+    Write-Output ""
+    Write-Output "SELibs release assets created:"
+    Write-Output "  Manifest: $manifestPath"
+    Write-Output "  Component: $componentPath"
+    Write-Output "  SHA256: $componentHash"
+    Write-Output "  Source files: $copiedFileCount"
+}
+finally {
+    if (Test-Path -LiteralPath $stagingRoot) {
+        Remove-Item `
+            -LiteralPath $stagingRoot `
+            -Recurse `
+            -Force
+    }
+}
