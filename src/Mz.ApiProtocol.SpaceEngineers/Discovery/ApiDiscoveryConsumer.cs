@@ -365,12 +365,6 @@ namespace Mz.ApiProtocol.SpaceEngineers
                     return;
                 }
 
-                //TODO: ehhhh...
-                var endpointCopy = new Dictionary<string, Delegate>(StringComparer.Ordinal);
-
-                foreach (var pair in announcement.Endpoints)
-                    endpointCopy.Add(pair.Key, pair.Value);
-
                 var connection = new ApiConnection(announcement);
 
                 Connection = connection;
