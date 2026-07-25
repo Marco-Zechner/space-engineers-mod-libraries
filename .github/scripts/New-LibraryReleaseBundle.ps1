@@ -51,52 +51,11 @@ function Write-GitHubOutput {
     )
 }
 
-function ConvertTo-DependencyMap {
-    param(
-        [Parameter(Mandatory = $true)]
-        [object]$Dependencies
-    )
-
-    $result = [ordered]@{}
-
-    foreach (
-        $property in @(
-            $Dependencies.PSObject.Properties |
-                Sort-Object Name
-        )
-    ) {
-        $packageId = [string]$property.Name
-        $version = [string]$property.Value
-
-        if ($packageId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
-            throw "Dependency package ID '$packageId' is invalid."
-        }
-
-        if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
-            throw (
-                "Dependency '$packageId' must use an exact numeric " +
-                "major.minor.patch version."
-            )
-        }
-
-        $result[$packageId] = $version
-    }
-
-    return $result
-}
-
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $scriptDirectory "..\..")
 )
-
-$configurationPath = Join-Path `
-    $repoRoot `
-    ".github\release-libraries.json"
-
-if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
-    throw "Release configuration not found: $configurationPath"
-}
+. (Join-Path $scriptDirectory "LibraryReleaseMetadata.ps1")
 
 $tagPattern = (
     '^(?<slug>[a-z0-9][a-z0-9-]*)/' +
@@ -114,55 +73,45 @@ if ($Tag -notmatch $tagPattern) {
 $slug = $Matches["slug"].ToLowerInvariant()
 $version = $Matches["version"]
 
-$configuration = Get-Content `
-    -LiteralPath $configurationPath `
-    -Raw |
-    ConvertFrom-Json
+$libraries = @(Get-ReleaseLibraries -RepoRoot $repoRoot)
 
-$libraryProperty = @(
-    $configuration.PSObject.Properties |
+$libraryMatches = @(
+    $libraries |
         Where-Object {
-            $_.Name.Equals(
+            $_.Slug.Equals(
                 $slug,
                 [System.StringComparison]::OrdinalIgnoreCase
             )
         }
 )
 
-if ($libraryProperty.Count -ne 1) {
-    throw "Library '$slug' is not declared exactly once."
+if ($libraryMatches.Count -ne 1) {
+    throw "Library '$slug' was not discovered exactly once."
 }
 
-$library = $libraryProperty[0].Value
-$packageId = [string]$library.packageId
-$testProjectPrefix = [string]$library.testProjectPrefix
+$library = $libraryMatches[0]
+$packageId = [string]$library.PackageId
+$sourceDirectories = @($library.SourceDirectories)
 
-if ($packageId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
-    throw "Library '$slug' has invalid packageId '$packageId'."
+if ($version -ne [string]$library.Version) {
+    throw (
+        "Release tag version '$version' does not match " +
+        "LibraryVersionFile version '$($library.Version)' for " +
+        "'$packageId'."
+    )
 }
 
-if ([string]::IsNullOrWhiteSpace($testProjectPrefix)) {
-    throw "Library '$slug' has no testProjectPrefix."
-}
-
-$sourceDirectories = @($library.sourceDirectories)
-
-if ($sourceDirectories.Count -eq 0) {
-    throw "Library '$slug' has no source directories."
-}
-
-if ($null -eq $library.dependencies) {
-    throw "Library '$slug' must declare a dependencies object."
-}
-
-$dependencies = ConvertTo-DependencyMap `
-    -Dependencies $library.dependencies
+$dependencies = Resolve-LibraryDependencies `
+    -Library $library `
+    -Libraries $libraries `
+    -RepoRoot $repoRoot
 
 $folders = New-Object System.Collections.ArrayList
 $folderClaims = @{}
 
 foreach ($sourceRelativeValue in $sourceDirectories) {
     $sourceRelative = [string]$sourceRelativeValue
+
     $sourceDirectory = Join-Path `
         $repoRoot `
         $sourceRelative.Replace("/", "\")
@@ -186,33 +135,14 @@ foreach ($sourceRelativeValue in $sourceDirectories) {
     $folderClaims[$key] = $true
     [void]$folders.Add($folder)
 }
-
 Write-Output "Package: $packageId"
 Write-Output "Version: $version"
 Write-Output "Tag: $Tag"
 
-$testRoot = Join-Path $repoRoot "tests"
 $testProjects = @(
-    Get-ChildItem `
-        -LiteralPath $testRoot `
-        -Recurse `
-        -File `
-        -Filter "*.csproj" |
-        Where-Object {
-            $_.BaseName.StartsWith(
-                $testProjectPrefix,
-                [System.StringComparison]::Ordinal
-            ) -and
-            $_.BaseName.EndsWith(
-                ".Tests",
-                [System.StringComparison]::Ordinal
-            ) -and
-            -not $_.BaseName.EndsWith(
-                ".SpaceEngineers.Tests",
-                [System.StringComparison]::Ordinal
-            )
-        } |
-        Sort-Object FullName
+    Get-LibraryPortableTestProjects `
+        -Library $library `
+        -RepoRoot $repoRoot
 )
 
 if ($testProjects.Count -eq 0) {

@@ -3,10 +3,7 @@ name: Library Releases
 on:
   push:
     tags:
-      - "apiprotocol/v*"
-      - "logging/v*"
-      - "networking/v*"
-      - "semanticversioning/v*"
+      - "*/v*"
 
 permissions:
   contents: write

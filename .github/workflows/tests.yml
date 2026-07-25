@@ -7,7 +7,6 @@ on:
     paths:
       - "src/**"
       - "tests/**"
-      - ".github/release-libraries.json"
       - ".github/scripts/**"
       - ".github/tests/**"
       - ".github/workflows/**"
@@ -18,7 +17,6 @@ on:
     paths:
       - "src/**"
       - "tests/**"
-      - ".github/release-libraries.json"
       - ".github/scripts/**"
       - ".github/tests/**"
       - ".github/workflows/**"
@@ -42,10 +40,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
       - name: Test SELibs release assets
         shell: powershell
         run: |
           & ".\.github\tests\New-LibraryReleaseBundle.Tests.ps1"
+      - name: Test automatic package discovery
+        shell: powershell
+        run: |
+          & ".\.github\tests\LibraryReleaseMetadata.Tests.ps1"
 
   discover:
     name: Discover test projects
@@ -58,33 +65,48 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
       - name: Discover portable tests
         id: projects
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
 
-          $allProjects = @(
-              Get-ChildItem `
-                  -Path "tests" `
-                  -Recurse `
-                  -File `
-                  -Filter "*.csproj" |
-                  Where-Object {
-                      $_.BaseName -like "*.Tests"
-                  } |
+          $repoRoot = [System.IO.Path]::GetFullPath(".")
+
+          . ".\.github\scripts\LibraryReleaseMetadata.ps1"
+
+          $libraries = @(
+              Get-ReleaseLibraries -RepoRoot $repoRoot
+          )
+
+          $projectMap = @{}
+
+          foreach ($library in $libraries) {
+              foreach (
+                  $project in @(
+                      Get-LibraryPortableTestProjects `
+                          -Library $library `
+                          -RepoRoot $repoRoot
+                  )
+              ) {
+                  $projectMap[
+                      $project.FullName.ToLowerInvariant()
+                  ] = $project
+              }
+          }
+
+          $projects = @(
+              $projectMap.Values |
                   Sort-Object FullName
           )
 
-          $projects = @(
-              $allProjects |
-              Where-Object {
-                  $_.BaseName -notlike "*.SpaceEngineers.Tests"
-              }
-          )
-
           if ($projects.Count -eq 0) {
-              throw "No portable test projects were found."
+              throw "No package-root test projects were found."
           }
 
           $include = foreach ($project in $projects) {
@@ -93,7 +115,7 @@ jobs:
                   $project.FullName
               ).Replace("\", "/")
 
-              $displayName = $project.BaseName -replace "\.Tests$", ""
+              $displayName = $project.BaseName
 
               $id = (
                   $displayName.ToLowerInvariant() `
@@ -113,26 +135,11 @@ jobs:
 
           "matrix=$matrix" >> $env:GITHUB_OUTPUT
 
-          Write-Host "Portable test projects:"
+          Write-Host "Package-root test projects:"
+
           $projects | ForEach-Object {
               Write-Host "  $($_.FullName)"
           }
-
-          $skipped = @(
-              $allProjects |
-              Where-Object {
-                  $_.BaseName -like "*.SpaceEngineers.Tests"
-              }
-          )
-
-          if ($skipped.Count -gt 0) {
-              Write-Host ""
-              Write-Host "Skipped Space Engineers test projects:"
-              $skipped | ForEach-Object {
-                  Write-Host "  $($_.FullName)"
-              }
-          }
-
   test:
     name: ${{ matrix.name }}
     needs: discover

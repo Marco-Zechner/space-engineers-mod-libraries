@@ -35,22 +35,24 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// failures are captured in <see cref="LastError"/> and do not escape through
         /// the shared mod-message handler.
         /// </remarks>
-        public event Action<ApiConsumerObservedEventArgs>
-            ConsumerObserved;
+        public event Action<ApiConsumerObservedEventArgs> ConsumerObserved;
         
         /// <summary>
         /// Gets the mod providing the API.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public ApiModIdentity Provider { get; }
 
         /// <summary>
         /// Gets the API identity and version exposed by this provider.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public ApiDescriptor Descriptor { get; }
 
         /// <summary>
         /// Gets the identity of this provider instance.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public Guid ProviderInstanceId { get; }
 
         /// <summary>
@@ -78,21 +80,8 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <param name="endpoints">
         /// The endpoint delegates exposed by the provider.
         /// </param>
-        public ApiDiscoveryProvider(
-            IModMessageBus messageBus,
-            ApiModIdentity provider,
-            ApiDescriptor descriptor,
-            IDictionary<string, Delegate> endpoints
-        )
-            : this(
-                messageBus,
-                provider,
-                descriptor,
-                Guid.NewGuid(),
-                endpoints
-            )
-        {
-        }
+        public ApiDiscoveryProvider(IModMessageBus messageBus, ApiModIdentity provider, ApiDescriptor descriptor, IDictionary<string, Delegate> endpoints)
+            : this(messageBus, provider, descriptor, Guid.NewGuid(), endpoints) { }
 
         /// <summary>
         /// Creates a provider with an explicit provider-instance identity.
@@ -118,53 +107,25 @@ namespace Mz.ApiProtocol.SpaceEngineers
         /// <exception cref="ArgumentException">
         /// Thrown when the provider-instance ID or an endpoint is invalid.
         /// </exception>
-        public ApiDiscoveryProvider(
-            IModMessageBus messageBus,
-            ApiModIdentity provider,
-            ApiDescriptor descriptor,
-            Guid providerInstanceId,
-            IDictionary<string, Delegate> endpoints
-        )
+        public ApiDiscoveryProvider(IModMessageBus messageBus, ApiModIdentity provider, ApiDescriptor descriptor, Guid providerInstanceId, IDictionary<string, Delegate> endpoints)
         {
             if (messageBus == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(messageBus)
-                );
-            }
+                throw new ArgumentNullException(nameof(messageBus));
 
             if (providerInstanceId == Guid.Empty)
-            {
-                throw new ArgumentException(
-                    "A provider requires a non-empty instance identifier.",
-                    nameof(providerInstanceId)
-                );
-            }
+                throw new ArgumentException("A provider requires a non-empty instance identifier.", nameof(providerInstanceId));
 
-            var validated = new ApiAnnouncement(
-                provider,
-                descriptor,
-                providerInstanceId,
-                Guid.Empty,
-                endpoints
-            );
+            var validated = new ApiAnnouncement(provider, descriptor, providerInstanceId, Guid.Empty, endpoints);
 
             _messageBus = messageBus;
             Provider = validated.Provider;
             Descriptor = validated.Descriptor;
             ProviderInstanceId = providerInstanceId;
 
-            _endpoints = new Dictionary<string, Delegate>(
-                StringComparer.Ordinal
-            );
+            _endpoints = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 
-            foreach (
-                KeyValuePair<string, Delegate> pair
-                in validated.Endpoints
-            )
-            {
+            foreach (var pair in validated.Endpoints)
                 _endpoints.Add(pair.Key, pair.Value);
-            }
         }
 
         /// <summary>
@@ -180,11 +141,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
             if (IsStarted)
                 return;
 
-            var subscription = new ModMessageSubscription(
-                _messageBus,
-                ApiProtocolChannels.Discovery,
-                HandleMessage
-            );
+            var subscription = new ModMessageSubscription(_messageBus, ApiProtocolChannels.Discovery, HandleMessage);
 
             _subscription = subscription;
             _withdrawalSent = false;
@@ -217,21 +174,11 @@ namespace Mz.ApiProtocol.SpaceEngineers
             ThrowIfDisposed();
 
             if (!IsStarted)
-            {
-                throw new InvalidOperationException(
-                    "The API discovery provider has not been started."
-                );
-            }
+                throw new InvalidOperationException("The API discovery provider has not been started.");
 
             _messageBus.Send(
                 ApiProtocolChannels.Discovery,
-                ApiDiscoveryWireProtocol.CreateAnnouncement(
-                    Provider,
-                    Descriptor,
-                    ProviderInstanceId,
-                    Guid.Empty,
-                    _endpoints
-                )
+                ApiDiscoveryWireProtocol.CreateAnnouncement(Provider, Descriptor, ProviderInstanceId, Guid.Empty, _endpoints)
             );
 
             LastError = null;
@@ -257,11 +204,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
                 {
                     _messageBus.Send(
                         ApiProtocolChannels.Discovery,
-                        ApiDiscoveryWireProtocol.CreateWithdrawal(
-                            Provider,
-                            Descriptor.ApiId,
-                            ProviderInstanceId
-                        )
+                        ApiDiscoveryWireProtocol.CreateWithdrawal(Provider, Descriptor.ApiId, ProviderInstanceId)
                     );
 
                     _withdrawalSent = true;
@@ -311,43 +254,22 @@ namespace Mz.ApiProtocol.SpaceEngineers
             {
                 ApiWireEnvelope envelope;
 
-                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(
-                    payload,
-                    out envelope
-                ))
-                {
+                if (!ApiDiscoveryWireProtocol.TryParseEnvelope(payload, out envelope))
                     return;
-                }
 
-                if (envelope.MessageKind
-                    != ApiWireMessageKind.Request)
-                {
+                if (envelope.MessageKind != ApiWireMessageKind.Request)
                     return;
-                }
 
-                if (!string.Equals(
-                    Descriptor.ApiId,
-                    envelope.ApiId,
-                    StringComparison.Ordinal
-                ))
-                {
+                if (!string.Equals(Descriptor.ApiId, envelope.ApiId, StringComparison.Ordinal))
                     return;
-                }
 
-                ApiWireCompatibilityStatus wireCompatibility =
-                    ApiProtocolInfo.EvaluateWireProtocol(
-                        envelope.WireProtocolVersion
-                    );
+                ApiWireCompatibilityStatus wireCompatibility = ApiProtocolInfo.EvaluateWireProtocol(envelope.WireProtocolVersion);
 
-                if (wireCompatibility
-                    != ApiWireCompatibilityStatus.Compatible)
+                if (wireCompatibility != ApiWireCompatibilityStatus.Compatible)
                 {
                     LastError = RaiseEvent(
                         WireIncompatibilityObserved,
-                        new ApiWireIncompatibilityEventArgs(
-                            envelope,
-                            wireCompatibility
-                        )
+                        new ApiWireIncompatibilityEventArgs(envelope, wireCompatibility)
                     );
 
                     return;
@@ -355,29 +277,17 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
                 ApiDiscoveryRequest request;
 
-                if (!ApiDiscoveryWireProtocol.TryParseRequest(
-                    payload,
-                    out request
-                ))
-                {
+                if (!ApiDiscoveryWireProtocol.TryParseRequest(payload, out request))
                     return;
-                }
 
-                ApiCompatibilityStatus apiCompatibility =
-                    request.Dependency.Requirement.Evaluate(
-                        Descriptor
-                    );
+                ApiCompatibilityStatus apiCompatibility = request.Dependency.Requirement.Evaluate(Descriptor);
 
-                Exception observationError = RaiseEvent(
+                var observationError = RaiseEvent(
                     ConsumerObserved,
-                    new ApiConsumerObservedEventArgs(
-                        request,
-                        apiCompatibility
-                    )
+                    new ApiConsumerObservedEventArgs(request, apiCompatibility)
                 );
 
-                if (apiCompatibility
-                    != ApiCompatibilityStatus.Compatible)
+                if (apiCompatibility != ApiCompatibilityStatus.Compatible)
                 {
                     LastError = observationError;
                     return;
@@ -385,13 +295,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
 
                 _messageBus.Send(
                     ApiProtocolChannels.Discovery,
-                    ApiDiscoveryWireProtocol.CreateAnnouncement(
-                        Provider,
-                        Descriptor,
-                        ProviderInstanceId,
-                        request.CorrelationId,
-                        _endpoints
-                    )
+                    ApiDiscoveryWireProtocol.CreateAnnouncement(Provider, Descriptor, ProviderInstanceId, request.CorrelationId, _endpoints)
                 );
 
                 LastError = observationError;
@@ -402,24 +306,19 @@ namespace Mz.ApiProtocol.SpaceEngineers
             }
         }
         
-        private Exception RaiseEvent<TEventArgs>(
-            Action<TEventArgs> handler,
-            TEventArgs eventArgs
-        )
+        private Exception RaiseEvent<TEventArgs>(Action<TEventArgs> handler, TEventArgs eventArgs)
         {
             if (handler == null)
                 return null;
 
             Exception firstError = null;
-            Delegate[] subscribers = handler.GetInvocationList();
+            var subscribers = handler.GetInvocationList();
 
             foreach (var subscriberItem in subscribers)
             {
                 try
                 {
-                    var subscriber =
-                        (Action<TEventArgs>)subscriberItem;
-
+                    var subscriber = (Action<TEventArgs>)subscriberItem;
                     subscriber(eventArgs);
                 }
                 catch (Exception exception)
@@ -435,11 +334,7 @@ namespace Mz.ApiProtocol.SpaceEngineers
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
-            {
-                throw new InvalidOperationException(
-                    "The API discovery provider has been disposed."
-                );
-            }
+                throw new InvalidOperationException("The API discovery provider has been disposed.");
         }
     }
 }
