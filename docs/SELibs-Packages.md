@@ -46,3 +46,34 @@ The component ZIP has exactly one root:
 
 The package manifest records the package ID, numeric version, exact
 dependencies, owned folders, component filename, and SHA-256 checksum.
+
+## Automatic package discovery
+
+Release tooling does not maintain a central list of package names or source
+folders.
+
+Every `LibraryVersionFile.cs` beneath `src` defines one package root:
+
+- the file namespace is the SELibs package ID;
+- `Major`, `Minor`, and `Patch` define the package version;
+- the single project beside the version file is the package root;
+- projects without their own version file join a package when their root
+  namespace matches that package and they reference one of its projects;
+- portable release tests are discovered from test projects that directly
+  reference the package's versioned root project.
+
+The final namespace segment, converted to lowercase, is the tag slug. For
+example, namespace `Mz.ApiProtocol` uses tags such as
+`apiprotocol/v0.2.0`.
+
+Normal project references to another discovered package become exact package
+dependencies. Evaluated source files outside the package's owned source
+folders are matched against folder ownership in `selibs.lock.json`.
+
+Only the releasing package's owned source folders are copied into its component
+archive. Dependency source is never embedded. Unmapped external source causes
+publishing to fail rather than guessing a package identity.
+
+Adding another library therefore requires a project with an adjacent
+`LibraryVersionFile.cs`; no release configuration entry or workflow tag prefix
+is added manually.
