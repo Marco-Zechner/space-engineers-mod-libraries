@@ -43,51 +43,26 @@ namespace Mz.SemanticVersioning
                 throw new ArgumentNullException(nameof(entries));
 
             if (entries.Length == 0)
-            {
-                throw new ArgumentException(
-                    "At least one changelog entry is required.",
-                    nameof(entries)
-                );
-            }
+                throw new ArgumentException("At least one changelog entry is required.", nameof(entries));
 
             CurrentVersion = SemanticVersion.Parse(currentVersion);
             _entries = (ChangelogEntry[])entries.Clone();
 
             SemanticVersion previousVersion = null;
 
-            for (var index = 0; index < _entries.Length; index++)
+            foreach (var entry in _entries)
             {
-                var entry = _entries[index];
-
                 if (entry == null)
-                {
-                    throw new ArgumentException(
-                        "Changelog entries cannot contain null.",
-                        nameof(entries)
-                    );
-                }
+                    throw new ArgumentException("Changelog entries cannot contain null.", nameof(entries));
 
-                if (
-                    previousVersion != null &&
-                    entry.Version >= previousVersion
-                )
-                {
-                    throw new ArgumentException(
-                        "Changelog entries must be ordered from newest to oldest with unique versions.",
-                        nameof(entries)
-                    );
-                }
+                if (previousVersion != null && entry.Version >= previousVersion)
+                    throw new ArgumentException("Changelog entries must be ordered from newest to oldest with unique versions.", nameof(entries));
 
                 previousVersion = entry.Version;
             }
 
             if (_entries[0].Version != CurrentVersion)
-            {
-                throw new ArgumentException(
-                    "The first changelog entry must match the current package version.",
-                    nameof(entries)
-                );
-            }
+                throw new ArgumentException("The first changelog entry must match the current package version.", nameof(entries));
         }
     }
 }

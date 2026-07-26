@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Mz.SemanticVersioning
 {
@@ -37,23 +38,12 @@ namespace Mz.SemanticVersioning
                 throw new ArgumentNullException(nameof(changes));
 
             if (changes.Length == 0)
-                throw new ArgumentException(
-                    "At least one changelog change is required.",
-                    nameof(changes)
-                );
+                throw new ArgumentException("At least one changelog change is required.", nameof(changes));
 
             var copiedChanges = (string[])changes.Clone();
 
-            for (var index = 0; index < copiedChanges.Length; index++)
-            {
-                if (string.IsNullOrWhiteSpace(copiedChanges[index]))
-                {
-                    throw new ArgumentException(
-                        "Changelog changes cannot be empty.",
-                        nameof(changes)
-                    );
-                }
-            }
+            if (copiedChanges.Any(string.IsNullOrWhiteSpace))
+                throw new ArgumentException("Changelog changes cannot be empty.", nameof(changes));
 
             Version = SemanticVersion.Parse(version);
             _changes = copiedChanges;
