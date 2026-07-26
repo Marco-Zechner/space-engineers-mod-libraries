@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mz.SemanticVersioning;
 using Xunit;
 
@@ -10,7 +10,7 @@ namespace Mz.ApiProtocol.Tests
         public void CurrentVersions_AreDefined()
         {
             Assert.Equal(
-                new SemanticVersion(0, 2, 0),
+                new SemanticVersion(0, 2, 1),
                 ApiProtocolInfo.LibraryVersion
             );
 

@@ -111,18 +111,18 @@ try {
     $semanticOutput = Join-Path $testRoot "semantic"
 
     & $bundleScript `
-        -Tag "semanticversioning/v0.1.0" `
+        -Tag "semanticversioning/v0.1.1" `
         -OutputDirectory $semanticOutput `
         -SkipTests |
         Out-Null
 
     $semanticManifestPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.0-package.json"
+        "Mz.SemanticVersioning-0.1.1-package.json"
 
     $semanticComponentPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.0-component.zip"
+        "Mz.SemanticVersioning-0.1.1-component.zip"
 
     Assert-True `
         -Condition (
@@ -156,7 +156,7 @@ try {
         -Message "SemanticVersioning has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.1.0" `
+        -Expected "0.1.1" `
         -Actual ([string]$semanticManifest.version) `
         -Message "SemanticVersioning has the wrong version."
 
@@ -220,18 +220,18 @@ try {
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
-        -Tag "apiprotocol/v0.2.0" `
+        -Tag "apiprotocol/v0.2.1" `
         -OutputDirectory $apiOutput `
         -SkipTests |
         Out-Null
 
     $apiManifestPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.0-package.json"
+        "Mz.ApiProtocol-0.2.1-package.json"
 
     $apiComponentPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.0-component.zip"
+        "Mz.ApiProtocol-0.2.1-component.zip"
 
     $apiManifest = Get-Content `
         -LiteralPath $apiManifestPath `
@@ -244,12 +244,12 @@ try {
         -Message "ApiProtocol has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.2.0" `
+        -Expected "0.2.1" `
         -Actual ([string]$apiManifest.version) `
         -Message "ApiProtocol has the wrong package version."
 
     Assert-Equal `
-        -Expected "0.1.0" `
+        -Expected "0.1.1" `
         -Actual (
             [string]$apiManifest.dependencies."Mz.SemanticVersioning"
         ) `
@@ -346,7 +346,7 @@ try {
     $loggingOutput = Join-Path $testRoot "logging"
 
     & $bundleScript `
-        -Tag "logging/v0.1.0" `
+        -Tag "logging/v0.1.1" `
         -OutputDirectory $loggingOutput `
         -SkipTests |
         Out-Null
@@ -356,7 +356,7 @@ try {
             -Path (
                 Join-Path `
                     $loggingOutput `
-                    "Mz.Logging-0.1.0-component.zip"
+                    "Mz.Logging-0.1.1-component.zip"
             )
     )
 
@@ -370,7 +370,7 @@ try {
     $networkingOutput = Join-Path $testRoot "networking"
 
     & $bundleScript `
-        -Tag "networking/v0.1.0" `
+        -Tag "networking/v0.1.1" `
         -OutputDirectory $networkingOutput `
         -SkipTests |
         Out-Null
@@ -380,7 +380,7 @@ try {
             -Path (
                 Join-Path `
                     $networkingOutput `
-                    "Mz.Networking-0.1.0-component.zip"
+                    "Mz.Networking-0.1.1-component.zip"
             )
     )
 

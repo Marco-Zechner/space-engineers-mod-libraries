@@ -18,7 +18,7 @@ namespace Mz.Networking
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 0;
+        public const int Patch = 1;
 
         /// <summary>
         /// Gets the version string.
