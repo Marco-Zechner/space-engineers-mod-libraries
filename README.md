@@ -11,7 +11,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | Package | Latest stable release | Documentation |
 | --- | --- | --- |
 | `Mz.ApiProtocol` | Not published | [Guide](src/Mz.ApiProtocol.Core/README.md) |
-| `Mz.Logging` | Not published | [Guide](src/Mz.Logging.Core/README.md) |
+| `Mz.Logging` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1) | [Guide](src/Mz.Logging.Core/README.md) |
 | `Mz.Networking` | Not published | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | Not published | [Guide](src/Mz.SemanticVersioning/README.md) |
 
@@ -23,7 +23,10 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.Logging
 
-- No stable release has been published.
+- Latest stable release: [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1)
+- Added a complete package usage guide and installation examples.
+- Added the shared Mz.SemanticVersioning dependency.
+- Adopted the shared SemanticVersioning changelog model.
 
 ### Mz.Networking
 
