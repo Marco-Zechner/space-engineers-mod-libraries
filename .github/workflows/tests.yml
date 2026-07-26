@@ -53,6 +53,10 @@ jobs:
         shell: powershell
         run: |
           & ".\.github\tests\LibraryReleaseMetadata.Tests.ps1"
+      - name: Test generated repository README
+        shell: powershell
+        run: |
+          & ".\.github\tests\New-RepositoryReadme.Tests.ps1"
 
   discover:
     name: Discover test projects
