@@ -54,9 +54,19 @@ jobs:
 
           git add -- README.md
 
-          if (git diff --cached --quiet) {
+          git diff --cached --quiet
+          $diffExitCode = $LASTEXITCODE
+
+          if ($diffExitCode -eq 0) {
               Write-Host "README.md is already current."
               exit 0
+          }
+
+          if ($diffExitCode -ne 1) {
+              throw (
+                  "Could not inspect the staged README.md diff. " +
+                  "Git exited with code $diffExitCode."
+              )
           }
 
           git commit -m "docs: update published package catalog"
