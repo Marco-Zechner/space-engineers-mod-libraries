@@ -1,7 +1,7 @@
 # Mz.SemanticVersioning
 
-`Mz.SemanticVersioning` provides a small immutable semantic-version value
-object for Space Engineers mod source projects.
+`Mz.SemanticVersioning` provides immutable semantic-version and package
+changelog value objects for Space Engineers mod source projects.
 
 The current implementation supports exact numeric `major.minor.patch`
 versions. It intentionally does not support prerelease labels or build
@@ -19,7 +19,7 @@ After installing SELibs, run these commands from the root of the mod project:
 
 ```shell
     selibs init
-    selibs add Mz.SemanticVersioning@0.1.0
+    selibs add Mz.SemanticVersioning@0.1.1
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
@@ -89,6 +89,42 @@ Equality compares the three numeric components:
 ```csharp
     bool same = SemanticVersion.Parse("1.2.3") == new SemanticVersion(1, 2, 3);
 ```
+
+## Define package changelogs
+
+`ChangelogEntry` stores one semantic version and a copied, immutable list of
+changes. `Changelog` validates that the complete history is unique, ordered
+from newest to oldest, and begins with the current package version:
+
+```csharp
+    var changelog = new Changelog(
+        "1.2.0",
+        new[]
+        {
+            new ChangelogEntry(
+                "1.2.0",
+                new[]
+                {
+                    "Added shared package metadata."
+                }
+            ),
+            new ChangelogEntry(
+                "1.1.0",
+                new[]
+                {
+                    "Published the previous release."
+                }
+            )
+        }
+    );
+
+    SemanticVersion currentVersion = changelog.CurrentVersion;
+    ChangelogEntry currentChanges = changelog.Current;
+    ChangelogEntry[] completeHistory = changelog.Entries;
+```
+
+Returned entry and change arrays are copies. Modifying those arrays does not
+modify the stored changelog.
 
 ## Package version
 

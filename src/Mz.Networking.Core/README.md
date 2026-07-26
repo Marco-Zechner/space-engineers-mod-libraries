@@ -10,6 +10,9 @@ The package contains:
 - `Mz.Networking.SpaceEngineers`  -  secure-message serialization, transport,
   and session lifecycle integration.
 
+`Mz.SemanticVersioning` is an exact package dependency shared by all
+library packages in this repository.
+
 ## Install
 
 ### Install with SELibs
@@ -22,13 +25,14 @@ After installing SELibs, run these commands from the root of the mod project:
 
 ```shell
     selibs init
-    selibs add Mz.Networking@0.1.0
+    selibs add Mz.Networking@0.1.1
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
 
-SELibs installs both Networking source components, records their checksums, and
-tracks the exact package version. Inspect that state with:
+SELibs installs both Networking source components and the exact
+`Mz.SemanticVersioning` dependency. It records their checksums and selected
+versions. Inspect that state with:
 
 ```shell
     selibs status
@@ -40,6 +44,7 @@ To install without SELibs, use the source from the matching release tag in this
 repository and copy both complete folders:
 
 ```text
+    src/Mz.SemanticVersioning
     src/Mz.Networking.Core
     src/Mz.Networking.SpaceEngineers
 ```
@@ -47,13 +52,15 @@ repository and copy both complete folders:
 Place them as sibling folders under the mod's script library directory:
 
 ```text
+    Data/Scripts/ExampleMod/Libraries/Mz.SemanticVersioning
     Data/Scripts/ExampleMod/Libraries/Mz.Networking.Core
     Data/Scripts/ExampleMod/Libraries/Mz.Networking.SpaceEngineers
 ```
 
-Compile all contained `.cs` files as part of the mod. The Space Engineers
-component depends on the Core component, so both folders must come from the
-same package release.
+Compile all contained `.cs` files as part of the mod. Networking `0.1.1`
+requires `Mz.SemanticVersioning` `0.1.1`. The Space Engineers component also
+depends on the Core component, so use the exact dependency versions declared
+by the selected package manifest.
 
 ## Create a Space Engineers network session
 
