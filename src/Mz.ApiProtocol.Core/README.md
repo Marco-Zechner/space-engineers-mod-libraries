@@ -13,6 +13,9 @@ The package contains:
 `Mz.SemanticVersioning` is installed automatically as an exact transitive
 dependency.
 
+For complete provider and consumer session components, see the
+[copy-paste example](Guide.md).
+
 ## Install
 
 ### Install with SELibs
@@ -25,7 +28,7 @@ After installing SELibs, run these commands from the root of the mod project:
 
 ```shell
     selibs init
-    selibs add Mz.ApiProtocol@0.2.0
+    selibs add Mz.ApiProtocol@0.2.1
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
@@ -57,7 +60,7 @@ Place them as sibling folders under the mod's script library directory:
     Data/Scripts/ExampleMod/Libraries/Mz.SemanticVersioning
 ```
 
-For `Mz.ApiProtocol` 0.2.0, use `Mz.SemanticVersioning` 0.1.0. Compile all
+For `Mz.ApiProtocol` 0.2.1, use `Mz.SemanticVersioning` 0.1.1. Compile all
 contained `.cs` files as part of the mod. Do not substitute a different
 dependency version unless the package manifest for the selected ApiProtocol
 release explicitly requires it.

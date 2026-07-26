@@ -15,6 +15,8 @@
 
     <ItemGroup>
         <Compile
+            Include="Examples\*.cs" />
+        <Compile
             Include="..\..\src\Mz.SemanticVersioning\*.cs"
             Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
         <Compile

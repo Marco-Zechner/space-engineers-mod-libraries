@@ -13,6 +13,9 @@ The package contains:
 `Mz.SemanticVersioning` is an exact package dependency shared by all
 library packages in this repository.
 
+For complete server and client session components, see the
+[copy-paste example](Guide.md).
+
 ## Install
 
 ### Install with SELibs
