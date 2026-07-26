@@ -391,6 +391,42 @@ try {
         ) `
         -Message "Networking README is missing from its archive."
 
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.Core/" +
+                "Endpoints/NetworkEndpoint.cs"
+            )
+        ) `
+        -Message "Networking Core endpoint layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.Core/" +
+                "Dispatching/NetworkMessageDispatcher.cs"
+            )
+        ) `
+        -Message "Networking Core dispatching layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.SpaceEngineers/" +
+                "Gateway/SpaceEngineersNetworkGateway.cs"
+            )
+        ) `
+        -Message "Networking gateway layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.SpaceEngineers/" +
+                "Wire/NetworkEnvelopeWire.cs"
+            )
+        ) `
+        -Message "Networking wire layout was not preserved."
+
     Assert-Throws `
         -Action {
             & $bundleScript `
