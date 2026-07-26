@@ -316,6 +316,34 @@ try {
 
     Assert-True `
         -Condition (
+            $readmeWorkflowText.Contains(
+                'git diff --cached --quiet'
+            ) `
+            -and $readmeWorkflowText.Contains(
+                '$diffExitCode = $LASTEXITCODE'
+            ) `
+            -and $readmeWorkflowText.Contains(
+                'if ($diffExitCode -eq 0)'
+            )
+        ) `
+        -Message (
+            "README workflow does not handle an unchanged generated " +
+            "README through the Git exit code."
+        )
+
+    Assert-True `
+        -Condition (
+            -not $readmeWorkflowText.Contains(
+                'if (git diff --cached --quiet)'
+            )
+        ) `
+        -Message (
+            "README workflow still treats native command output as a " +
+            "PowerShell Boolean."
+        )
+
+    Assert-True `
+        -Condition (
             $readmeWorkflowText.Contains("workflow_call:")
         ) `
         -Message "README workflow is not reusable."
