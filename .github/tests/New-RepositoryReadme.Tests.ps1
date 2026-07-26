@@ -272,6 +272,52 @@ try {
         ) `
         -Message "Generated README omitted the SELibs link."
 
+    $releaseWorkflowText = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $repoRoot `
+                ".github\workflows\releases.yml"
+        ) `
+        -Raw
+
+    $readmeWorkflowText = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $repoRoot `
+                ".github\workflows\update-readme.yml"
+        ) `
+        -Raw
+
+    Assert-True `
+        -Condition (
+            $releaseWorkflowText.Contains(
+                "uses: ./.github/workflows/update-readme.yml"
+            )
+        ) `
+        -Message (
+            "Automated releases do not invoke the README workflow."
+        )
+
+    Assert-True `
+        -Condition (
+            $releaseWorkflowText.Contains("needs: release")
+        ) `
+        -Message "README generation is not ordered after publication."
+
+    Assert-True `
+        -Condition (
+            $readmeWorkflowText.Contains("workflow_call:")
+        ) `
+        -Message "README workflow is not reusable."
+
+    Assert-True `
+        -Condition (
+            $readmeWorkflowText.Contains("- published")
+        ) `
+        -Message (
+            "README workflow no longer handles manual release publication."
+        )
+
     Write-Output (
         "OK repository README tests passed: " +
         "$script:Passed assertions"
