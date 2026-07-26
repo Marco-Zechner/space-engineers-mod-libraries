@@ -384,10 +384,9 @@ try {
             Where-Object { $_.PackageId -eq "Test.Dependency" }
     )[0]
 
-    Assert-Equal `
-        -Expected "root" `
-        -Actual ([string]$rootPackage.Slug) `
-        -Message "Package slug was not derived from the namespace."
+    Assert-True `
+        -Condition ($null -eq $rootPackage.PSObject.Properties["Slug"]) `
+        -Message "Release metadata still exposes a derived slug."
 
     Assert-Equal `
         -Expected "1.0.0" `

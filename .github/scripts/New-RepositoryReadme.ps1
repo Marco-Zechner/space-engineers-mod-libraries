@@ -170,18 +170,11 @@ $libraries = @(
         Sort-Object PackageId
 )
 
-$libraryBySlug = @{}
-
-foreach ($library in $libraries) {
-    $libraryBySlug[
-        ([string]$library.Slug).ToLowerInvariant()
-    ] = $library
-}
-
-$latestBySlug = @{}
+$latestByPackageId = @{}
 $tagPattern = (
-    '^(?<slug>[a-z0-9][a-z0-9-]*)/' +
-    'v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    '^release/' +
+    '(?<packageId>[A-Za-z_][A-Za-z0-9_.]*)/' +
+    '(?<version>[0-9]+\.[0-9]+\.[0-9]+)$'
 )
 
 foreach (
@@ -216,12 +209,25 @@ foreach (
         continue
     }
 
-    $slug = $Matches["slug"].ToLowerInvariant()
+    $tagPackageId = $Matches["packageId"]
     $versionText = $Matches["version"]
 
-    if (-not $libraryBySlug.ContainsKey($slug)) {
+    $libraryMatches = @(
+        $libraries |
+            Where-Object {
+                ([string]$_.PackageId).Equals(
+                    $tagPackageId,
+                    [System.StringComparison]::Ordinal
+                )
+            }
+    )
+
+    if ($libraryMatches.Count -ne 1) {
         continue
     }
+
+    $library = $libraryMatches[0]
+    $packageId = [string]$library.PackageId
 
     $assets = @(
         (
@@ -254,7 +260,6 @@ foreach (
     }
 
     $manifest = Read-ReleaseManifest -Asset $manifestAssets[0]
-    $library = $libraryBySlug[$slug]
 
     if ([int]$manifest.schemaVersion -ne 1) {
         throw "Release '$tag' uses an unsupported manifest schema."
@@ -262,13 +267,13 @@ foreach (
 
     if (
         -not ([string]$manifest.id).Equals(
-            [string]$library.PackageId,
-            [System.StringComparison]::OrdinalIgnoreCase
+            $packageId,
+            [System.StringComparison]::Ordinal
         )
     ) {
         throw (
             "Release '$tag' manifest ID '$($manifest.id)' does not " +
-            "match '$($library.PackageId)'."
+            "match '$packageId'."
         )
     }
 
@@ -335,7 +340,7 @@ foreach (
     }
 
     $candidate = [pscustomobject]@{
-        Slug = $slug
+        PackageId = $packageId
         Version = $versionText
         ParsedVersion = $parsedVersion
         Url = $releaseUrl
@@ -343,12 +348,12 @@ foreach (
     }
 
     if (
-        -not $latestBySlug.ContainsKey($slug) -or
+        -not $latestByPackageId.ContainsKey($packageId) -or
         $candidate.ParsedVersion.CompareTo(
-            $latestBySlug[$slug].ParsedVersion
+            $latestByPackageId[$packageId].ParsedVersion
         ) -gt 0
     ) {
-        $latestBySlug[$slug] = $candidate
+        $latestByPackageId[$packageId] = $candidate
     }
 }
 
@@ -379,7 +384,7 @@ $lines = New-Object System.Collections.ArrayList
 [void]$lines.Add("| --- | --- | --- |")
 
 foreach ($library in $libraries) {
-    $slug = ([string]$library.Slug).ToLowerInvariant()
+    $packageId = [string]$library.PackageId
     $readmePath = Join-Path `
         (Split-Path -Parent ([string]$library.RootProjectPath)) `
         "README.md"
@@ -397,8 +402,8 @@ foreach ($library in $libraries) {
         "Not available"
     }
 
-    $releaseText = if ($latestBySlug.ContainsKey($slug)) {
-        $release = $latestBySlug[$slug]
+    $releaseText = if ($latestByPackageId.ContainsKey($packageId)) {
+        $release = $latestByPackageId[$packageId]
         "[``$($release.Version)``]($($release.Url))"
     }
     else {
@@ -414,18 +419,18 @@ foreach ($library in $libraries) {
 [void]$lines.Add("## Latest changes")
 
 foreach ($library in $libraries) {
-    $slug = ([string]$library.Slug).ToLowerInvariant()
+    $packageId = [string]$library.PackageId
 
     [void]$lines.Add("")
     [void]$lines.Add("### $($library.PackageId)")
     [void]$lines.Add("")
 
-    if (-not $latestBySlug.ContainsKey($slug)) {
+    if (-not $latestByPackageId.ContainsKey($packageId)) {
         [void]$lines.Add("- No stable release has been published.")
         continue
     }
 
-    $release = $latestBySlug[$slug]
+    $release = $latestByPackageId[$packageId]
 
     [void]$lines.Add(
         "- Latest stable release: " +

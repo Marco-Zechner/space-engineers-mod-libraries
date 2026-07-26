@@ -17,16 +17,20 @@ SELibs packages and are not duplicated inside dependent archives.
 
 ## Release tags
 
-Tags use:
+Tags use the namespace and numeric version declared by the selected
+`LibraryVersionFile.cs`:
 
-    <slug>/v<major.minor.patch>
+    release/<namespace>/<major.minor.patch>
 
 Examples:
 
-    semanticversioning/v0.1.0
-    apiprotocol/v0.2.0
-    logging/v0.1.0
-    networking/v0.1.0
+    release/Mz.SemanticVersioning/0.1.1
+    release/Mz.ApiProtocol/0.2.1
+    release/Mz.Logging/0.1.1
+    release/Mz.Networking/0.1.1
+
+Both values are matched exactly. Namespace casing must be identical to the
+version-file namespace, and the tag version must equal `Major.Minor.Patch`.
 
 Release revisions are not appended to tags. A published version is immutable;
 changed source requires a new package version.
@@ -62,9 +66,9 @@ Every `LibraryVersionFile.cs` beneath `src` defines one package root:
 - portable release tests are discovered from test projects that directly
   reference the package's versioned root project.
 
-The final namespace segment, converted to lowercase, is the tag slug. For
-example, namespace `Mz.ApiProtocol` uses tags such as
-`apiprotocol/v0.2.0`.
+The complete version-file namespace is the release identity. For example,
+namespace `Mz.ApiProtocol` version `0.2.1` uses the exact tag
+`release/Mz.ApiProtocol/0.2.1`. No separate slug is derived or configured.
 
 Normal project references to another discovered package become exact package
 dependencies. Evaluated source files outside the package's owned source

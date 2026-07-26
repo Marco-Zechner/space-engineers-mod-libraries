@@ -256,19 +256,8 @@ function Read-LibraryVersionDescriptor {
         )
     }
 
-    $packageLeaf = $packageId.Split(".")[-1]
-    $slug = $packageLeaf.ToLowerInvariant().Replace("_", "-")
-
-    if ($slug -notmatch '^[a-z0-9][a-z0-9-]*$') {
-        throw (
-            "Package namespace '$packageId' cannot produce a valid " +
-            "release slug."
-        )
-    }
-
     return [pscustomobject]@{
         PackageId = $packageId
-        Slug = $slug
         Version = $version
         Changelog = @($changelog)
         VersionFilePath = [System.IO.Path]::GetFullPath($Path)
@@ -530,7 +519,6 @@ function Get-ReleaseLibraries {
     $libraries = New-Object System.Collections.ArrayList
     $assignments = @{}
     $packageClaims = @{}
-    $slugClaims = @{}
 
     $versionFiles = @(
         Get-ChildItem `
@@ -595,7 +583,6 @@ function Get-ReleaseLibraries {
         }
 
         $packageKey = $descriptor.PackageId.ToLowerInvariant()
-        $slugKey = $descriptor.Slug.ToLowerInvariant()
 
         if ($packageClaims.ContainsKey($packageKey)) {
             throw (
@@ -604,17 +591,8 @@ function Get-ReleaseLibraries {
             )
         }
 
-        if ($slugClaims.ContainsKey($slugKey)) {
-            throw (
-                "Release slug '$($descriptor.Slug)' is produced by both " +
-                "'$($slugClaims[$slugKey])' and " +
-                "'$($descriptor.PackageId)'."
-            )
-        }
-
         $library = [pscustomobject]@{
             PackageId = $descriptor.PackageId
-            Slug = $descriptor.Slug
             Version = $descriptor.Version
             Changelog = @($descriptor.Changelog)
             VersionFilePath = $descriptor.VersionFilePath
@@ -627,7 +605,6 @@ function Get-ReleaseLibraries {
         [void]$library.SourceRoots.Add($rootProject.Directory)
 
         $packageClaims[$packageKey] = $library
-        $slugClaims[$slugKey] = $descriptor.PackageId
         $assignments[$rootProjectKey] = $library
 
         [void]$libraries.Add($library)
