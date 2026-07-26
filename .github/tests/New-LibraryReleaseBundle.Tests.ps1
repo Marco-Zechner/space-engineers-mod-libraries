@@ -210,6 +210,13 @@ try {
         ) `
         -Message "SemanticVersioning source file is missing from its archive."
 
+    Assert-True `
+        -Condition (
+            $semanticEntries -contains
+            "Libraries/Mz.SemanticVersioning/README.md"
+        ) `
+        -Message "SemanticVersioning README is missing from its archive."
+
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
@@ -328,6 +335,61 @@ try {
             ).Count -gt 0
         ) `
         -Message "ApiProtocol Space Engineers sources are missing."
+
+    Assert-True `
+        -Condition (
+            $apiEntries -contains
+            "Libraries/Mz.ApiProtocol.Core/README.md"
+        ) `
+        -Message "ApiProtocol README is missing from its archive."
+
+    $loggingOutput = Join-Path $testRoot "logging"
+
+    & $bundleScript `
+        -Tag "logging/v0.1.0" `
+        -OutputDirectory $loggingOutput `
+        -SkipTests |
+        Out-Null
+
+    $loggingEntries = @(
+        Get-ZipEntries `
+            -Path (
+                Join-Path `
+                    $loggingOutput `
+                    "Mz.Logging-0.1.0-component.zip"
+            )
+    )
+
+    Assert-True `
+        -Condition (
+            $loggingEntries -contains
+            "Libraries/Mz.Logging.Core/README.md"
+        ) `
+        -Message "Logging README is missing from its archive."
+
+    $networkingOutput = Join-Path $testRoot "networking"
+
+    & $bundleScript `
+        -Tag "networking/v0.1.0" `
+        -OutputDirectory $networkingOutput `
+        -SkipTests |
+        Out-Null
+
+    $networkingEntries = @(
+        Get-ZipEntries `
+            -Path (
+                Join-Path `
+                    $networkingOutput `
+                    "Mz.Networking-0.1.0-component.zip"
+            )
+    )
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains
+            "Libraries/Mz.Networking.Core/README.md"
+        ) `
+        -Message "Networking README is missing from its archive."
 
     Assert-Throws `
         -Action {
