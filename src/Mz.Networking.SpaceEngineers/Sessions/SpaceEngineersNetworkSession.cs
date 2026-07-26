@@ -10,72 +10,39 @@ namespace Mz.Networking.SpaceEngineers
         IDisposable
     {
         private readonly ISpaceEngineersNetworkGateway _gateway;
-        private readonly Action<
-            ushort,
-            byte[],
-            ulong,
-            bool
-        > _secureMessageHandler;
+        private readonly Action<ushort, byte[], ulong, bool> _secureMessageHandler;
 
-        private readonly Action<
-            SpaceEngineersNetworkReceiveFailure
-        > _receiveFailureHandler;
+        private readonly Action<SpaceEngineersNetworkReceiveFailure> _receiveFailureHandler;
 
         private bool _disposed;
 
         /// <summary>
         /// Creates a session using the active Space Engineers ModAPI.
         /// </summary>
-        public SpaceEngineersNetworkSession(
-            ushort channelId,
-            Action<SpaceEngineersNetworkReceiveFailure>
-                receiveFailureHandler
-        )
-            : this(
-                new SpaceEngineersNetworkGateway(),
-                channelId,
-                receiveFailureHandler
-            )
-        {
-        }
+        public SpaceEngineersNetworkSession(ushort channelId, Action<SpaceEngineersNetworkReceiveFailure> receiveFailureHandler)
+            : this(new SpaceEngineersNetworkGateway(), channelId, receiveFailureHandler) { }
 
         /// <summary>
         /// Creates a session over an explicit Space Engineers gateway.
         /// </summary>
-        public SpaceEngineersNetworkSession(
-            ISpaceEngineersNetworkGateway gateway,
-            ushort channelId,
-            Action<SpaceEngineersNetworkReceiveFailure>
-                receiveFailureHandler
-        )
+        public SpaceEngineersNetworkSession(ISpaceEngineersNetworkGateway gateway, ushort channelId, Action<SpaceEngineersNetworkReceiveFailure> receiveFailureHandler)
         {
             if (gateway == null)
                 throw new ArgumentNullException(nameof(gateway));
 
             if (receiveFailureHandler == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(receiveFailureHandler)
-                );
-            }
+                throw new ArgumentNullException(nameof(receiveFailureHandler));
 
             _gateway = gateway;
             _receiveFailureHandler = receiveFailureHandler;
             ChannelId = channelId;
 
-            Transport =
-                new SpaceEngineersNetworkTransport(
-                    gateway,
-                    channelId
-                );
+            Transport = new SpaceEngineersNetworkTransport(gateway, channelId);
 
             Endpoint = new NetworkEndpoint(Transport);
             _secureMessageHandler = ReceiveSecureMessage;
 
-            _gateway.RegisterSecureMessageHandler(
-                ChannelId,
-                _secureMessageHandler
-            );
+            _gateway.RegisterSecureMessageHandler(ChannelId, _secureMessageHandler);
         }
 
         /// <summary>
@@ -103,65 +70,30 @@ namespace Mz.Networking.SpaceEngineers
 
             _disposed = true;
 
-            _gateway.UnregisterSecureMessageHandler(
-                ChannelId,
-                _secureMessageHandler
-            );
+            _gateway.UnregisterSecureMessageHandler(ChannelId, _secureMessageHandler);
         }
 
-        private void ReceiveSecureMessage(
-            ushort channelId,
-            byte[] serialized,
-            ulong senderPeerId,
-            bool senderIsServer
-        )
+        private void ReceiveSecureMessage(ushort channelId, byte[] serialized, ulong senderPeerId, bool senderIsServer)
         {
             try
             {
                 if (channelId != ChannelId)
-                {
-                    throw new InvalidOperationException(
-                        "The secure-message handler received channel "
-                        + channelId
-                        + " instead of its configured channel "
-                        + ChannelId
-                        + "."
-                    );
-                }
+                    throw new InvalidOperationException($"The secure-message handler received channel {channelId} instead of its configured channel {ChannelId}.");
 
                 if (serialized == null)
-                {
-                    throw new ArgumentNullException(
-                        nameof(serialized)
-                    );
-                }
+                    throw new ArgumentNullException(nameof(serialized));
 
-                NetworkEnvelope envelope =
-                    _gateway.Deserialize(serialized);
+                var envelope = _gateway.Deserialize(serialized);
 
                 NetworkReceiveContext ignored;
 
-                Endpoint.Receive(
-                    envelope,
-                    senderPeerId,
-                    senderIsServer,
-                    out ignored
-                );
+                Endpoint.Receive(envelope, senderPeerId, senderIsServer, out ignored);
             }
             catch (Exception exception)
             {
-                byte[] failedMessage =
-                    serialized ?? new byte[0];
+                var failedMessage = serialized ?? Array.Empty<byte>();
 
-                _receiveFailureHandler(
-                    new SpaceEngineersNetworkReceiveFailure(
-                        channelId,
-                        failedMessage,
-                        senderPeerId,
-                        senderIsServer,
-                        exception
-                    )
-                );
+                _receiveFailureHandler(new SpaceEngineersNetworkReceiveFailure(channelId, failedMessage, senderPeerId, senderIsServer, exception));
             }
         }
     }

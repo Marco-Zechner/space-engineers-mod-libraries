@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 
@@ -9,55 +10,30 @@ namespace Mz.Networking.SpaceEngineers
     /// Uses the active Space Engineers ModAPI multiplayer and binary
     /// serialization services.
     /// </summary>
-    public sealed class SpaceEngineersNetworkGateway :
-        ISpaceEngineersNetworkGateway
+    public sealed class SpaceEngineersNetworkGateway : ISpaceEngineersNetworkGateway
     {
         /// <inheritdoc />
-        public bool IsServer
-        {
-            get
-            {
-                return GetMultiplayer().IsServer;
-            }
-        }
+        public bool IsServer => GetMultiplayer().IsServer;
 
         /// <inheritdoc />
-        public ulong LocalPeerId
-        {
-            get
-            {
-                return GetMultiplayer().MyId;
-            }
-        }
+        public ulong LocalPeerId => GetMultiplayer().MyId;
 
         /// <inheritdoc />
-        public void RegisterSecureMessageHandler(
-            ushort channelId,
-            Action<ushort, byte[], ulong, bool> handler
-        )
+        public void RegisterSecureMessageHandler(ushort channelId, Action<ushort, byte[], ulong, bool> handler)
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
-            GetMultiplayer().RegisterSecureMessageHandler(
-                channelId,
-                handler
-            );
+            GetMultiplayer().RegisterSecureMessageHandler(channelId, handler);
         }
 
         /// <inheritdoc />
-        public void UnregisterSecureMessageHandler(
-            ushort channelId,
-            Action<ushort, byte[], ulong, bool> handler
-        )
+        public void UnregisterSecureMessageHandler(ushort channelId, Action<ushort, byte[], ulong, bool> handler)
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
-            GetMultiplayer().UnregisterSecureMessageHandler(
-                channelId,
-                handler
-            );
+            GetMultiplayer().UnregisterSecureMessageHandler(channelId, handler);
         }
 
         /// <inheritdoc />
@@ -83,25 +59,13 @@ namespace Mz.Networking.SpaceEngineers
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            NetworkEnvelopeWire wire =
-                GetUtilities()
-                    .SerializeFromBinary<NetworkEnvelopeWire>(
-                        serialized
-                    );
+            var wire = GetUtilities().SerializeFromBinary<NetworkEnvelopeWire>(serialized);
 
             if (wire == null)
-            {
-                throw new InvalidOperationException(
-                    "The serialized network envelope was empty."
-                );
-            }
+                throw new InvalidOperationException("The serialized network envelope was empty.");
 
             if (wire.Payload == null)
-            {
-                throw new InvalidOperationException(
-                    "The serialized network envelope had no payload."
-                );
-            }
+                throw new InvalidOperationException("The serialized network envelope had no payload.");
 
             return new NetworkEnvelope(
                 wire.MessageType,
@@ -112,37 +76,21 @@ namespace Mz.Networking.SpaceEngineers
         }
 
         /// <inheritdoc />
-        public bool SendToServer(
-            ushort channelId,
-            byte[] serialized
-        )
+        public bool SendToServer(ushort channelId, byte[] serialized)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageToServer(
-                channelId,
-                serialized,
-                true
-            );
+            return GetMultiplayer().SendMessageToServer(channelId, serialized, true);
         }
 
         /// <inheritdoc />
-        public bool SendToPeer(
-            ushort channelId,
-            byte[] serialized,
-            ulong peerId
-        )
+        public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageTo(
-                channelId,
-                serialized,
-                peerId,
-                true
-            );
+            return GetMultiplayer().SendMessageTo(channelId, serialized, peerId, true);
         }
 
         /// <inheritdoc />
@@ -151,58 +99,33 @@ namespace Mz.Networking.SpaceEngineers
             if (playerIds == null)
                 throw new ArgumentNullException(nameof(playerIds));
 
-            IMyPlayerCollection playerCollection =
-                GetMultiplayer().Players;
+            var playerCollection = GetMultiplayer().Players;
 
             if (playerCollection == null)
-            {
-                throw new InvalidOperationException(
-                    "Space Engineers player information is unavailable."
-                );
-            }
+                throw new InvalidOperationException("Space Engineers player information is unavailable.");
 
             var players = new List<IMyPlayer>();
             playerCollection.GetPlayers(players, null);
 
-            for (var index = 0; index < players.Count; index++)
-            {
-                IMyPlayer player = players[index];
-
-                if (player != null)
-                    playerIds.Add(player.SteamUserId);
-            }
+            playerIds.AddRange(from player in players where player != null select player.SteamUserId);
         }
 
         private static IMyMultiplayer GetMultiplayer()
         {
-            IMyMultiplayer multiplayer =
-                MyAPIGateway.Multiplayer;
+            var multiplayer = MyAPIGateway.Multiplayer;
 
             if (multiplayer == null)
-            {
-                throw new InvalidOperationException(
-                    "Space Engineers multiplayer is unavailable. "
-                    + "Use networking during the active session "
-                    + "lifecycle."
-                );
-            }
+                throw new InvalidOperationException("Space Engineers multiplayer is unavailable. Use networking during the active session lifecycle.");
 
             return multiplayer;
         }
 
         private static IMyUtilities GetUtilities()
         {
-            IMyUtilities utilities =
-                MyAPIGateway.Utilities;
+            var utilities = MyAPIGateway.Utilities;
 
             if (utilities == null)
-            {
-                throw new InvalidOperationException(
-                    "Space Engineers utilities are unavailable. "
-                    + "Use networking during the active session "
-                    + "lifecycle."
-                );
-            }
+                throw new InvalidOperationException("Space Engineers utilities are unavailable. Use networking during the active session lifecycle.");
 
             return utilities;
         }

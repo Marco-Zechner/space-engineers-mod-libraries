@@ -52,13 +52,8 @@ namespace Mz.Networking
         public bool RequiresSerialization { get; set; }
 
         internal NetworkReceiveContext(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            bool isServer,
-            bool transportSenderIsServer,
-            bool originalSenderWasCorrected,
-            bool relayFlagWasCorrected
-        )
+            NetworkEnvelope envelope, ulong transportSenderId, 
+            bool isServer, bool transportSenderIsServer, bool originalSenderWasCorrected, bool relayFlagWasCorrected)
         {
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
@@ -67,16 +62,12 @@ namespace Mz.Networking
             TransportSenderId = transportSenderId;
             IsServer = isServer;
             TransportSenderIsServer = transportSenderIsServer;
-            OriginalSenderWasCorrected =
-                originalSenderWasCorrected;
+            OriginalSenderWasCorrected = originalSenderWasCorrected;
 
-            RelayFlagWasCorrected =
-                relayFlagWasCorrected;
+            RelayFlagWasCorrected = relayFlagWasCorrected;
 
             RelayMode = NetworkRelayMode.None;
-            RequiresSerialization =
-                originalSenderWasCorrected
-                || relayFlagWasCorrected;
+            RequiresSerialization = originalSenderWasCorrected || relayFlagWasCorrected;
         }
     }
 }

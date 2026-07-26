@@ -36,48 +36,33 @@ namespace Example.NetworkingMod
     /// Install Mz.Networking in that mod before compiling it.
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public sealed class ExampleNetworkServerSession :
-        MySessionComponentBase
+    public sealed class ExampleNetworkServerSession : MySessionComponentBase
     {
         // Pick one channel that is unique to the mod. The client file must use
         // exactly the same value.
         private const ushort ChannelId = 45123;
 
         // Message types are case-sensitive and must match the client file.
-        private const string PingRequestMessage =
-            "example.networking.ping.request";
+        private const string PingRequestMessage = "example.networking.ping.request";
 
-        private const string PingResponseMessage =
-            "example.networking.ping.response";
+        private const string PingResponseMessage = "example.networking.ping.response";
 
         private SpaceEngineersNetworkSession _network;
         private NetworkMessageSubscription _pingSubscription;
 
         public override void BeforeStart()
         {
-            if (
-                MyAPIGateway.Multiplayer == null
-                || !MyAPIGateway.Multiplayer.IsServer
-            ) {
+            if (MyAPIGateway.Multiplayer == null || !MyAPIGateway.Multiplayer.IsServer)
                 return;
-            }
 
-            _network = new SpaceEngineersNetworkSession(
-                ChannelId,
-                OnReceiveFailure
+            _network = new SpaceEngineersNetworkSession(ChannelId, OnReceiveFailure);
+
+            _pingSubscription = _network.Endpoint.RegisterHandler(
+                PingRequestMessage,
+                OnPingRequest
             );
 
-            _pingSubscription =
-                _network.Endpoint.RegisterHandler(
-                    PingRequestMessage,
-                    OnPingRequest
-                );
-
-            ShowMessage(
-                "Server handler registered on channel "
-                + ChannelId
-                + "."
-            );
+            ShowMessage($"Server handler registered on channel {ChannelId}.");
         }
 
         protected override void UnloadData()
@@ -95,49 +80,24 @@ namespace Example.NetworkingMod
             }
         }
 
-        private void OnPingRequest(
-            NetworkReceiveContext context
-        )
+        private void OnPingRequest(NetworkReceiveContext context)
         {
-            string requestText = Encoding.UTF8.GetString(
-                context.Envelope.Payload
-            );
+            string requestText = Encoding.UTF8.GetString(context.Envelope.Payload);
 
             // The server has already validated this ID against the trusted
             // transport sender.
-            ulong requestingPeerId =
-                context.Envelope.OriginalSenderId;
+            ulong requestingPeerId = context.Envelope.OriginalSenderId;
 
-            string responseText =
-                "Pong from the authoritative server. You sent: "
-                + requestText;
+            string responseText = "Pong from the authoritative server. You sent: " + requestText;
 
-            _network.Endpoint.SendToPlayer(
-                PingResponseMessage,
-                Encoding.UTF8.GetBytes(responseText),
-                requestingPeerId
-            );
+            _network.Endpoint.SendToPlayer(PingResponseMessage, Encoding.UTF8.GetBytes(responseText), requestingPeerId);
 
-            ShowMessage(
-                "Answered peer "
-                + requestingPeerId
-                + ": "
-                + requestText
-            );
+            ShowMessage($"Answered peer {requestingPeerId}: {requestText}");
         }
 
-        private static void OnReceiveFailure(
-            SpaceEngineersNetworkReceiveFailure failure
-        )
+        private static void OnReceiveFailure(SpaceEngineersNetworkReceiveFailure failure)
         {
-            ShowMessage(
-                "Rejected packet on channel "
-                + failure.ChannelId
-                + " from peer "
-                + failure.SenderPeerId
-                + ": "
-                + failure.Exception.Message
-            );
+            ShowMessage($"Rejected packet on channel {failure.ChannelId} from peer {failure.SenderPeerId}: {failure.Exception.Message}");
         }
 
         private static void ShowMessage(string message)
@@ -149,10 +109,7 @@ namespace Example.NetworkingMod
             if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
-            MyAPIGateway.Utilities.ShowMessage(
-                "Network Server",
-                message
-            );
+            MyAPIGateway.Utilities.ShowMessage("Network Server", message);
         }
     }
 }
@@ -179,17 +136,14 @@ namespace Example.NetworkingMod
     /// Join a multiplayer server with a remote client and type /netping.
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public sealed class ExampleNetworkClientSession :
-        MySessionComponentBase
+    public sealed class ExampleNetworkClientSession : MySessionComponentBase
     {
         // These values must match ExampleNetworkServerSession exactly.
         private const ushort ChannelId = 45123;
 
-        private const string PingRequestMessage =
-            "example.networking.ping.request";
+        private const string PingRequestMessage = "example.networking.ping.request";
 
-        private const string PingResponseMessage =
-            "example.networking.ping.response";
+        private const string PingResponseMessage = "example.networking.ping.response";
 
         private const string ChatCommand = "/netping";
 
@@ -204,45 +158,27 @@ namespace Example.NetworkingMod
             if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
-            if (
-                MyAPIGateway.Multiplayer == null
-                || MyAPIGateway.Multiplayer.IsServer
-            ) {
+            if (MyAPIGateway.Multiplayer == null || MyAPIGateway.Multiplayer.IsServer)
                 return;
-            }
 
-            _network = new SpaceEngineersNetworkSession(
-                ChannelId,
-                OnReceiveFailure
+            _network = new SpaceEngineersNetworkSession(ChannelId, OnReceiveFailure);
+
+            _responseSubscription = _network.Endpoint.RegisterHandler(
+                PingResponseMessage,
+                OnPingResponse
             );
 
-            _responseSubscription =
-                _network.Endpoint.RegisterHandler(
-                    PingResponseMessage,
-                    OnPingResponse
-                );
-
-            MyAPIGateway.Utilities.MessageEntered +=
-                OnMessageEntered;
+            MyAPIGateway.Utilities.MessageEntered += OnMessageEntered;
 
             _chatHandlerRegistered = true;
 
-            ShowMessage(
-                "Type "
-                + ChatCommand
-                + " followed by optional text."
-            );
+            ShowMessage($"Type {ChatCommand} followed by optional text.");
         }
 
         protected override void UnloadData()
         {
-            if (
-                _chatHandlerRegistered
-                && MyAPIGateway.Utilities != null
-            ) {
-                MyAPIGateway.Utilities.MessageEntered -=
-                    OnMessageEntered;
-            }
+            if (_chatHandlerRegistered && MyAPIGateway.Utilities != null)
+                MyAPIGateway.Utilities.MessageEntered -= OnMessageEntered;
 
             _chatHandlerRegistered = false;
 
@@ -259,24 +195,14 @@ namespace Example.NetworkingMod
             }
         }
 
-        private void OnMessageEntered(
-            string message,
-            ref bool sendToOthers
-        )
+        private void OnMessageEntered(string message, ref bool sendToOthers)
         {
             if (message == null)
                 return;
 
-            bool exactCommand = string.Equals(
-                message,
-                ChatCommand,
-                StringComparison.OrdinalIgnoreCase
-            );
+            bool exactCommand = string.Equals(message, ChatCommand, StringComparison.OrdinalIgnoreCase);
 
-            bool commandWithText = message.StartsWith(
-                ChatCommand + " ",
-                StringComparison.OrdinalIgnoreCase
-            );
+            bool commandWithText = message.StartsWith(ChatCommand + " ", StringComparison.OrdinalIgnoreCase);
 
             if (!exactCommand && !commandWithText)
                 return;
@@ -299,31 +225,18 @@ namespace Example.NetworkingMod
             ShowMessage("Ping sent: " + text);
         }
 
-        private static void OnPingResponse(
-            NetworkReceiveContext context
-        )
+        private static void OnPingResponse(NetworkReceiveContext context)
         {
             // Clients only accept packets whose immediate transport sender was
             // identified as the authoritative server.
-            string responseText = Encoding.UTF8.GetString(
-                context.Envelope.Payload
-            );
+            string responseText = Encoding.UTF8.GetString(context.Envelope.Payload);
 
             ShowMessage(responseText);
         }
 
-        private static void OnReceiveFailure(
-            SpaceEngineersNetworkReceiveFailure failure
-        )
+        private static void OnReceiveFailure(SpaceEngineersNetworkReceiveFailure failure)
         {
-            ShowMessage(
-                "Rejected packet on channel "
-                + failure.ChannelId
-                + " from peer "
-                + failure.SenderPeerId
-                + ": "
-                + failure.Exception.Message
-            );
+            ShowMessage($"Rejected packet on channel {failure.ChannelId} from peer {failure.SenderPeerId}: {failure.Exception.Message}");
         }
 
         private static void ShowMessage(string message)
@@ -331,10 +244,7 @@ namespace Example.NetworkingMod
             if (MyAPIGateway.Utilities == null)
                 return;
 
-            MyAPIGateway.Utilities.ShowMessage(
-                "Network Client",
-                message
-            );
+            MyAPIGateway.Utilities.ShowMessage("Network Client", message);
         }
     }
 }

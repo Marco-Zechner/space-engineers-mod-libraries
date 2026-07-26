@@ -33,28 +33,12 @@ namespace Mz.Networking.SpaceEngineers
         /// <summary>
         /// Gets a copy of the received serialized packet.
         /// </summary>
-        public byte[] SerializedMessage
-        {
-            get
-            {
-                return Copy(_serializedMessage);
-            }
-        }
+        public byte[] SerializedMessage => Copy(_serializedMessage);
 
-        internal SpaceEngineersNetworkReceiveFailure(
-            ushort channelId,
-            byte[] serializedMessage,
-            ulong senderPeerId,
-            bool senderIsServer,
-            Exception exception
-        )
+        internal SpaceEngineersNetworkReceiveFailure(ushort channelId, byte[] serializedMessage, ulong senderPeerId, bool senderIsServer, Exception exception)
         {
             if (serializedMessage == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(serializedMessage)
-                );
-            }
+                throw new ArgumentNullException(nameof(serializedMessage));
 
             if (exception == null)
                 throw new ArgumentNullException(nameof(exception));
@@ -69,13 +53,7 @@ namespace Mz.Networking.SpaceEngineers
         private static byte[] Copy(byte[] source)
         {
             var copy = new byte[source.Length];
-
-            Array.Copy(
-                source,
-                copy,
-                source.Length
-            );
-
+            Array.Copy(source, copy, source.Length);
             return copy;
         }
     }

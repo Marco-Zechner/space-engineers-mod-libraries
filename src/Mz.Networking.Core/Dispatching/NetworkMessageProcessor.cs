@@ -28,12 +28,8 @@ namespace Mz.Networking
         /// </param>
         /// <returns>The completed receive context.</returns>
         public static NetworkReceiveContext Process(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            bool isServer,
-            bool transportSenderIsServer,
-            Action<NetworkReceiveContext> handler
-        )
+            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer, 
+            Action<NetworkReceiveContext> handler)
         {
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
@@ -42,47 +38,21 @@ namespace Mz.Networking
                 throw new ArgumentNullException(nameof(handler));
 
             if (!isServer && !transportSenderIsServer)
-            {
-                throw new InvalidOperationException(
-                    "A client can only accept network messages sent "
-                    + "by the authoritative server."
-                );
-            }
+                throw new InvalidOperationException("A client can only accept network messages sent by the authoritative server.");
 
-            bool senderWasCorrected =
-                isServer
-                && envelope.OriginalSenderId
-                    != transportSenderId;
+            var senderWasCorrected = isServer && envelope.OriginalSenderId != transportSenderId;
 
-            bool relayFlagWasCorrected =
-                isServer
-                && !transportSenderIsServer
-                && envelope.IsRelay;
+            var relayFlagWasCorrected = isServer && !transportSenderIsServer && envelope.IsRelay;
 
-            NetworkEnvelope validatedEnvelope = envelope;
+            var validatedEnvelope = envelope;
 
             if (senderWasCorrected)
-            {
-                validatedEnvelope =
-                    validatedEnvelope.WithOriginalSenderId(
-                        transportSenderId
-                    );
-            }
+                validatedEnvelope = validatedEnvelope.WithOriginalSenderId(transportSenderId);
 
             if (relayFlagWasCorrected)
-            {
-                validatedEnvelope =
-                    validatedEnvelope.WithRelay(false);
-            }
+                validatedEnvelope = validatedEnvelope.WithRelay(false);
 
-            var context = new NetworkReceiveContext(
-                validatedEnvelope,
-                transportSenderId,
-                isServer,
-                transportSenderIsServer,
-                senderWasCorrected,
-                relayFlagWasCorrected
-            );
+            var context = new NetworkReceiveContext(validatedEnvelope, transportSenderId, isServer, transportSenderIsServer, senderWasCorrected, relayFlagWasCorrected);
 
             handler(context);
 
@@ -91,19 +61,10 @@ namespace Mz.Networking
             return context;
         }
 
-        private static void ValidateRelayMode(
-            NetworkRelayMode relayMode
-        )
+        private static void ValidateRelayMode(NetworkRelayMode relayMode)
         {
-            if (relayMode < NetworkRelayMode.None
-                || relayMode
-                    > NetworkRelayMode.ReturnToSender)
-            {
-                throw new InvalidOperationException(
-                    "The receive handler selected an unsupported "
-                    + "relay mode."
-                );
-            }
+            if (relayMode < NetworkRelayMode.None || relayMode > NetworkRelayMode.ReturnToSender)
+                throw new InvalidOperationException("The receive handler selected an unsupported relay mode.");
         }
     }
 }

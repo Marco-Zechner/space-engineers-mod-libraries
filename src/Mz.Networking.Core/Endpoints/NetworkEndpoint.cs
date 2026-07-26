@@ -26,42 +26,21 @@ namespace Mz.Networking
         /// <summary>
         /// Registers one application message handler.
         /// </summary>
-        public NetworkMessageSubscription RegisterHandler(
-            string messageType,
-            Action<NetworkReceiveContext> handler
-        )
-        {
-            return _dispatcher.RegisterHandler(
-                messageType,
-                handler
-            );
-        }
+        public NetworkMessageSubscription RegisterHandler(string messageType, Action<NetworkReceiveContext> handler) 
+            => _dispatcher.RegisterHandler(messageType, handler);
 
         /// <summary>
         /// Sends an application message to the authoritative server.
         /// </summary>
-        public void SendToServer(
-            string messageType,
-            byte[] payload
-        )
+        public void SendToServer(string messageType, byte[] payload)
         {
-            var envelope = new NetworkEnvelope(
-                messageType,
-                _transport.LocalPeerId,
-                false,
-                payload
-            );
+            var envelope = new NetworkEnvelope(messageType, _transport.LocalPeerId, false, payload);
 
             if (_transport.IsServer)
             {
                 NetworkReceiveContext ignored;
 
-                Receive(
-                    envelope,
-                    _transport.LocalPeerId,
-                    true,
-                    out ignored
-                );
+                Receive(envelope, _transport.LocalPeerId, true, out ignored);
 
                 return;
             }
@@ -72,54 +51,24 @@ namespace Mz.Networking
         /// <summary>
         /// Sends an application message from the server to one peer.
         /// </summary>
-        public void SendToPlayer(
-            string messageType,
-            byte[] payload,
-            ulong peerId
-        )
+        public void SendToPlayer(string messageType, byte[] payload, ulong peerId)
         {
             EnsureServer();
 
-            var envelope = new NetworkEnvelope(
-                messageType,
-                _transport.LocalPeerId,
-                false,
-                payload
-            );
+            var envelope = new NetworkEnvelope(messageType, _transport.LocalPeerId, false, payload);
 
-            _transport.SendToPeer(
-                envelope,
-                peerId
-            );
+            _transport.SendToPeer(envelope, peerId);
         }
 
         /// <summary>
         /// Processes an envelope received from the concrete transport.
         /// </summary>
-        public bool Receive(
-            NetworkEnvelope envelope,
-            ulong transportSenderId,
-            bool transportSenderIsServer,
-            out NetworkReceiveContext context
-        )
+        public bool Receive(NetworkEnvelope envelope, ulong transportSenderId, bool transportSenderIsServer, out NetworkReceiveContext context)
         {
-            if (!_transport.IsServer
-                && !transportSenderIsServer)
-            {
-                throw new InvalidOperationException(
-                    "A client can only accept network messages sent "
-                    + "by the authoritative server."
-                );
-            }
+            if (!_transport.IsServer && !transportSenderIsServer)
+                throw new InvalidOperationException("A client can only accept network messages sent by the authoritative server.");
 
-            bool dispatched =
-                _dispatcher.TryDispatch(
-                    envelope,
-                    transportSenderId,
-                    _transport.IsServer,
-                    transportSenderIsServer,
-                    out context
-                );
+            var dispatched = _dispatcher.TryDispatch(envelope, transportSenderId, _transport.IsServer, transportSenderIsServer, out context);
 
             if (!dispatched)
                 return false;
@@ -135,16 +84,12 @@ namespace Mz.Networking
             if (context.RelayMode == NetworkRelayMode.None)
                 return;
 
-            NetworkEnvelope relayEnvelope =
-                context.Envelope.WithRelay(true);
+            var relayEnvelope = context.Envelope.WithRelay(true);
 
             switch (context.RelayMode)
             {
                 case NetworkRelayMode.ToOthers:
-                    _transport.SendToOthers(
-                        relayEnvelope,
-                        context.Envelope.OriginalSenderId
-                    );
+                    _transport.SendToOthers(relayEnvelope, context.Envelope.OriginalSenderId);
                     break;
 
                 case NetworkRelayMode.ToEveryone:
@@ -152,29 +97,18 @@ namespace Mz.Networking
                     break;
 
                 case NetworkRelayMode.ReturnToSender:
-                    _transport.SendToPeer(
-                        relayEnvelope,
-                        context.Envelope.OriginalSenderId
-                    );
+                    _transport.SendToPeer(relayEnvelope, context.Envelope.OriginalSenderId);
                     break;
 
                 default:
-                    throw new InvalidOperationException(
-                        "The receive handler selected an unsupported "
-                        + "relay mode."
-                    );
+                    throw new InvalidOperationException("The receive handler selected an unsupported relay mode.");
             }
         }
 
         private void EnsureServer()
         {
             if (!_transport.IsServer)
-            {
-                throw new InvalidOperationException(
-                    "Only the authoritative server can send messages "
-                    + "directly to another player."
-                );
-            }
+                throw new InvalidOperationException("Only the authoritative server can send messages directly to another player.");
         }
     }
 }

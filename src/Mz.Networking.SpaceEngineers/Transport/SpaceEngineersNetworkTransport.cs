@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mz.Networking.SpaceEngineers
 {
@@ -7,8 +8,7 @@ namespace Mz.Networking.SpaceEngineers
     /// Sends network envelopes over one fixed Space Engineers secure-message
     /// channel.
     /// </summary>
-    public sealed class SpaceEngineersNetworkTransport :
-        INetworkTransport
+    public sealed class SpaceEngineersNetworkTransport : INetworkTransport
     {
         private readonly ISpaceEngineersNetworkGateway _gateway;
         private readonly ushort _channelId;
@@ -16,10 +16,7 @@ namespace Mz.Networking.SpaceEngineers
         /// <summary>
         /// Creates a transport over one secure-message channel.
         /// </summary>
-        public SpaceEngineersNetworkTransport(
-            ISpaceEngineersNetworkGateway gateway,
-            ushort channelId
-        )
+        public SpaceEngineersNetworkTransport(ISpaceEngineersNetworkGateway gateway, ushort channelId)
         {
             if (gateway == null)
                 throw new ArgumentNullException(nameof(gateway));
@@ -29,77 +26,41 @@ namespace Mz.Networking.SpaceEngineers
         }
 
         /// <inheritdoc />
-        public bool IsServer
-        {
-            get
-            {
-                return _gateway.IsServer;
-            }
-        }
+        public bool IsServer => _gateway.IsServer;
 
         /// <inheritdoc />
-        public ulong LocalPeerId
-        {
-            get
-            {
-                return _gateway.LocalPeerId;
-            }
-        }
+        public ulong LocalPeerId => _gateway.LocalPeerId;
 
         /// <inheritdoc />
         public void SendToServer(NetworkEnvelope envelope)
         {
-            byte[] serialized = Serialize(envelope);
+            var serialized = Serialize(envelope);
 
-            if (!_gateway.SendToServer(
-                    _channelId,
-                    serialized
-                ))
-            {
-                throw new InvalidOperationException(
-                    "Space Engineers rejected the network message "
-                    + "sent to the server."
-                );
-            }
+            if (!_gateway.SendToServer(_channelId, serialized))
+                throw new InvalidOperationException("Space Engineers rejected the network message sent to the server.");
         }
 
         /// <inheritdoc />
-        public void SendToPeer(
-            NetworkEnvelope envelope,
-            ulong peerId
-        )
+        public void SendToPeer(NetworkEnvelope envelope, ulong peerId)
         {
             EnsureServer();
 
-            byte[] serialized = Serialize(envelope);
+            var serialized = Serialize(envelope);
             SendSerializedToPeer(serialized, peerId);
         }
 
         /// <inheritdoc />
-        public void SendToOthers(
-            NetworkEnvelope envelope,
-            ulong excludedPeerId
-        )
+        public void SendToOthers(NetworkEnvelope envelope, ulong excludedPeerId)
         {
             EnsureServer();
 
-            byte[] serialized = Serialize(envelope);
+            var serialized = Serialize(envelope);
             var playerIds = new List<ulong>();
 
             _gateway.GetPlayerIds(playerIds);
 
-            for (var index = 0; index < playerIds.Count; index++)
-            {
-                ulong peerId = playerIds[index];
-
-                if (peerId == LocalPeerId
-                    || peerId == excludedPeerId)
-                {
-                    continue;
-                }
-
+            foreach (var peerId in playerIds.Where(peerId => peerId != LocalPeerId && peerId != excludedPeerId))
                 SendSerializedToPeer(serialized, peerId);
-            }
         }
 
         /// <inheritdoc />
@@ -107,20 +68,13 @@ namespace Mz.Networking.SpaceEngineers
         {
             EnsureServer();
 
-            byte[] serialized = Serialize(envelope);
+            var serialized = Serialize(envelope);
             var playerIds = new List<ulong>();
 
             _gateway.GetPlayerIds(playerIds);
 
-            for (var index = 0; index < playerIds.Count; index++)
-            {
-                ulong peerId = playerIds[index];
-
-                if (peerId == LocalPeerId)
-                    continue;
-
+            foreach (var peerId in playerIds.Where(peerId => peerId != LocalPeerId))
                 SendSerializedToPeer(serialized, peerId);
-            }
         }
 
         private byte[] Serialize(NetworkEnvelope envelope)
@@ -128,49 +82,25 @@ namespace Mz.Networking.SpaceEngineers
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
 
-            byte[] serialized =
+            var serialized =
                 _gateway.Serialize(envelope);
 
             if (serialized == null)
-            {
-                throw new InvalidOperationException(
-                    "The Space Engineers network gateway returned "
-                    + "no serialized message."
-                );
-            }
+                throw new InvalidOperationException("The Space Engineers network gateway returned no serialized message.");
 
             return serialized;
         }
 
-        private void SendSerializedToPeer(
-            byte[] serialized,
-            ulong peerId
-        )
+        private void SendSerializedToPeer(byte[] serialized, ulong peerId)
         {
-            if (!_gateway.SendToPeer(
-                    _channelId,
-                    serialized,
-                    peerId
-                ))
-            {
-                throw new InvalidOperationException(
-                    "Space Engineers rejected the network message "
-                    + "sent to peer "
-                    + peerId
-                    + "."
-                );
-            }
+            if (!_gateway.SendToPeer(_channelId, serialized, peerId))
+                throw new InvalidOperationException($"Space Engineers rejected the network message sent to peer {peerId}.");
         }
 
         private void EnsureServer()
         {
             if (!IsServer)
-            {
-                throw new InvalidOperationException(
-                    "Only the authoritative server can send "
-                    + "network messages directly to players."
-                );
-            }
+                throw new InvalidOperationException("Only the authoritative server can send network messages directly to players.");
         }
     }
 }
