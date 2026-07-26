@@ -2,6 +2,9 @@
 
 `Mz.ApiProtocol` can be used directly by any modder, but an API should normally hide those details from downstream consumers.
 
+Install `Mz.ApiProtocol@0.2.2` in the provider mod and in every consuming mod
+that copies the provider-authored facade.
+
 The recommended workflow has three files:
 
 1. The API provider's session component.

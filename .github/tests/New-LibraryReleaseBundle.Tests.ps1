@@ -266,18 +266,18 @@ try {
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
-        -Tag "release/Mz.ApiProtocol/0.2.1" `
+        -Tag "release/Mz.ApiProtocol/0.2.2" `
         -OutputDirectory $apiOutput `
         -SkipTests |
         Out-Null
 
     $apiManifestPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.1-package.json"
+        "Mz.ApiProtocol-0.2.2-package.json"
 
     $apiComponentPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.1-component.zip"
+        "Mz.ApiProtocol-0.2.2-component.zip"
 
     $apiManifest = Get-Content `
         -LiteralPath $apiManifestPath `
@@ -290,12 +290,12 @@ try {
         -Message "ApiProtocol has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.2.1" `
+        -Expected "0.2.2" `
         -Actual ([string]$apiManifest.version) `
         -Message "ApiProtocol has the wrong package version."
 
     Assert-Equal `
-        -Expected "0.2.1,0.2.0" `
+        -Expected "0.2.2,0.2.1,0.2.0" `
         -Actual (
             @($apiManifest.changelog.version) -join ","
         ) `
@@ -463,7 +463,7 @@ try {
     $networkingOutput = Join-Path $testRoot "networking"
 
     & $bundleScript `
-        -Tag "release/Mz.Networking/0.1.1" `
+        -Tag "release/Mz.Networking/0.1.2" `
         -OutputDirectory $networkingOutput `
         -SkipTests |
         Out-Null
@@ -472,7 +472,7 @@ try {
         -LiteralPath (
             Join-Path `
                 $networkingOutput `
-                "Mz.Networking-0.1.1-package.json"
+                "Mz.Networking-0.1.2-package.json"
         ) `
         -Raw |
         ConvertFrom-Json
@@ -482,9 +482,21 @@ try {
             -Path (
                 Join-Path `
                     $networkingOutput `
-                    "Mz.Networking-0.1.1-component.zip"
+                    "Mz.Networking-0.1.2-component.zip"
             )
     )
+
+    Assert-Equal `
+        -Expected "0.1.2" `
+        -Actual ([string]$networkingManifest.version) `
+        -Message "Networking has the wrong package version."
+
+    Assert-Equal `
+        -Expected "0.1.2,0.1.1,0.1.0" `
+        -Actual (
+            @($networkingManifest.changelog.version) -join ","
+        ) `
+        -Message "Networking changelog order is incorrect."
 
     Assert-Equal `
         -Expected "0.1.1" `

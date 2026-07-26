@@ -8,9 +8,9 @@ SELibs.
 | Package | Owned source folders | Exact dependencies |
 | --- | --- | --- |
 | `Mz.SemanticVersioning` | `Mz.SemanticVersioning` | None |
-| `Mz.ApiProtocol` | `Mz.ApiProtocol.Core`, `Mz.ApiProtocol.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.0` |
-| `Mz.Logging` | `Mz.Logging.Core`, `Mz.Logging.SpaceEngineers` | None |
-| `Mz.Networking` | `Mz.Networking.Core`, `Mz.Networking.SpaceEngineers` | None |
+| `Mz.ApiProtocol` | `Mz.ApiProtocol.Core`, `Mz.ApiProtocol.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
+| `Mz.Logging` | `Mz.Logging.Core`, `Mz.Logging.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
+| `Mz.Networking` | `Mz.Networking.Core`, `Mz.Networking.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
 
 Each package archive contains only its own folders. Dependencies are separate
 SELibs packages and are not duplicated inside dependent archives.
@@ -25,9 +25,9 @@ Tags use the namespace and numeric version declared by the selected
 Examples:
 
     release/Mz.SemanticVersioning/0.1.1
-    release/Mz.ApiProtocol/0.2.1
+    release/Mz.ApiProtocol/0.2.2
     release/Mz.Logging/0.1.1
-    release/Mz.Networking/0.1.1
+    release/Mz.Networking/0.1.2
 
 Both values are matched exactly. Namespace casing must be identical to the
 version-file namespace, and the tag version must equal `Major.Minor.Patch`.
@@ -67,8 +67,8 @@ Every `LibraryVersionFile.cs` beneath `src` defines one package root:
   reference the package's versioned root project.
 
 The complete version-file namespace is the release identity. For example,
-namespace `Mz.ApiProtocol` version `0.2.1` uses the exact tag
-`release/Mz.ApiProtocol/0.2.1`. No separate slug is derived or configured.
+namespace `Mz.ApiProtocol` version `0.2.2` uses the exact tag
+`release/Mz.ApiProtocol/0.2.2`. No separate slug is derived or configured.
 
 Normal project references to another discovered package become exact package
 dependencies. Evaluated source files outside the package's owned source

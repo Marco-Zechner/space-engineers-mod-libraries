@@ -21,7 +21,7 @@ namespace Mz.Networking
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 1;
+        public const int Patch = 2;
 
         /// <summary>
         /// Gets the version string.
@@ -35,6 +35,14 @@ namespace Mz.Networking
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.1.2",
+                    new[]
+                    {
+                        "Added compiled server and client copy-paste examples for a multiplayer ping flow.",
+                        "Included the copy-paste guide in release bundles."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.1.1",
                     new[]
