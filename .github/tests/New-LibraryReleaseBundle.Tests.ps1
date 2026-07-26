@@ -161,6 +161,38 @@ try {
         -Message "SemanticVersioning has the wrong version."
 
     Assert-Equal `
+        -Expected "0.1.1,0.1.0" `
+        -Actual (
+            @($semanticManifest.changelog.version) -join ","
+        ) `
+        -Message "SemanticVersioning changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected (
+            "Added a complete package usage guide and installation examples."
+        ) `
+        -Actual (
+            [string]$semanticManifest.changelog[0].changes[0]
+        ) `
+        -Message "SemanticVersioning current changelog is incorrect."
+
+    $semanticNotes = Get-Content `
+        -LiteralPath (Join-Path $semanticOutput "release-notes.md") `
+        -Raw
+
+    Assert-True `
+        -Condition ($semanticNotes.Contains("## Changes")) `
+        -Message "Release notes do not contain a Changes section."
+
+    Assert-True `
+        -Condition (
+            $semanticNotes.Contains(
+                "- Added a complete package usage guide and installation examples."
+            )
+        ) `
+        -Message "Release notes do not contain the current changelog."
+
+    Assert-Equal `
         -Expected 0 `
         -Actual @(
             $semanticManifest.dependencies.PSObject.Properties
@@ -247,6 +279,13 @@ try {
         -Expected "0.2.1" `
         -Actual ([string]$apiManifest.version) `
         -Message "ApiProtocol has the wrong package version."
+
+    Assert-Equal `
+        -Expected "0.2.1,0.2.0" `
+        -Actual (
+            @($apiManifest.changelog.version) -join ","
+        ) `
+        -Message "ApiProtocol changelog order is incorrect."
 
     Assert-Equal `
         -Expected "0.1.1" `
