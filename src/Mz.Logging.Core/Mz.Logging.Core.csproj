@@ -14,4 +14,8 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Mz.SemanticVersioning\Mz.SemanticVersioning.csproj" />
+    </ItemGroup>
+
 </Project>

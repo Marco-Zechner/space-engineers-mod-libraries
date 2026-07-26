@@ -14,6 +14,9 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile
+            Include="..\..\src\Mz.SemanticVersioning\*.cs"
+            Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
+        <Compile
             Include="..\..\src\Mz.Logging.Core\*.cs"
             Link="Libraries\Mz.Logging.Core\%(Filename)%(Extension)" />
         <Compile

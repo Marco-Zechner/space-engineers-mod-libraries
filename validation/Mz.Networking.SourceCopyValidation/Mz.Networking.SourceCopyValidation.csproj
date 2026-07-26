@@ -15,6 +15,9 @@
 
     <ItemGroup>
         <Compile
+            Include="..\..\src\Mz.SemanticVersioning\*.cs"
+            Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
+        <Compile
             Include="..\..\src\Mz.Networking.Core\**\*.cs"
             Exclude="..\..\src\Mz.Networking.Core\bin\**;..\..\src\Mz.Networking.Core\obj\**"
             Link="Libraries\Mz.Networking.Core\%(RecursiveDir)%(Filename)%(Extension)" />
