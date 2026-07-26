@@ -13,7 +13,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | `Mz.ApiProtocol` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/apiprotocol/v0.2.0) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
 | `Mz.Logging` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/logging/v0.1.0) | [Guide](src/Mz.Logging.Core/README.md) |
 | `Mz.Networking` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/networking/v0.1.0) | [Guide](src/Mz.Networking.Core/README.md) |
-| `Mz.SemanticVersioning` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/semanticversioning/v0.1.0) | [Guide](src/Mz.SemanticVersioning/README.md) |
+| `Mz.SemanticVersioning` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/semanticversioning/v0.1.1) | [Guide](src/Mz.SemanticVersioning/README.md) |
 
 ## Latest changes
 
@@ -34,8 +34,9 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.SemanticVersioning
 
-- Latest stable release: [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/semanticversioning/v0.1.0)
-- No changelog metadata was published for this release.
+- Latest stable release: [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/semanticversioning/v0.1.1)
+- Added a complete package usage guide and installation examples.
+- Added shared immutable changelog value types.
 
 ## Release format
 
