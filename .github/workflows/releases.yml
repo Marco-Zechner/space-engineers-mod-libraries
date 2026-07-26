@@ -3,7 +3,7 @@ name: Library Releases
 on:
   push:
     tags:
-      - "*/v*"
+      - "release/*/*"
 
 permissions:
   contents: write

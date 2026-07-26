@@ -111,7 +111,7 @@ try {
     $semanticOutput = Join-Path $testRoot "semantic"
 
     & $bundleScript `
-        -Tag "semanticversioning/v0.1.1" `
+        -Tag "release/Mz.SemanticVersioning/0.1.1" `
         -OutputDirectory $semanticOutput `
         -SkipTests |
         Out-Null
@@ -266,7 +266,7 @@ try {
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
-        -Tag "apiprotocol/v0.2.1" `
+        -Tag "release/Mz.ApiProtocol/0.2.1" `
         -OutputDirectory $apiOutput `
         -SkipTests |
         Out-Null
@@ -399,7 +399,7 @@ try {
     $loggingOutput = Join-Path $testRoot "logging"
 
     & $bundleScript `
-        -Tag "logging/v0.1.1" `
+        -Tag "release/Mz.Logging/0.1.1" `
         -OutputDirectory $loggingOutput `
         -SkipTests |
         Out-Null
@@ -456,7 +456,7 @@ try {
     $networkingOutput = Join-Path $testRoot "networking"
 
     & $bundleScript `
-        -Tag "networking/v0.1.1" `
+        -Tag "release/Mz.Networking/0.1.1" `
         -OutputDirectory $networkingOutput `
         -SkipTests |
         Out-Null
@@ -550,11 +550,41 @@ try {
         -Action {
             & $bundleScript `
                 -Tag "apiprotocol/v0.2.0-r2" `
-                -OutputDirectory (Join-Path $testRoot "invalid") `
+                -OutputDirectory (Join-Path $testRoot "legacy") `
                 -SkipTests |
                 Out-Null
         } `
         -ExpectedMessagePart "Invalid release tag"
+
+    Assert-Throws `
+        -Action {
+            & $bundleScript `
+                -Tag "release/mz.Logging/0.1.1" `
+                -OutputDirectory (Join-Path $testRoot "wrong-case") `
+                -SkipTests |
+                Out-Null
+        } `
+        -ExpectedMessagePart "was not discovered exactly once"
+
+    Assert-Throws `
+        -Action {
+            & $bundleScript `
+                -Tag "release/Mz.Unknown/1.0.0" `
+                -OutputDirectory (Join-Path $testRoot "unknown") `
+                -SkipTests |
+                Out-Null
+        } `
+        -ExpectedMessagePart "was not discovered exactly once"
+
+    Assert-Throws `
+        -Action {
+            & $bundleScript `
+                -Tag "release/Mz.Logging/0.1.0" `
+                -OutputDirectory (Join-Path $testRoot "wrong-version") `
+                -SkipTests |
+                Out-Null
+        } `
+        -ExpectedMessagePart "does not match LibraryVersionFile version"
 
     Write-Output (
         "OK SELibs package-format tests passed: " +

@@ -58,19 +58,20 @@ $repoRoot = [System.IO.Path]::GetFullPath(
 . (Join-Path $scriptDirectory "LibraryReleaseMetadata.ps1")
 
 $tagPattern = (
-    '^(?<slug>[a-z0-9][a-z0-9-]*)/' +
-    'v(?<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    '^release/' +
+    '(?<packageId>[A-Za-z_][A-Za-z0-9_.]*)/' +
+    '(?<version>[0-9]+\.[0-9]+\.[0-9]+)$'
 )
 
 if ($Tag -notmatch $tagPattern) {
     throw (
         "Invalid release tag '$Tag'. Expected " +
-        "<library>/v<major.minor.patch>, for example " +
-        "apiprotocol/v0.2.0."
+        "release/<namespace>/<major.minor.patch>, for example " +
+        "release/Mz.ApiProtocol/0.2.0."
     )
 }
 
-$slug = $Matches["slug"].ToLowerInvariant()
+$tagPackageId = $Matches["packageId"]
 $version = $Matches["version"]
 
 $libraries = @(Get-ReleaseLibraries -RepoRoot $repoRoot)
@@ -78,17 +79,18 @@ $libraries = @(Get-ReleaseLibraries -RepoRoot $repoRoot)
 $libraryMatches = @(
     $libraries |
         Where-Object {
-            $_.Slug.Equals(
-                $slug,
-                [System.StringComparison]::OrdinalIgnoreCase
+            ([string]$_.PackageId).Equals(
+                $tagPackageId,
+                [System.StringComparison]::Ordinal
             )
         }
 )
 
 if ($libraryMatches.Count -ne 1) {
-    throw "Library '$slug' was not discovered exactly once."
+    throw (
+        "Library namespace '$tagPackageId' was not discovered exactly once."
+    )
 }
-
 $library = $libraryMatches[0]
 $packageId = [string]$library.PackageId
 $sourceDirectories = @($library.SourceDirectories)

@@ -189,22 +189,22 @@ try {
         -Path $releaseMetadataPath `
         -Value @(
             (New-TestRelease `
-                -Tag "apiprotocol/v0.2.0" `
+                -Tag "release/Mz.ApiProtocol/0.2.0" `
                 -ManifestPath $apiOld)
             (New-TestRelease `
-                -Tag "apiprotocol/v0.2.1" `
+                -Tag "release/Mz.ApiProtocol/0.2.1" `
                 -ManifestPath $apiLatest)
             (New-TestRelease `
-                -Tag "logging/v0.1.1" `
+                -Tag "release/Mz.Logging/0.1.1" `
                 -ManifestPath $logging)
             (New-TestRelease `
-                -Tag "networking/v0.1.1" `
+                -Tag "release/Mz.Networking/0.1.1" `
                 -ManifestPath $networking)
             (New-TestRelease `
-                -Tag "semanticversioning/v0.1.1" `
+                -Tag "release/Mz.SemanticVersioning/0.1.1" `
                 -ManifestPath $semantic)
             (New-TestRelease `
-                -Tag "apiprotocol/v9.0.0" `
+                -Tag "release/Mz.ApiProtocol/9.0.0" `
                 -ManifestPath $draftManifest `
                 -Draft)
         )
@@ -229,13 +229,13 @@ try {
         -Condition (
             $text.Contains(
                 "[``0.2.1``]" +
-                "(https://example.invalid/releases/apiprotocol/v0.2.1)"
+                "(https://example.invalid/releases/release/Mz.ApiProtocol/0.2.1)"
             )
         ) `
         -Message "Generated README did not select the newest API release."
 
     Assert-True `
-        -Condition (-not $text.Contains("apiprotocol/v9.0.0")) `
+        -Condition (-not $text.Contains("release/Mz.ApiProtocol/9.0.0")) `
         -Message "Generated README selected a draft release."
 
     Assert-True `
@@ -303,6 +303,16 @@ try {
             $releaseWorkflowText.Contains("needs: release")
         ) `
         -Message "README generation is not ordered after publication."
+
+    Assert-True `
+        -Condition (
+            $releaseWorkflowText.Contains(
+                '- "release/*/*"'
+            )
+        ) `
+        -Message (
+            "Release workflow does not select namespace/version tags."
+        )
 
     Assert-True `
         -Condition (
