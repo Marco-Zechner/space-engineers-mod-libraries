@@ -21,7 +21,7 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 1;
+        public const int Patch = 2;
 
         /// <summary>
         /// Gets the version string.
@@ -35,6 +35,14 @@ namespace Mz.ApiProtocol
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.2.2",
+                    new[]
+                    {
+                        "Added compiled provider, consumer-facade, and downstream usage examples.",
+                        "Included the copy-paste guide in release bundles."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.2.1",
                     new[]

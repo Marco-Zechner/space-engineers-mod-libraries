@@ -28,7 +28,7 @@ After installing SELibs, run these commands from the root of the mod project:
 
 ```shell
     selibs init
-    selibs add Mz.Networking@0.1.1
+    selibs add Mz.Networking@0.1.2
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
@@ -60,7 +60,7 @@ Place them as sibling folders under the mod's script library directory:
     Data/Scripts/ExampleMod/Libraries/Mz.Networking.SpaceEngineers
 ```
 
-Compile all contained `.cs` files as part of the mod. Networking `0.1.1`
+Compile all contained `.cs` files as part of the mod. Networking `0.1.2`
 requires `Mz.SemanticVersioning` `0.1.1`. The Space Engineers component also
 depends on the Core component, so use the exact dependency versions declared
 by the selected package manifest.
