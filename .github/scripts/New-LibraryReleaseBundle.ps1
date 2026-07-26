@@ -231,6 +231,10 @@ try {
                             -or $_.Name.Equals(
                                 "README.md",
                                 [System.StringComparison]::OrdinalIgnoreCase
+                            ) `
+                            -or $_.Name.Equals(
+                                "Guide.md",
+                                [System.StringComparison]::OrdinalIgnoreCase
                             )
                         )
                 } |

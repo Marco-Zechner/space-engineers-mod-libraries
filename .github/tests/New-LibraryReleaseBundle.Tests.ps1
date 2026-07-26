@@ -396,6 +396,13 @@ try {
         ) `
         -Message "ApiProtocol README is missing from its archive."
 
+    Assert-True `
+        -Condition (
+            $apiEntries -contains
+            "Libraries/Mz.ApiProtocol.Core/Guide.md"
+        ) `
+        -Message "ApiProtocol copy-paste guide is missing from its archive."
+
     $loggingOutput = Join-Path $testRoot "logging"
 
     & $bundleScript `
@@ -509,6 +516,13 @@ try {
             "Libraries/Mz.Networking.Core/README.md"
         ) `
         -Message "Networking README is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains
+            "Libraries/Mz.Networking.Core/Guide.md"
+        ) `
+        -Message "Networking copy-paste guide is missing from its archive."
 
     Assert-True `
         -Condition (
