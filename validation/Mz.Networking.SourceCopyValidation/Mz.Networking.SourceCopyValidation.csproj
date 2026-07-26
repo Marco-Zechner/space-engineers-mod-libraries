@@ -15,11 +15,16 @@
 
     <ItemGroup>
         <Compile
-            Include="..\..\src\Mz.Networking.Core\*.cs"
-            Link="Libraries\Mz.Networking.Core\%(Filename)%(Extension)" />
+            Include="..\..\src\Mz.SemanticVersioning\*.cs"
+            Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
         <Compile
-            Include="..\..\src\Mz.Networking.SpaceEngineers\*.cs"
-            Link="Libraries\Mz.Networking.SpaceEngineers\%(Filename)%(Extension)" />
+            Include="..\..\src\Mz.Networking.Core\**\*.cs"
+            Exclude="..\..\src\Mz.Networking.Core\bin\**;..\..\src\Mz.Networking.Core\obj\**"
+            Link="Libraries\Mz.Networking.Core\%(RecursiveDir)%(Filename)%(Extension)" />
+        <Compile
+            Include="..\..\src\Mz.Networking.SpaceEngineers\**\*.cs"
+            Exclude="..\..\src\Mz.Networking.SpaceEngineers\bin\**;..\..\src\Mz.Networking.SpaceEngineers\obj\**"
+            Link="Libraries\Mz.Networking.SpaceEngineers\%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
 
     <ItemGroup>

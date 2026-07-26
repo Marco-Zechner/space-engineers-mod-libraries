@@ -1,7 +1,10 @@
+using Mz.SemanticVersioning;
+
 namespace Mz.Logging
 {
     /// <summary>
-    /// Defines the released version of this library package.
+    /// Defines the released version and ordered changelog of this library
+    /// package.
     /// </summary>
     public static class LibraryVersionFile
     {
@@ -18,11 +21,37 @@ namespace Mz.Logging
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 0;
+        public const int Patch = 1;
 
         /// <summary>
         /// Gets the version string.
         /// </summary>
         public static string VersionString => $"{Major}.{Minor}.{Patch}";
+
+        /// <summary>
+        /// Gets the complete changelog ordered from newest to oldest.
+        /// </summary>
+        public static Changelog Changelog { get; } = new Changelog(
+            VersionString,
+            new[]
+            {
+                new ChangelogEntry(
+                    "0.1.1",
+                    new[]
+                    {
+                        "Added a complete package usage guide and installation examples.",
+                        "Added the shared Mz.SemanticVersioning dependency.",
+                        "Adopted the shared SemanticVersioning changelog model."
+                    }
+                ),
+                new ChangelogEntry(
+                    "0.1.0",
+                    new[]
+                    {
+                        "Published the initial SELibs package release."
+                    }
+                )
+            }
+        );
     }
 }

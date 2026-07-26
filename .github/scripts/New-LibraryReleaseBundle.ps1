@@ -92,6 +92,7 @@ if ($libraryMatches.Count -ne 1) {
 $library = $libraryMatches[0]
 $packageId = [string]$library.PackageId
 $sourceDirectories = @($library.SourceDirectories)
+$changelog = @($library.Changelog)
 
 if ($version -ne [string]$library.Version) {
     throw (
@@ -314,6 +315,15 @@ try {
         schemaVersion = 1
         id = $packageId
         version = $version
+        changelog = @(
+            $changelog |
+                ForEach-Object {
+                    [ordered]@{
+                        version = [string]$_.Version
+                        changes = @($_.Changes)
+                    }
+                }
+        )
         dependencies = $dependencies
         folders = @($folders | Sort-Object)
         component = [ordered]@{
@@ -340,6 +350,16 @@ try {
         "# $packageId $version",
         "",
         "SELibs source package generated from commit ``$commit``.",
+        "",
+        "## Changes",
+        ""
+    )
+
+    foreach ($change in @($changelog[0].Changes)) {
+        $notesLines += "- $change"
+    }
+
+    $notesLines += @(
         "",
         "## Package",
         "",

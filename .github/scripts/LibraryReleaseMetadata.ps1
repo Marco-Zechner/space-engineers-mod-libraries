@@ -52,6 +52,28 @@ function Get-LibraryObjectPropertyValue {
 
     return $property.Value
 }
+function ConvertFrom-LibraryCSharpStringLiteral {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Value,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    try {
+        return [System.Text.RegularExpressions.Regex]::Unescape(
+            $Value
+        )
+    }
+    catch {
+        throw (
+            "Library changelog in '$Path' contains an unsupported " +
+            "C# string escape."
+        )
+    }
+}
+
 function Read-LibraryVersionDescriptor {
     param(
         [Parameter(Mandatory = $true)]
@@ -80,7 +102,6 @@ function Read-LibraryVersionDescriptor {
     }
 
     $packageId = $namespaceMatch.Groups["value"].Value
-
     $versionParts = [ordered]@{}
 
     foreach ($name in @("Major", "Minor", "Patch")) {
@@ -103,6 +124,138 @@ function Read-LibraryVersionDescriptor {
         $versionParts[$name] = $match.Groups["value"].Value
     }
 
+    $version = (
+        "$($versionParts["Major"])." +
+        "$($versionParts["Minor"])." +
+        "$($versionParts["Patch"])"
+    )
+
+    $entryPattern = (
+        '(?s)new\s+ChangelogEntry\s*\(\s*' +
+        '"(?<version>(?:\\.|[^"\\])*)"\s*,\s*' +
+        'new\s*\[\]\s*\{(?<changes>.*?)\}\s*\)'
+    )
+
+    $entryMatches = @(
+        [regex]::Matches(
+            $text,
+            $entryPattern
+        )
+    )
+
+    if ($entryMatches.Count -eq 0) {
+        throw (
+            "Library version file '$Path' does not declare any " +
+            "ChangelogEntry values."
+        )
+    }
+
+    $changelog = New-Object System.Collections.ArrayList
+    $versions = @{}
+    $previousVersion = $null
+
+    foreach ($entryMatch in $entryMatches) {
+        $entryVersion = ConvertFrom-LibraryCSharpStringLiteral `
+            -Value $entryMatch.Groups["version"].Value `
+            -Path $Path
+
+        if ($entryVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw (
+                "Library changelog in '$Path' contains invalid version " +
+                "'$entryVersion'."
+            )
+        }
+
+        $versionKey = $entryVersion.ToLowerInvariant()
+
+        if ($versions.ContainsKey($versionKey)) {
+            throw (
+                "Library changelog in '$Path' declares version " +
+                "'$entryVersion' more than once."
+            )
+        }
+
+        $parsedVersion = [version]::Parse($entryVersion)
+
+        if (
+            $null -ne $previousVersion -and
+            $parsedVersion.CompareTo($previousVersion) -ge 0
+        ) {
+            throw (
+                "Library changelog in '$Path' must be ordered from " +
+                "newest to oldest."
+            )
+        }
+
+        $changesText = $entryMatch.Groups["changes"].Value
+        $changeMatches = @(
+            [regex]::Matches(
+                $changesText,
+                '"(?<value>(?:\\.|[^"\\])*)"'
+            )
+        )
+
+        if ($changeMatches.Count -eq 0) {
+            throw (
+                "Library changelog version '$entryVersion' in '$Path' " +
+                "does not contain any changes."
+            )
+        }
+
+        $residue = [regex]::Replace(
+            $changesText,
+            '"(?:\\.|[^"\\])*"',
+            ""
+        )
+
+        $residue = [regex]::Replace(
+            $residue,
+            '[\s,]',
+            ""
+        )
+
+        if (-not [string]::IsNullOrEmpty($residue)) {
+            throw (
+                "Library changelog version '$entryVersion' in '$Path' " +
+                "uses unsupported change-list syntax."
+            )
+        }
+
+        $changes = New-Object System.Collections.ArrayList
+
+        foreach ($changeMatch in $changeMatches) {
+            $change = ConvertFrom-LibraryCSharpStringLiteral `
+                -Value $changeMatch.Groups["value"].Value `
+                -Path $Path
+
+            if ([string]::IsNullOrWhiteSpace($change)) {
+                throw (
+                    "Library changelog version '$entryVersion' in '$Path' " +
+                    "contains an empty change."
+                )
+            }
+
+            [void]$changes.Add($change)
+        }
+
+        [void]$changelog.Add(
+            [pscustomobject]@{
+                Version = $entryVersion
+                Changes = @($changes)
+            }
+        )
+
+        $versions[$versionKey] = $true
+        $previousVersion = $parsedVersion
+    }
+
+    if ([string]$changelog[0].Version -ne $version) {
+        throw (
+            "Library changelog in '$Path' must begin with current " +
+            "package version '$version'."
+        )
+    }
+
     $packageLeaf = $packageId.Split(".")[-1]
     $slug = $packageLeaf.ToLowerInvariant().Replace("_", "-")
 
@@ -116,15 +269,11 @@ function Read-LibraryVersionDescriptor {
     return [pscustomobject]@{
         PackageId = $packageId
         Slug = $slug
-        Version = (
-            "$($versionParts["Major"])." +
-            "$($versionParts["Minor"])." +
-            "$($versionParts["Patch"])"
-        )
+        Version = $version
+        Changelog = @($changelog)
         VersionFilePath = [System.IO.Path]::GetFullPath($Path)
     }
 }
-
 function Get-LibraryProjectTargetFramework {
     param(
         [Parameter(Mandatory = $true)]
@@ -467,6 +616,7 @@ function Get-ReleaseLibraries {
             PackageId = $descriptor.PackageId
             Slug = $descriptor.Slug
             Version = $descriptor.Version
+            Changelog = @($descriptor.Changelog)
             VersionFilePath = $descriptor.VersionFilePath
             RootProjectPath = $rootProjectPath
             Projects = New-Object System.Collections.ArrayList

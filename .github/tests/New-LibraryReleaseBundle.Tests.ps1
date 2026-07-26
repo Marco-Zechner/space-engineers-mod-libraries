@@ -111,18 +111,18 @@ try {
     $semanticOutput = Join-Path $testRoot "semantic"
 
     & $bundleScript `
-        -Tag "semanticversioning/v0.1.0" `
+        -Tag "semanticversioning/v0.1.1" `
         -OutputDirectory $semanticOutput `
         -SkipTests |
         Out-Null
 
     $semanticManifestPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.0-package.json"
+        "Mz.SemanticVersioning-0.1.1-package.json"
 
     $semanticComponentPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.0-component.zip"
+        "Mz.SemanticVersioning-0.1.1-component.zip"
 
     Assert-True `
         -Condition (
@@ -156,9 +156,41 @@ try {
         -Message "SemanticVersioning has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.1.0" `
+        -Expected "0.1.1" `
         -Actual ([string]$semanticManifest.version) `
         -Message "SemanticVersioning has the wrong version."
+
+    Assert-Equal `
+        -Expected "0.1.1,0.1.0" `
+        -Actual (
+            @($semanticManifest.changelog.version) -join ","
+        ) `
+        -Message "SemanticVersioning changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected (
+            "Added a complete package usage guide and installation examples."
+        ) `
+        -Actual (
+            [string]$semanticManifest.changelog[0].changes[0]
+        ) `
+        -Message "SemanticVersioning current changelog is incorrect."
+
+    $semanticNotes = Get-Content `
+        -LiteralPath (Join-Path $semanticOutput "release-notes.md") `
+        -Raw
+
+    Assert-True `
+        -Condition ($semanticNotes.Contains("## Changes")) `
+        -Message "Release notes do not contain a Changes section."
+
+    Assert-True `
+        -Condition (
+            $semanticNotes.Contains(
+                "- Added a complete package usage guide and installation examples."
+            )
+        ) `
+        -Message "Release notes do not contain the current changelog."
 
     Assert-Equal `
         -Expected 0 `
@@ -213,6 +245,20 @@ try {
     Assert-True `
         -Condition (
             $semanticEntries -contains
+            "Libraries/Mz.SemanticVersioning/Changelog.cs"
+        ) `
+        -Message "Shared Changelog source is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $semanticEntries -contains
+            "Libraries/Mz.SemanticVersioning/ChangelogEntry.cs"
+        ) `
+        -Message "Shared ChangelogEntry source is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $semanticEntries -contains
             "Libraries/Mz.SemanticVersioning/README.md"
         ) `
         -Message "SemanticVersioning README is missing from its archive."
@@ -220,18 +266,18 @@ try {
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
-        -Tag "apiprotocol/v0.2.0" `
+        -Tag "apiprotocol/v0.2.1" `
         -OutputDirectory $apiOutput `
         -SkipTests |
         Out-Null
 
     $apiManifestPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.0-package.json"
+        "Mz.ApiProtocol-0.2.1-package.json"
 
     $apiComponentPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.0-component.zip"
+        "Mz.ApiProtocol-0.2.1-component.zip"
 
     $apiManifest = Get-Content `
         -LiteralPath $apiManifestPath `
@@ -244,12 +290,19 @@ try {
         -Message "ApiProtocol has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.2.0" `
+        -Expected "0.2.1" `
         -Actual ([string]$apiManifest.version) `
         -Message "ApiProtocol has the wrong package version."
 
     Assert-Equal `
-        -Expected "0.1.0" `
+        -Expected "0.2.1,0.2.0" `
+        -Actual (
+            @($apiManifest.changelog.version) -join ","
+        ) `
+        -Message "ApiProtocol changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected "0.1.1" `
         -Actual (
             [string]$apiManifest.dependencies."Mz.SemanticVersioning"
         ) `
@@ -346,19 +399,52 @@ try {
     $loggingOutput = Join-Path $testRoot "logging"
 
     & $bundleScript `
-        -Tag "logging/v0.1.0" `
+        -Tag "logging/v0.1.1" `
         -OutputDirectory $loggingOutput `
         -SkipTests |
         Out-Null
+
+    $loggingManifest = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $loggingOutput `
+                "Mz.Logging-0.1.1-package.json"
+        ) `
+        -Raw |
+        ConvertFrom-Json
 
     $loggingEntries = @(
         Get-ZipEntries `
             -Path (
                 Join-Path `
                     $loggingOutput `
-                    "Mz.Logging-0.1.0-component.zip"
+                    "Mz.Logging-0.1.1-component.zip"
             )
     )
+
+    Assert-Equal `
+        -Expected "0.1.1" `
+        -Actual (
+            [string]$loggingManifest.dependencies."Mz.SemanticVersioning"
+        ) `
+        -Message "Logging has the wrong SemanticVersioning dependency."
+
+    Assert-True `
+        -Condition (
+            @(
+                $loggingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message (
+            "Logging component incorrectly embeds its SemanticVersioning " +
+            "dependency."
+        )
 
     Assert-True `
         -Condition (
@@ -370,19 +456,52 @@ try {
     $networkingOutput = Join-Path $testRoot "networking"
 
     & $bundleScript `
-        -Tag "networking/v0.1.0" `
+        -Tag "networking/v0.1.1" `
         -OutputDirectory $networkingOutput `
         -SkipTests |
         Out-Null
+
+    $networkingManifest = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $networkingOutput `
+                "Mz.Networking-0.1.1-package.json"
+        ) `
+        -Raw |
+        ConvertFrom-Json
 
     $networkingEntries = @(
         Get-ZipEntries `
             -Path (
                 Join-Path `
                     $networkingOutput `
-                    "Mz.Networking-0.1.0-component.zip"
+                    "Mz.Networking-0.1.1-component.zip"
             )
     )
+
+    Assert-Equal `
+        -Expected "0.1.1" `
+        -Actual (
+            [string]$networkingManifest.dependencies."Mz.SemanticVersioning"
+        ) `
+        -Message "Networking has the wrong SemanticVersioning dependency."
+
+    Assert-True `
+        -Condition (
+            @(
+                $networkingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message (
+            "Networking component incorrectly embeds its SemanticVersioning " +
+            "dependency."
+        )
 
     Assert-True `
         -Condition (
@@ -390,6 +509,42 @@ try {
             "Libraries/Mz.Networking.Core/README.md"
         ) `
         -Message "Networking README is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.Core/" +
+                "Endpoints/NetworkEndpoint.cs"
+            )
+        ) `
+        -Message "Networking Core endpoint layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.Core/" +
+                "Dispatching/NetworkMessageDispatcher.cs"
+            )
+        ) `
+        -Message "Networking Core dispatching layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.SpaceEngineers/" +
+                "Gateway/SpaceEngineersNetworkGateway.cs"
+            )
+        ) `
+        -Message "Networking gateway layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $networkingEntries -contains (
+                "Libraries/Mz.Networking.SpaceEngineers/" +
+                "Wire/NetworkEnvelopeWire.cs"
+            )
+        ) `
+        -Message "Networking wire layout was not preserved."
 
     Assert-Throws `
         -Action {

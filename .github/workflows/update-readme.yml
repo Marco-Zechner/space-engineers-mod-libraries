@@ -1,0 +1,72 @@
+name: Update Repository README
+
+on:
+  release:
+    types:
+      - published
+
+  workflow_call:
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-readme
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update published package catalog
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Generate root README
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          & ".\.github\scripts\New-RepositoryReadme.ps1" `
+              -Repository "${{ github.repository }}"
+
+      - name: Commit generated README
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          git config user.name "github-actions[bot]"
+          git config `
+              user.email `
+              "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -- README.md
+
+          if (git diff --cached --quiet) {
+              Write-Host "README.md is already current."
+              exit 0
+          }
+
+          git commit -m "docs: update published package catalog"
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Could not commit generated README.md."
+          }
+
+          git push origin HEAD:main
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Could not push generated README.md."
+          }

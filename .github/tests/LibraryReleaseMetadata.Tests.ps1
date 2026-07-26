@@ -126,6 +126,24 @@ try {
             "        public const int Major = 2;",
             "        public const int Minor = 3;",
             "        public const int Patch = 4;",
+            "        public static ChangelogEntry[] Changelog => null;",
+            "        private static readonly ChangelogEntry[] Entries =",
+            "        {",
+            "            new ChangelogEntry(",
+            '                "2.3.4",',
+            "                new[]",
+            "                {",
+            '                    "Improved dependency behavior."',
+            "                }",
+            "            ),",
+            "            new ChangelogEntry(",
+            '                "2.3.3",',
+            "                new[]",
+            "                {",
+            '                    "Published the previous release."',
+            "                }",
+            "            )",
+            "        };",
             "    }",
             "}"
         )
@@ -174,6 +192,25 @@ try {
             "        public const int Major = 1;",
             "        public const int Minor = 0;",
             "        public const int Patch = 0;",
+            "        public static ChangelogEntry[] Changelog => null;",
+            "        private static readonly ChangelogEntry[] Entries =",
+            "        {",
+            "            new ChangelogEntry(",
+            '                "1.0.0",',
+            "                new[]",
+            "                {",
+            '                    "Added the root package."',
+            '                    "Added adapter support."',
+            "                }",
+            "            ),",
+            "            new ChangelogEntry(",
+            '                "0.9.0",',
+            "                new[]",
+            "                {",
+            '                    "Published the preview package."',
+            "                }",
+            "            )",
+            "        };",
             "    }",
             "}"
         )
@@ -361,6 +398,27 @@ try {
         -Expected "2.3.4" `
         -Actual ([string]$dependencyPackage.Version) `
         -Message "Dependency package version was not read correctly."
+
+    Assert-Equal `
+        -Expected "1.0.0,0.9.0" `
+        -Actual (
+            @($rootPackage.Changelog.Version) -join ","
+        ) `
+        -Message "Root package changelog order was not preserved."
+
+    Assert-Equal `
+        -Expected "Added the root package.,Added adapter support." `
+        -Actual (
+            @($rootPackage.Changelog[0].Changes) -join ","
+        ) `
+        -Message "Root package current changes were not parsed."
+
+    Assert-Equal `
+        -Expected "2.3.4,2.3.3" `
+        -Actual (
+            @($dependencyPackage.Changelog.Version) -join ","
+        ) `
+        -Message "Dependency package changelog was not parsed."
 
     Assert-Equal `
         -Expected "src/Test.Root.Adapter,src/Test.Root.Core" `
