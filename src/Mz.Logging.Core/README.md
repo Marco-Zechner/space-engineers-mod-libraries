@@ -39,7 +39,7 @@ versions. Inspect that state with:
 ### Install manually
 
 To install without SELibs, use the source from the matching release tag in this
-repository and copy both complete folders:
+repository and copy these complete folders:
 
 ```text
     src/Mz.SemanticVersioning

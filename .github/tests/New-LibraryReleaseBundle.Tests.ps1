@@ -245,6 +245,20 @@ try {
     Assert-True `
         -Condition (
             $semanticEntries -contains
+            "Libraries/Mz.SemanticVersioning/Changelog.cs"
+        ) `
+        -Message "Shared Changelog source is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $semanticEntries -contains
+            "Libraries/Mz.SemanticVersioning/ChangelogEntry.cs"
+        ) `
+        -Message "Shared ChangelogEntry source is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $semanticEntries -contains
             "Libraries/Mz.SemanticVersioning/README.md"
         ) `
         -Message "SemanticVersioning README is missing from its archive."
@@ -390,6 +404,15 @@ try {
         -SkipTests |
         Out-Null
 
+    $loggingManifest = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $loggingOutput `
+                "Mz.Logging-0.1.1-package.json"
+        ) `
+        -Raw |
+        ConvertFrom-Json
+
     $loggingEntries = @(
         Get-ZipEntries `
             -Path (
@@ -398,6 +421,30 @@ try {
                     "Mz.Logging-0.1.1-component.zip"
             )
     )
+
+    Assert-Equal `
+        -Expected "0.1.1" `
+        -Actual (
+            [string]$loggingManifest.dependencies."Mz.SemanticVersioning"
+        ) `
+        -Message "Logging has the wrong SemanticVersioning dependency."
+
+    Assert-True `
+        -Condition (
+            @(
+                $loggingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message (
+            "Logging component incorrectly embeds its SemanticVersioning " +
+            "dependency."
+        )
 
     Assert-True `
         -Condition (
@@ -414,6 +461,15 @@ try {
         -SkipTests |
         Out-Null
 
+    $networkingManifest = Get-Content `
+        -LiteralPath (
+            Join-Path `
+                $networkingOutput `
+                "Mz.Networking-0.1.1-package.json"
+        ) `
+        -Raw |
+        ConvertFrom-Json
+
     $networkingEntries = @(
         Get-ZipEntries `
             -Path (
@@ -422,6 +478,30 @@ try {
                     "Mz.Networking-0.1.1-component.zip"
             )
     )
+
+    Assert-Equal `
+        -Expected "0.1.1" `
+        -Actual (
+            [string]$networkingManifest.dependencies."Mz.SemanticVersioning"
+        ) `
+        -Message "Networking has the wrong SemanticVersioning dependency."
+
+    Assert-True `
+        -Condition (
+            @(
+                $networkingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message (
+            "Networking component incorrectly embeds its SemanticVersioning " +
+            "dependency."
+        )
 
     Assert-True `
         -Condition (
