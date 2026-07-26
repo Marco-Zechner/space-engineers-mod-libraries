@@ -200,6 +200,7 @@ New-Item `
     Out-Null
 
 $copiedFileCount = 0
+$copiedReadmeCount = 0
 
 try {
     foreach ($sourceRelativeValue in $sourceDirectories) {
@@ -216,15 +217,34 @@ try {
             Get-ChildItem `
                 -LiteralPath $sourceDirectory `
                 -Recurse `
-                -File `
-                -Filter "*.cs" |
+                -File |
                 Where-Object {
-                    $_.FullName -notmatch '[\\/](bin|obj)[\\/]'
+                    $_.FullName -notmatch '[\\/](bin|obj)[\\/]' `
+                        -and (
+                            $_.Extension.Equals(
+                                ".cs",
+                                [System.StringComparison]::OrdinalIgnoreCase
+                            ) `
+                            -or $_.Name.Equals(
+                                "README.md",
+                                [System.StringComparison]::OrdinalIgnoreCase
+                            )
+                        )
                 } |
                 Sort-Object FullName
         )
 
-        if ($sourceFiles.Count -eq 0) {
+        $csharpSourceCount = @(
+            $sourceFiles |
+                Where-Object {
+                    $_.Extension.Equals(
+                        ".cs",
+                        [System.StringComparison]::OrdinalIgnoreCase
+                    )
+                }
+        ).Count
+
+        if ($csharpSourceCount -eq 0) {
             throw "No C# source files found in: $sourceDirectory"
         }
 
@@ -253,11 +273,24 @@ try {
                 -Destination $destinationPath
 
             $copiedFileCount++
+
+            if (
+                $sourceFile.Name.Equals(
+                    "README.md",
+                    [System.StringComparison]::OrdinalIgnoreCase
+                )
+            ) {
+                $copiedReadmeCount++
+            }
         }
     }
 
     if ($copiedFileCount -eq 0) {
         throw "The component archive contains no source files."
+    }
+
+    if ($copiedReadmeCount -eq 0) {
+        throw "The component archive contains no package README.md."
     }
 
     $assetBaseName = "$packageId-$version"
@@ -385,7 +418,8 @@ try {
     Write-Output "  Manifest: $manifestPath"
     Write-Output "  Component: $componentPath"
     Write-Output "  SHA256: $componentHash"
-    Write-Output "  Source files: $copiedFileCount"
+    Write-Output "  Package files: $copiedFileCount"
+    Write-Output "  README files: $copiedReadmeCount"
 }
 finally {
     if (Test-Path -LiteralPath $stagingRoot) {
