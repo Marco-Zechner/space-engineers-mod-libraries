@@ -10,18 +10,18 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 | Package | Latest stable release | Documentation |
 | --- | --- | --- |
-| `Mz.ApiProtocol` | [`0.2.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.1) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
+| `Mz.ApiProtocol` | [`0.2.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.2) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
 | `Mz.Logging` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1) | [Guide](src/Mz.Logging.Core/README.md) |
-| `Mz.Networking` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.1) | [Guide](src/Mz.Networking.Core/README.md) |
+| `Mz.Networking` | [`0.1.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.2) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.1.1) | [Guide](src/Mz.SemanticVersioning/README.md) |
 
 ## Latest changes
 
 ### Mz.ApiProtocol
 
-- Latest stable release: [`0.2.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.1)
-- Added a complete package usage guide and installation examples.
-- Adopted the shared SemanticVersioning changelog model.
+- Latest stable release: [`0.2.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.2)
+- Added compiled provider, consumer-facade, and downstream usage examples.
+- Included the copy-paste guide in release bundles.
 
 ### Mz.Logging
 
@@ -32,12 +32,9 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.Networking
 
-- Latest stable release: [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.1)
-- Organized Core and Space Engineers sources by responsibility.
-- Preserved nested source folders in validation and release archives.
-- Added a complete package usage guide and installation examples.
-- Added the shared Mz.SemanticVersioning dependency.
-- Adopted the shared SemanticVersioning changelog model.
+- Latest stable release: [`0.1.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.2)
+- Added compiled server and client copy-paste examples for a multiplayer ping flow.
+- Included the copy-paste guide in release bundles.
 
 ### Mz.SemanticVersioning
 
