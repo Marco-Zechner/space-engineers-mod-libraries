@@ -8,24 +8,6 @@ namespace Mz.SemanticVersioning
     /// </summary>
     public static class LibraryVersionFile
     {
-        private static readonly ChangelogEntry[] Entries =
-        {
-            new ChangelogEntry(
-                "0.1.1",
-                new[]
-                {
-                    "Added a complete package usage guide and installation examples."
-                }
-            ),
-            new ChangelogEntry(
-                "0.1.0",
-                new[]
-                {
-                    "Published the initial SELibs package release."
-                }
-            )
-        };
-
         /// <summary>
         /// Gets the major version number.
         /// </summary>
@@ -49,9 +31,26 @@ namespace Mz.SemanticVersioning
         /// <summary>
         /// Gets the complete changelog ordered from newest to oldest.
         /// </summary>
-        public static ChangelogEntry[] Changelog =>
-            (ChangelogEntry[])Entries.Clone();
+        public static ChangelogEntry[] Changelog => (ChangelogEntry[])Entries.Clone();
 
+        private static readonly ChangelogEntry[] Entries =
+        {
+            new ChangelogEntry(
+                "0.1.1",
+                new[]
+                {
+                    "Added a complete package usage guide and installation examples."
+                }
+            ),
+            new ChangelogEntry(
+                "0.1.0",
+                new[]
+                {
+                    "Published the initial SELibs package release."
+                }
+            )
+        };
+        
         /// <summary>
         /// Describes the changes published in one package version.
         /// </summary>
@@ -72,16 +71,10 @@ namespace Mz.SemanticVersioning
             /// <summary>
             /// Creates one immutable changelog entry.
             /// </summary>
-            public ChangelogEntry(
-                string version,
-                string[] changes
-            )
+            public ChangelogEntry(string version, string[] changes)
             {
                 if (string.IsNullOrWhiteSpace(version))
-                    throw new ArgumentException(
-                        "A changelog version is required.",
-                        nameof(version)
-                    );
+                    throw new ArgumentException("A changelog version is required.", nameof(version));
 
                 if (changes == null)
                     throw new ArgumentNullException(nameof(changes));
