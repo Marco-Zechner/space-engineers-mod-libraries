@@ -9,6 +9,7 @@
     <Project Path="src/Mz.SemanticVersioning/Mz.SemanticVersioning.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Release.Tests/Release.Tests.csproj" />
     <Project Path="tests/Mz.ApiProtocol.Core.Tests/Mz.ApiProtocol.Core.Tests.csproj" />
     <Project Path="tests/Mz.ApiProtocol.SpaceEngineers.Tests/Mz.ApiProtocol.SpaceEngineers.Tests.csproj" />
     <Project Path="tests/Mz.Logging.Core.Tests/Mz.Logging.Core.Tests.csproj" />
