@@ -11,6 +11,43 @@ $bundleScript = Join-Path `
     $repoRoot `
     ".github\scripts\New-LibraryReleaseBundle.ps1"
 
+$metadataScript = Join-Path `
+    $repoRoot `
+    ".github\scripts\LibraryReleaseMetadata.ps1"
+
+. $metadataScript
+
+$libraries = @(
+    Get-ReleaseLibraries -RepoRoot $repoRoot
+)
+
+function Get-TestLibrary {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PackageId
+    )
+
+    $matches = @(
+        $libraries |
+            Where-Object {
+                ([string]$_.PackageId).Equals(
+                    $PackageId,
+                    [System.StringComparison]::Ordinal
+                )
+            }
+    )
+
+    if ($matches.Count -ne 1) {
+        throw (
+            "Expected exactly one discovered package named '{0}'; found {1}." -f
+            $PackageId,
+            $matches.Count
+        )
+    }
+
+    return $matches[0]
+}
+
 $script:Passed = 0
 
 function Assert-True {
@@ -108,21 +145,73 @@ $testRoot = Join-Path `
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 
 try {
+    $semanticLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.SemanticVersioning"
+
+    $semanticVersion =
+        [string]$semanticLibrary.Version
+
+    $semanticTag =
+        "release/Mz.SemanticVersioning/$semanticVersion"
+
+    $semanticChangelogVersions =
+        @($semanticLibrary.Changelog.Version) -join ","
+
+    $semanticCurrentChange =
+        [string]$semanticLibrary.Changelog[0].Changes[0]
+
+    $apiLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.ApiProtocol"
+
+    $apiVersion =
+        [string]$apiLibrary.Version
+
+    $apiTag =
+        "release/Mz.ApiProtocol/$apiVersion"
+
+    $apiChangelogVersions =
+        @($apiLibrary.Changelog.Version) -join ","
+
+    $loggingLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.Logging"
+
+    $loggingVersion =
+        [string]$loggingLibrary.Version
+
+    $loggingTag =
+        "release/Mz.Logging/$loggingVersion"
+
+    $networkingLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.Networking"
+
+    $networkingVersion =
+        [string]$networkingLibrary.Version
+
+    $networkingTag =
+        "release/Mz.Networking/$networkingVersion"
+
+    $networkingChangelogVersions =
+        @($networkingLibrary.Changelog.Version) -join ","
+
     $semanticOutput = Join-Path $testRoot "semantic"
 
     & $bundleScript `
-        -Tag "release/Mz.SemanticVersioning/0.1.1" `
+        -Tag $semanticTag `
         -OutputDirectory $semanticOutput `
         -SkipTests |
         Out-Null
 
     $semanticManifestPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.1-package.json"
+        ("Mz.SemanticVersioning-" + $semanticVersion + "-package.json")
 
     $semanticComponentPath = Join-Path `
         $semanticOutput `
-        "Mz.SemanticVersioning-0.1.1-component.zip"
+        ("Mz.SemanticVersioning-" + $semanticVersion + "-component.zip")
 
     Assert-True `
         -Condition (
@@ -156,21 +245,19 @@ try {
         -Message "SemanticVersioning has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.1.1" `
+        -Expected $semanticVersion `
         -Actual ([string]$semanticManifest.version) `
         -Message "SemanticVersioning has the wrong version."
 
     Assert-Equal `
-        -Expected "0.1.1,0.1.0" `
+        -Expected $semanticChangelogVersions `
         -Actual (
             @($semanticManifest.changelog.version) -join ","
         ) `
         -Message "SemanticVersioning changelog order is incorrect."
 
     Assert-Equal `
-        -Expected (
-            "Added a complete package usage guide and installation examples."
-        ) `
+        -Expected $semanticCurrentChange `
         -Actual (
             [string]$semanticManifest.changelog[0].changes[0]
         ) `
@@ -187,7 +274,7 @@ try {
     Assert-True `
         -Condition (
             $semanticNotes.Contains(
-                "- Added a complete package usage guide and installation examples."
+                "- " + $semanticCurrentChange
             )
         ) `
         -Message "Release notes do not contain the current changelog."
@@ -266,18 +353,18 @@ try {
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
-        -Tag "release/Mz.ApiProtocol/0.2.2" `
+        -Tag $apiTag `
         -OutputDirectory $apiOutput `
         -SkipTests |
         Out-Null
 
     $apiManifestPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.2-package.json"
+        ("Mz.ApiProtocol-" + $apiVersion + "-package.json")
 
     $apiComponentPath = Join-Path `
         $apiOutput `
-        "Mz.ApiProtocol-0.2.2-component.zip"
+        ("Mz.ApiProtocol-" + $apiVersion + "-component.zip")
 
     $apiManifest = Get-Content `
         -LiteralPath $apiManifestPath `
@@ -290,19 +377,19 @@ try {
         -Message "ApiProtocol has the wrong package ID."
 
     Assert-Equal `
-        -Expected "0.2.2" `
+        -Expected $apiVersion `
         -Actual ([string]$apiManifest.version) `
         -Message "ApiProtocol has the wrong package version."
 
     Assert-Equal `
-        -Expected "0.2.2,0.2.1,0.2.0" `
+        -Expected $apiChangelogVersions `
         -Actual (
             @($apiManifest.changelog.version) -join ","
         ) `
         -Message "ApiProtocol changelog order is incorrect."
 
     Assert-Equal `
-        -Expected "0.1.1" `
+        -Expected $semanticVersion `
         -Actual (
             [string]$apiManifest.dependencies."Mz.SemanticVersioning"
         ) `
@@ -406,7 +493,7 @@ try {
     $loggingOutput = Join-Path $testRoot "logging"
 
     & $bundleScript `
-        -Tag "release/Mz.Logging/0.1.1" `
+        -Tag $loggingTag `
         -OutputDirectory $loggingOutput `
         -SkipTests |
         Out-Null
@@ -415,7 +502,7 @@ try {
         -LiteralPath (
             Join-Path `
                 $loggingOutput `
-                "Mz.Logging-0.1.1-package.json"
+                ("Mz.Logging-" + $loggingVersion + "-package.json")
         ) `
         -Raw |
         ConvertFrom-Json
@@ -425,12 +512,12 @@ try {
             -Path (
                 Join-Path `
                     $loggingOutput `
-                    "Mz.Logging-0.1.1-component.zip"
+                    ("Mz.Logging-" + $loggingVersion + "-component.zip")
             )
     )
 
     Assert-Equal `
-        -Expected "0.1.1" `
+        -Expected $semanticVersion `
         -Actual (
             [string]$loggingManifest.dependencies."Mz.SemanticVersioning"
         ) `
@@ -463,7 +550,7 @@ try {
     $networkingOutput = Join-Path $testRoot "networking"
 
     & $bundleScript `
-        -Tag "release/Mz.Networking/0.1.2" `
+        -Tag $networkingTag `
         -OutputDirectory $networkingOutput `
         -SkipTests |
         Out-Null
@@ -472,7 +559,7 @@ try {
         -LiteralPath (
             Join-Path `
                 $networkingOutput `
-                "Mz.Networking-0.1.2-package.json"
+                ("Mz.Networking-" + $networkingVersion + "-package.json")
         ) `
         -Raw |
         ConvertFrom-Json
@@ -482,24 +569,24 @@ try {
             -Path (
                 Join-Path `
                     $networkingOutput `
-                    "Mz.Networking-0.1.2-component.zip"
+                    ("Mz.Networking-" + $networkingVersion + "-component.zip")
             )
     )
 
     Assert-Equal `
-        -Expected "0.1.2" `
+        -Expected $networkingVersion `
         -Actual ([string]$networkingManifest.version) `
         -Message "Networking has the wrong package version."
 
     Assert-Equal `
-        -Expected "0.1.2,0.1.1,0.1.0" `
+        -Expected $networkingChangelogVersions `
         -Actual (
             @($networkingManifest.changelog.version) -join ","
         ) `
         -Message "Networking changelog order is incorrect."
 
     Assert-Equal `
-        -Expected "0.1.1" `
+        -Expected $semanticVersion `
         -Actual (
             [string]$networkingManifest.dependencies."Mz.SemanticVersioning"
         ) `
