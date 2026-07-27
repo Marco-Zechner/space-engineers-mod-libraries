@@ -21,7 +21,7 @@ namespace Mz.ApiProtocol
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 3;
+        public const int Patch = 4;
 
         /// <summary>
         /// Gets the version string.
