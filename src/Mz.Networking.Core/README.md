@@ -216,6 +216,38 @@ Example:
 The server applies the relay after the handler returns. Relayed envelopes are
 marked as relays by the trusted server.
 
+## Latest-only unreliable state
+
+Unreliable packets may be dropped or arrive out of order. Applications sending
+frequent replaceable state can include their own `ushort` sequence in the
+payload and reject older updates with:
+
+    if (!NetworkSequence.IsNewer(candidateSequence, currentSequence))
+        return;
+
+`NetworkSequence.IsNewer` uses modular unsigned 16-bit comparison. A forward
+difference from 1 through 32767 is newer. Equal values are duplicates, and a
+difference of exactly 32768 is ambiguous and therefore rejected.
+
+`NetworkSequenceTracker` provides the same rule with first-value and reset
+handling:
+
+    private readonly NetworkSequenceTracker _stateSequence =
+        new NetworkSequenceTracker();
+
+    private void ApplyState(ushort sequence, byte[] state)
+    {
+        if (!_stateSequence.TryAccept(sequence))
+            return;
+
+        ApplyLatestState(state);
+    }
+
+Keep one tracker per independent sender, entity, and application stream. Reset
+or recreate that tracker whenever the stream, entity, or multiplayer session is
+recreated. Sequence metadata remains application-level and is not added to
+every `NetworkEnvelope`.
+
 ## Payload ownership
 
 `NetworkEnvelope` copies payload arrays when an envelope is created and when
