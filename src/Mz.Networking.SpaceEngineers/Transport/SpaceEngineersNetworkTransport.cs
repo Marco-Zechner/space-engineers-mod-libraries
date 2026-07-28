@@ -13,7 +13,7 @@ namespace Mz.Networking.SpaceEngineers
         private const int MaximumUnreliableMessageSize = 1024;
 
         private readonly ISpaceEngineersNetworkGateway _gateway;
-        private readonly ushort _channelId;
+        private ushort _channelId;
 
         /// <summary>
         /// Creates a transport using the legacy unframed envelope wire.
@@ -46,6 +46,11 @@ namespace Mz.Networking.SpaceEngineers
 
         /// <inheritdoc />
         public ulong LocalPeerId => _gateway.LocalPeerId;
+
+        /// <summary>
+        /// Gets the currently active secure-message channel.
+        /// </summary>
+        public ushort ChannelId => _channelId;
 
         /// <summary>
         /// Gets whether outgoing packets use the versioned Mz.Networking wire.
@@ -119,6 +124,11 @@ namespace Mz.Networking.SpaceEngineers
 
             foreach (var peerId in playerIds.Where(peerId => peerId != LocalPeerId))
                 SendSerializedToPeer(serialized, peerId, deliveryMode);
+        }
+
+        internal void ChangeChannel(ushort channelId)
+        {
+            _channelId = channelId;
         }
 
         private byte[] Serialize(NetworkEnvelope envelope, NetworkDeliveryMode deliveryMode)

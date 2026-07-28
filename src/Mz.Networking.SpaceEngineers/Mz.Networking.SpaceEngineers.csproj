@@ -17,6 +17,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Mz.ApiProtocol.SpaceEngineers\Mz.ApiProtocol.SpaceEngineers.csproj" />
         <ProjectReference Include="..\Mz.Networking.Core\Mz.Networking.Core.csproj" />
     </ItemGroup>
 
