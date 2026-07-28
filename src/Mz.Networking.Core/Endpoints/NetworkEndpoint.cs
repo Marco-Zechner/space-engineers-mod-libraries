@@ -26,14 +26,22 @@ namespace Mz.Networking
         /// <summary>
         /// Registers one application message handler.
         /// </summary>
-        public NetworkMessageSubscription RegisterHandler(string messageType, Action<NetworkReceiveContext> handler) 
+        public NetworkMessageSubscription RegisterHandler(string messageType, Action<NetworkReceiveContext> handler)
             => _dispatcher.RegisterHandler(messageType, handler);
+
+        /// <summary>
+        /// Sends an application message reliably to the authoritative server.
+        /// </summary>
+        public void SendToServer(string messageType, byte[] payload)
+            => SendToServer(messageType, payload, NetworkDeliveryMode.Reliable);
 
         /// <summary>
         /// Sends an application message to the authoritative server.
         /// </summary>
-        public void SendToServer(string messageType, byte[] payload)
+        public void SendToServer(string messageType, byte[] payload, NetworkDeliveryMode deliveryMode)
         {
+            EnsureDeliveryMode(deliveryMode);
+
             var envelope = new NetworkEnvelope(messageType, _transport.LocalPeerId, false, payload);
 
             if (_transport.IsServer)
@@ -41,23 +49,29 @@ namespace Mz.Networking
                 NetworkReceiveContext ignored;
 
                 Receive(envelope, _transport.LocalPeerId, true, out ignored);
-
                 return;
             }
 
-            _transport.SendToServer(envelope);
+            SendToServer(envelope, deliveryMode);
         }
+
+        /// <summary>
+        /// Sends an application message reliably from the server to one peer.
+        /// </summary>
+        public void SendToPlayer(string messageType, byte[] payload, ulong peerId)
+            => SendToPlayer(messageType, payload, peerId, NetworkDeliveryMode.Reliable);
 
         /// <summary>
         /// Sends an application message from the server to one peer.
         /// </summary>
-        public void SendToPlayer(string messageType, byte[] payload, ulong peerId)
+        public void SendToPlayer(string messageType, byte[] payload, ulong peerId, NetworkDeliveryMode deliveryMode)
         {
             EnsureServer();
+            EnsureDeliveryMode(deliveryMode);
 
             var envelope = new NetworkEnvelope(messageType, _transport.LocalPeerId, false, payload);
 
-            _transport.SendToPeer(envelope, peerId);
+            SendToPeer(envelope, peerId, deliveryMode);
         }
 
         /// <summary>
@@ -89,20 +103,88 @@ namespace Mz.Networking
             switch (context.RelayMode)
             {
                 case NetworkRelayMode.ToOthers:
-                    _transport.SendToOthers(relayEnvelope, context.Envelope.OriginalSenderId);
+                    SendToOthers(relayEnvelope, context.Envelope.OriginalSenderId, context.RelayDeliveryMode);
                     break;
 
                 case NetworkRelayMode.ToEveryone:
-                    _transport.SendToEveryone(relayEnvelope);
+                    SendToEveryone(relayEnvelope, context.RelayDeliveryMode);
                     break;
 
                 case NetworkRelayMode.ReturnToSender:
-                    _transport.SendToPeer(relayEnvelope, context.Envelope.OriginalSenderId);
+                    SendToPeer(relayEnvelope, context.Envelope.OriginalSenderId, context.RelayDeliveryMode);
                     break;
 
                 default:
                     throw new InvalidOperationException("The receive handler selected an unsupported relay mode.");
             }
+        }
+
+        private void SendToServer(NetworkEnvelope envelope, NetworkDeliveryMode deliveryMode)
+        {
+            var deliveryTransport = _transport as INetworkDeliveryTransport;
+
+            if (deliveryTransport != null)
+            {
+                deliveryTransport.SendToServer(envelope, deliveryMode);
+                return;
+            }
+
+            EnsureLegacyTransportSupports(deliveryMode);
+            _transport.SendToServer(envelope);
+        }
+
+        private void SendToPeer(NetworkEnvelope envelope, ulong peerId, NetworkDeliveryMode deliveryMode)
+        {
+            var deliveryTransport = _transport as INetworkDeliveryTransport;
+
+            if (deliveryTransport != null)
+            {
+                deliveryTransport.SendToPeer(envelope, peerId, deliveryMode);
+                return;
+            }
+
+            EnsureLegacyTransportSupports(deliveryMode);
+            _transport.SendToPeer(envelope, peerId);
+        }
+
+        private void SendToOthers(NetworkEnvelope envelope, ulong excludedPeerId, NetworkDeliveryMode deliveryMode)
+        {
+            var deliveryTransport = _transport as INetworkDeliveryTransport;
+
+            if (deliveryTransport != null)
+            {
+                deliveryTransport.SendToOthers(envelope, excludedPeerId, deliveryMode);
+                return;
+            }
+
+            EnsureLegacyTransportSupports(deliveryMode);
+            _transport.SendToOthers(envelope, excludedPeerId);
+        }
+
+        private void SendToEveryone(NetworkEnvelope envelope, NetworkDeliveryMode deliveryMode)
+        {
+            var deliveryTransport = _transport as INetworkDeliveryTransport;
+
+            if (deliveryTransport != null)
+            {
+                deliveryTransport.SendToEveryone(envelope, deliveryMode);
+                return;
+            }
+
+            EnsureLegacyTransportSupports(deliveryMode);
+            _transport.SendToEveryone(envelope);
+        }
+
+        private static void EnsureDeliveryMode(NetworkDeliveryMode deliveryMode)
+        {
+            if (deliveryMode < NetworkDeliveryMode.Reliable || deliveryMode > NetworkDeliveryMode.Unreliable)
+                throw new ArgumentException("The delivery mode is outside the supported range.", nameof(deliveryMode));
+        }
+
+        private static void EnsureLegacyTransportSupports(NetworkDeliveryMode deliveryMode)
+        {
+            if (deliveryMode != NetworkDeliveryMode.Reliable)
+                throw new NotSupportedException("The configured network transport does not support explicit unreliable delivery.");
         }
 
         private void EnsureServer()

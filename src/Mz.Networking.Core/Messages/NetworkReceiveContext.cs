@@ -46,6 +46,11 @@ namespace Mz.Networking
         public NetworkRelayMode RelayMode { get; set; }
 
         /// <summary>
+        /// Gets or sets the delivery guarantees used for a server relay.
+        /// </summary>
+        public NetworkDeliveryMode RelayDeliveryMode { get; set; }
+
+        /// <summary>
         /// Gets or sets whether the envelope must be serialized again before
         /// it is sent onward.
         /// </summary>
@@ -67,6 +72,7 @@ namespace Mz.Networking
             RelayFlagWasCorrected = relayFlagWasCorrected;
 
             RelayMode = NetworkRelayMode.None;
+            RelayDeliveryMode = NetworkDeliveryMode.Reliable;
             RequiresSerialization = originalSenderWasCorrected || relayFlagWasCorrected;
         }
     }

@@ -107,6 +107,43 @@ namespace Mz.Networking.Tests
 
             Assert.True(result.RequiresSerialization);
         }
+        [Fact]
+        public void Process_DefaultRelayDeliveryMode_IsReliable()
+        {
+            NetworkReceiveContext result =
+                NetworkMessageProcessor.Process(
+                    new NetworkEnvelope("Command.Execute", 444UL, false, new byte[0]),
+                    444UL,
+                    true,
+                    false,
+                    delegate
+                    {
+                    }
+                );
+
+            Assert.Equal(NetworkDeliveryMode.Reliable, result.RelayDeliveryMode);
+        }
+
+        [Fact]
+        public void Process_InvalidRelayDeliveryMode_Throws()
+        {
+            Assert.Throws<InvalidOperationException>(
+                delegate
+                {
+                    NetworkMessageProcessor.Process(
+                        new NetworkEnvelope("Command.Execute", 444UL, false, new byte[0]),
+                        444UL,
+                        true,
+                        false,
+                        delegate(NetworkReceiveContext context)
+                        {
+                            context.RelayDeliveryMode = (NetworkDeliveryMode)99;
+                        }
+                    );
+                }
+            );
+        }
+
 
         [Fact]
         public void Process_ClientReceiveFromNonServer_Throws()

@@ -10,7 +10,7 @@ namespace Mz.Networking.SpaceEngineers
     /// Uses the active Space Engineers ModAPI multiplayer and binary
     /// serialization services.
     /// </summary>
-    public sealed class SpaceEngineersNetworkGateway : ISpaceEngineersNetworkGateway
+    public sealed class SpaceEngineersNetworkGateway : ISpaceEngineersNetworkDeliveryGateway
     {
         /// <inheritdoc />
         public bool IsServer => GetMultiplayer().IsServer;
@@ -77,20 +77,28 @@ namespace Mz.Networking.SpaceEngineers
 
         /// <inheritdoc />
         public bool SendToServer(ushort channelId, byte[] serialized)
+            => SendToServer(channelId, serialized, true);
+
+        /// <inheritdoc />
+        public bool SendToServer(ushort channelId, byte[] serialized, bool reliable)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageToServer(channelId, serialized, true);
+            return GetMultiplayer().SendMessageToServer(channelId, serialized, reliable);
         }
 
         /// <inheritdoc />
         public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId)
+            => SendToPeer(channelId, serialized, peerId, true);
+
+        /// <inheritdoc />
+        public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId, bool reliable)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageTo(channelId, serialized, peerId, true);
+            return GetMultiplayer().SendMessageTo(channelId, serialized, peerId, reliable);
         }
 
         /// <inheritdoc />
