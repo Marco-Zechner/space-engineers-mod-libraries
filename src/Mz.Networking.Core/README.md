@@ -127,10 +127,19 @@ unframed for compatibility with existing deployments.
     }
 ```
 
-The receive-failure callback is required. It receives the channel, raw packet,
-transport sender information, failure kind, conflict flag, available network
-IDs, and exception when decoding or processing fails. Only foreign wire data
-and another network ID are marked as channel conflicts.
+`SpaceEngineersNetworkSession.Diagnostic` publishes receive failures containing
+the channel, raw packet, transport sender information, failure kind, conflict
+flag, available network IDs, recommended severity, stable diagnostic code,
+bounded diagnostic message, packet preview, discovered conflict text, and
+exception. Constructor overloads can optionally receive the same failure through
+a callback. Only foreign wire data and another network ID are marked as channel
+conflicts.
+
+Event subscriber exceptions are isolated. Existing callback overloads retain
+their previous exception behavior. Mz.Networking does not reference Mz.Logging,
+but its severity names and values intentionally match
+`Mz.Logging.LogLevel`, and `DiagnosticMessage` is ready for
+`Logger.Write(level, message, exception)` after an explicit level mapping.
 
 ## Send messages
 

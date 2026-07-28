@@ -10,7 +10,9 @@ namespace Mz.Networking.SpaceEngineers
     /// Uses the active Space Engineers ModAPI multiplayer and binary
     /// serialization services.
     /// </summary>
-    public sealed class SpaceEngineersNetworkGateway : ISpaceEngineersNetworkDeliveryGateway
+    public sealed class SpaceEngineersNetworkGateway :
+        ISpaceEngineersNetworkDeliveryGateway,
+        ISpaceEngineersNetworkDiagnosticGateway
     {
         /// <inheritdoc />
         public bool IsServer => GetMultiplayer().IsServer;
@@ -116,6 +118,33 @@ namespace Mz.Networking.SpaceEngineers
             playerCollection.GetPlayers(players, null);
 
             playerIds.AddRange(from player in players where player != null select player.SteamUserId);
+        }
+
+        /// <inheritdoc />
+        public bool TryDeserializeString(
+            byte[] serialized,
+            out string value)
+        {
+            value = null;
+
+            if (serialized == null)
+                return false;
+
+            try
+            {
+                value =
+                    GetUtilities()
+                        .SerializeFromBinary<string>(
+                            serialized
+                        );
+
+                return value != null;
+            }
+            catch
+            {
+                value = null;
+                return false;
+            }
         }
 
         private static IMyMultiplayer GetMultiplayer()

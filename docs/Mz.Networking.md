@@ -159,7 +159,8 @@ is read.
 ## Receive failures
 
 `SpaceEngineersNetworkSession` reports deserialization, trust, dispatch, and
-handler failures through the callback supplied to its constructor:
+handler failures through its `Diagnostic` event. Existing constructor overloads
+can also receive the same failure through a callback:
 
     private void OnNetworkFailure(
         SpaceEngineersNetworkReceiveFailure failure
@@ -190,6 +191,36 @@ Only packets without Mz.Networking magic and packets carrying another network
 ID are channel-conflict evidence. Unsupported versions, malformed recognized
 Mz.Networking framing, malformed own envelopes, processing failures, and
 application-handler failures are reported without marking a channel conflict.
+
+Each failure also contains:
+
+- a recommended `Severity`;
+- a stable `DiagnosticCode`;
+- a deterministic bounded `DiagnosticMessage`;
+- the complete packet length;
+- a bounded hexadecimal packet preview;
+- bounded sanitized text candidates for channel conflicts.
+
+Constructor overloads without a failure callback support event-only use.
+Exceptions from `Diagnostic` subscribers are isolated so logging or telemetry
+failures do not interrupt packet processing. Existing callback overloads retain
+their previous exception behavior.
+
+Mz.Networking does not depend on Mz.Logging. A consuming mod can map the
+severity explicitly and pass the prepared message and exception to its logger:
+
+    _network.Diagnostic += failure =>
+    {
+        _logger.Write(
+            ToLogLevel(failure.Severity),
+            failure.DiagnosticMessage,
+            failure.Exception
+        );
+    };
+
+The severity names and numeric values intentionally match
+`Mz.Logging.LogLevel`, but an explicit mapping function keeps that relationship
+visible at the integration boundary.
 
 ## Source-copy use
 

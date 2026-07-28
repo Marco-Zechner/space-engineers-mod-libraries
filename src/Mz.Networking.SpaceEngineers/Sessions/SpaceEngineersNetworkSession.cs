@@ -16,6 +16,69 @@ namespace Mz.Networking.SpaceEngineers
 
         /// <summary>
         /// Creates a compatibility session using the legacy unframed wire.
+        /// Receive diagnostics can be observed through <see cref="Diagnostic"/>.
+        /// </summary>
+        public SpaceEngineersNetworkSession(
+            ushort channelId)
+            : this(
+                new SpaceEngineersNetworkGateway(),
+                channelId,
+                null,
+                false,
+                null
+            ) { }
+
+        /// <summary>
+        /// Creates a session using the active Space Engineers ModAPI and an
+        /// explicit stable application network identity. Receive diagnostics
+        /// can be observed through <see cref="Diagnostic"/>.
+        /// </summary>
+        public SpaceEngineersNetworkSession(
+            ushort channelId,
+            string networkId)
+            : this(
+                new SpaceEngineersNetworkGateway(),
+                channelId,
+                networkId,
+                true,
+                null
+            ) { }
+
+        /// <summary>
+        /// Creates a compatibility session over an explicit gateway using the
+        /// legacy unframed wire. Receive diagnostics can be observed through
+        /// <see cref="Diagnostic"/>.
+        /// </summary>
+        public SpaceEngineersNetworkSession(
+            ISpaceEngineersNetworkGateway gateway,
+            ushort channelId)
+            : this(
+                gateway,
+                channelId,
+                null,
+                false,
+                null
+            ) { }
+
+        /// <summary>
+        /// Creates a session over an explicit gateway and stable application
+        /// network identity. Receive diagnostics can be observed through
+        /// <see cref="Diagnostic"/>.
+        /// </summary>
+        public SpaceEngineersNetworkSession(
+            ISpaceEngineersNetworkGateway gateway,
+            ushort channelId,
+            string networkId)
+            : this(
+                gateway,
+                channelId,
+                networkId,
+                true,
+                null
+            ) { }
+
+        /// <summary>
+        /// Creates a compatibility session using the legacy unframed wire.
         /// </summary>
         public SpaceEngineersNetworkSession(
             ushort channelId,
@@ -87,9 +150,6 @@ namespace Mz.Networking.SpaceEngineers
             if (gateway == null)
                 throw new ArgumentNullException(nameof(gateway));
 
-            if (receiveFailureHandler == null)
-                throw new ArgumentNullException(nameof(receiveFailureHandler));
-
             _gateway = gateway;
             _receiveFailureHandler = receiveFailureHandler;
             ChannelId = channelId;
@@ -134,6 +194,13 @@ namespace Mz.Networking.SpaceEngineers
         /// Gets the transport-independent mod-facing endpoint.
         /// </summary>
         public NetworkEndpoint Endpoint { get; }
+
+        /// <summary>
+        /// Raised for each rejected packet after its structured bounded
+        /// diagnostic fields have been prepared. Subscriber exceptions are
+        /// isolated and do not interrupt packet processing.
+        /// </summary>
+        public event Action<SpaceEngineersNetworkReceiveFailure> Diagnostic;
 
         /// <summary>
         /// Removes the exact secure-message handler registration.
@@ -287,18 +354,70 @@ namespace Mz.Networking.SpaceEngineers
             string observedNetworkId,
             Exception exception)
         {
-            _receiveFailureHandler(
-                new SpaceEngineersNetworkReceiveFailure(
+            var packet = serialized ?? Array.Empty<byte>();
+
+            var diagnostic =
+                SpaceEngineersNetworkDiagnosticBuilder.Build(
                     channelId,
-                    serialized ?? Array.Empty<byte>(),
+                    packet,
                     senderPeerId,
                     senderIsServer,
                     kind,
                     NetworkId,
                     observedNetworkId,
-                    exception
-                )
-            );
+                    _gateway as ISpaceEngineersNetworkDiagnosticGateway
+                );
+
+            var failure =
+                new SpaceEngineersNetworkReceiveFailure(
+                    channelId,
+                    packet,
+                    senderPeerId,
+                    senderIsServer,
+                    kind,
+                    NetworkId,
+                    observedNetworkId,
+                    exception,
+                    diagnostic
+                );
+
+            if (_receiveFailureHandler == null)
+            {
+                PublishDiagnostic(failure);
+                return;
+            }
+
+            try
+            {
+                _receiveFailureHandler(failure);
+            }
+            finally
+            {
+                PublishDiagnostic(failure);
+            }
+        }
+
+        private void PublishDiagnostic(
+            SpaceEngineersNetworkReceiveFailure failure)
+        {
+            var handlers = Diagnostic;
+
+            if (handlers == null)
+                return;
+
+            var subscribers = handlers.GetInvocationList();
+
+            for (var index = 0; index < subscribers.Length; index++)
+            {
+                try
+                {
+                    ((Action<SpaceEngineersNetworkReceiveFailure>)
+                        subscribers[index])(failure);
+                }
+                catch
+                {
+                }
+            }
         }
 
         private static SpaceEngineersNetworkReceiveFailureKind ToFailureKind(
