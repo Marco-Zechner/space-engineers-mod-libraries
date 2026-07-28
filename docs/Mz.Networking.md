@@ -30,6 +30,7 @@ session during unload.
     {
         _network = new SpaceEngineersNetworkSession(
             41000,
+            "Mz.Command.Network",
             OnNetworkFailure
         );
 
@@ -57,6 +58,12 @@ session during unload.
 
 The session registers one exact secure-message callback and removes that same
 callback when disposed. Disposal is idempotent.
+
+The explicit network ID is trimmed, case-sensitive, and limited to 256 UTF-8
+bytes. It is written to a versioned Mz.Networking wire header so another
+application identity on the same channel can be classified as a conflict. The
+legacy constructor without a network ID remains available for byte-for-byte
+compatibility with existing unframed Mz.Networking traffic.
 
 ## Sending messages
 
@@ -152,7 +159,8 @@ is read.
 ## Receive failures
 
 `SpaceEngineersNetworkSession` reports deserialization, trust, dispatch, and
-handler failures through the callback supplied to its constructor:
+handler failures through its `Diagnostic` event. Existing constructor overloads
+can also receive the same failure through a callback:
 
     private void OnNetworkFailure(
         SpaceEngineersNetworkReceiveFailure failure
@@ -173,8 +181,46 @@ The failure object contains:
 - channel ID;
 - immediate sender peer ID;
 - whether the sender was identified as the server;
+- failure `Kind`;
+- `IsChannelConflict`;
+- expected and observed network IDs when available;
 - the exception;
 - a copy of the serialized packet.
+
+Only packets without Mz.Networking magic and packets carrying another network
+ID are channel-conflict evidence. Unsupported versions, malformed recognized
+Mz.Networking framing, malformed own envelopes, processing failures, and
+application-handler failures are reported without marking a channel conflict.
+
+Each failure also contains:
+
+- a recommended `Severity`;
+- a stable `DiagnosticCode`;
+- a deterministic bounded `DiagnosticMessage`;
+- the complete packet length;
+- a bounded hexadecimal packet preview;
+- bounded sanitized text candidates for channel conflicts.
+
+Constructor overloads without a failure callback support event-only use.
+Exceptions from `Diagnostic` subscribers are isolated so logging or telemetry
+failures do not interrupt packet processing. Existing callback overloads retain
+their previous exception behavior.
+
+Mz.Networking does not depend on Mz.Logging. A consuming mod can map the
+severity explicitly and pass the prepared message and exception to its logger:
+
+    _network.Diagnostic += failure =>
+    {
+        _logger.Write(
+            ToLogLevel(failure.Severity),
+            failure.DiagnosticMessage,
+            failure.Exception
+        );
+    };
+
+The severity names and numeric values intentionally match
+`Mz.Logging.LogLevel`, but an explicit mapping function keeps that relationship
+visible at the integration boundary.
 
 ## Source-copy use
 
@@ -196,6 +242,8 @@ checks the mod whitelist.
 This implementation provides:
 
 - fixed-channel secure-message lifecycle;
+- optional versioned wire identity with conflict classification;
+- legacy unframed-wire compatibility;
 - binary envelope serialization;
 - trusted original-sender correction;
 - forged-relay correction;

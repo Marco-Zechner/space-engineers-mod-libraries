@@ -10,7 +10,9 @@ namespace Mz.Networking.SpaceEngineers
     /// Uses the active Space Engineers ModAPI multiplayer and binary
     /// serialization services.
     /// </summary>
-    public sealed class SpaceEngineersNetworkGateway : ISpaceEngineersNetworkGateway
+    public sealed class SpaceEngineersNetworkGateway :
+        ISpaceEngineersNetworkDeliveryGateway,
+        ISpaceEngineersNetworkDiagnosticGateway
     {
         /// <inheritdoc />
         public bool IsServer => GetMultiplayer().IsServer;
@@ -77,20 +79,28 @@ namespace Mz.Networking.SpaceEngineers
 
         /// <inheritdoc />
         public bool SendToServer(ushort channelId, byte[] serialized)
+            => SendToServer(channelId, serialized, true);
+
+        /// <inheritdoc />
+        public bool SendToServer(ushort channelId, byte[] serialized, bool reliable)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageToServer(channelId, serialized, true);
+            return GetMultiplayer().SendMessageToServer(channelId, serialized, reliable);
         }
 
         /// <inheritdoc />
         public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId)
+            => SendToPeer(channelId, serialized, peerId, true);
+
+        /// <inheritdoc />
+        public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId, bool reliable)
         {
             if (serialized == null)
                 throw new ArgumentNullException(nameof(serialized));
 
-            return GetMultiplayer().SendMessageTo(channelId, serialized, peerId, true);
+            return GetMultiplayer().SendMessageTo(channelId, serialized, peerId, reliable);
         }
 
         /// <inheritdoc />
@@ -108,6 +118,33 @@ namespace Mz.Networking.SpaceEngineers
             playerCollection.GetPlayers(players, null);
 
             playerIds.AddRange(from player in players where player != null select player.SteamUserId);
+        }
+
+        /// <inheritdoc />
+        public bool TryDeserializeString(
+            byte[] serialized,
+            out string value)
+        {
+            value = null;
+
+            if (serialized == null)
+                return false;
+
+            try
+            {
+                value =
+                    GetUtilities()
+                        .SerializeFromBinary<string>(
+                            serialized
+                        );
+
+                return value != null;
+            }
+            catch
+            {
+                value = null;
+                return false;
+            }
         }
 
         private static IMyMultiplayer GetMultiplayer()

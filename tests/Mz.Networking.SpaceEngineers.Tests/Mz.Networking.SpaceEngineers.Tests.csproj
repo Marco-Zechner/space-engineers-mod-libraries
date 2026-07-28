@@ -27,6 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\Mz.ApiProtocol.SpaceEngineers\Mz.ApiProtocol.SpaceEngineers.csproj" />
         <ProjectReference Include="..\..\src\Mz.Networking.SpaceEngineers\Mz.Networking.SpaceEngineers.csproj" />
     </ItemGroup>
 

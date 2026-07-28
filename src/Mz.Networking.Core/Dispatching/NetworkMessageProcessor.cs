@@ -8,7 +8,6 @@ namespace Mz.Networking
     /// </summary>
     public static class NetworkMessageProcessor
     {
-
         /// <summary>
         /// Validates a received envelope and invokes its application handler.
         /// </summary>
@@ -28,8 +27,13 @@ namespace Mz.Networking
         /// </param>
         /// <returns>The completed receive context.</returns>
         public static NetworkReceiveContext Process(
-            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer, 
+            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer,
             Action<NetworkReceiveContext> handler)
+            => Process(envelope, transportSenderId, isServer, transportSenderIsServer, handler, null);
+
+        internal static NetworkReceiveContext Process(
+            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer,
+            Action<NetworkReceiveContext> handler, Action<Exception> handlerFailureObserver)
         {
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
@@ -41,9 +45,7 @@ namespace Mz.Networking
                 throw new InvalidOperationException("A client can only accept network messages sent by the authoritative server.");
 
             var senderWasCorrected = isServer && envelope.OriginalSenderId != transportSenderId;
-
             var relayFlagWasCorrected = isServer && !transportSenderIsServer && envelope.IsRelay;
-
             var validatedEnvelope = envelope;
 
             if (senderWasCorrected)
@@ -54,9 +56,20 @@ namespace Mz.Networking
 
             var context = new NetworkReceiveContext(validatedEnvelope, transportSenderId, isServer, transportSenderIsServer, senderWasCorrected, relayFlagWasCorrected);
 
-            handler(context);
+            try
+            {
+                handler(context);
+            }
+            catch (Exception exception)
+            {
+                if (handlerFailureObserver != null)
+                    handlerFailureObserver(exception);
+
+                throw;
+            }
 
             ValidateRelayMode(context.RelayMode);
+            ValidateDeliveryMode(context.RelayDeliveryMode);
 
             return context;
         }
@@ -65,6 +78,12 @@ namespace Mz.Networking
         {
             if (relayMode < NetworkRelayMode.None || relayMode > NetworkRelayMode.ReturnToSender)
                 throw new InvalidOperationException("The receive handler selected an unsupported relay mode.");
+        }
+
+        private static void ValidateDeliveryMode(NetworkDeliveryMode deliveryMode)
+        {
+            if (deliveryMode < NetworkDeliveryMode.Reliable || deliveryMode > NetworkDeliveryMode.Unreliable)
+                throw new InvalidOperationException("The receive handler selected an unsupported relay delivery mode.");
         }
     }
 }

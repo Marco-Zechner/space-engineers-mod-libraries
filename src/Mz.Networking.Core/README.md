@@ -71,7 +71,10 @@ Each session owns one secure-message channel. The same channel ID must be used
 by every peer running the mod, and it should not collide with another protocol.
 
 Create the session during the active mod lifecycle and dispose it during
-unload.
+unload. Pass the same stable network ID on every peer. The explicit-ID overload
+uses a versioned wire header and can distinguish foreign channel traffic from
+another Mz.Networking application identity. The older overload remains
+unframed for compatibility with existing deployments.
 
 ```csharp
     using System.Text;
@@ -85,6 +88,7 @@ unload.
     {
         _network = new SpaceEngineersNetworkSession(
             45123,
+            "example.chat.network",
             failure =>
             {
                 MyLog.Default.WriteLineAndConsole(
@@ -123,9 +127,19 @@ unload.
     }
 ```
 
-The receive-failure callback is required. It receives the channel, raw packet,
-transport sender information, and exception when deserialization or processing
-fails.
+`SpaceEngineersNetworkSession.Diagnostic` publishes receive failures containing
+the channel, raw packet, transport sender information, failure kind, conflict
+flag, available network IDs, recommended severity, stable diagnostic code,
+bounded diagnostic message, packet preview, discovered conflict text, and
+exception. Constructor overloads can optionally receive the same failure through
+a callback. Only foreign wire data and another network ID are marked as channel
+conflicts.
+
+Event subscriber exceptions are isolated. Existing callback overloads retain
+their previous exception behavior. Mz.Networking does not reference Mz.Logging,
+but its severity names and values intentionally match
+`Mz.Logging.LogLevel`, and `DiagnosticMessage` is ready for
+`Logger.Write(level, message, exception)` after an explicit level mapping.
 
 ## Send messages
 
@@ -215,6 +229,38 @@ Example:
 
 The server applies the relay after the handler returns. Relayed envelopes are
 marked as relays by the trusted server.
+
+## Latest-only unreliable state
+
+Unreliable packets may be dropped or arrive out of order. Applications sending
+frequent replaceable state can include their own `ushort` sequence in the
+payload and reject older updates with:
+
+    if (!NetworkSequence.IsNewer(candidateSequence, currentSequence))
+        return;
+
+`NetworkSequence.IsNewer` uses modular unsigned 16-bit comparison. A forward
+difference from 1 through 32767 is newer. Equal values are duplicates, and a
+difference of exactly 32768 is ambiguous and therefore rejected.
+
+`NetworkSequenceTracker` provides the same rule with first-value and reset
+handling:
+
+    private readonly NetworkSequenceTracker _stateSequence =
+        new NetworkSequenceTracker();
+
+    private void ApplyState(ushort sequence, byte[] state)
+    {
+        if (!_stateSequence.TryAccept(sequence))
+            return;
+
+        ApplyLatestState(state);
+    }
+
+Keep one tracker per independent sender, entity, and application stream. Reset
+or recreate that tracker whenever the stream, entity, or multiplayer session is
+recreated. Sequence metadata remains application-level and is not added to
+every `NetworkEnvelope`.
 
 ## Payload ownership
 

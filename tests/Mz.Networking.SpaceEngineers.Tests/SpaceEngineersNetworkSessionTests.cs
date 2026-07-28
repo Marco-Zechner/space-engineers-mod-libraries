@@ -24,6 +24,8 @@ namespace Mz.Networking.SpaceEngineers.Tests
 
             Assert.Equal((ushort)41000, gateway.RegisteredChannel);
             Assert.NotNull(gateway.RegisteredHandler);
+            Assert.False(session.UsesWireIdentity);
+            Assert.Null(session.NetworkId);
 
             Action<ushort, byte[], ulong, bool> registered =
                 gateway.RegisteredHandler!;
@@ -129,11 +131,17 @@ namespace Mz.Networking.SpaceEngineers.Tests
             Assert.Equal(300UL, observed.SenderPeerId);
             Assert.False(observed.SenderIsServer);
             Assert.Same(expected, observed.Exception);
-
             Assert.Equal(
                 new byte[] { 4, 5, 6 },
                 observed.SerializedMessage
             );
+            Assert.Equal(
+                SpaceEngineersNetworkReceiveFailureKind.MalformedOwnPacket,
+                observed.Kind
+            );
+            Assert.False(observed.IsChannelConflict);
+            Assert.Null(observed.ExpectedNetworkId);
+            Assert.Null(observed.ObservedNetworkId);
         }
 
         [Fact]
@@ -216,7 +224,67 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 gateway.SerializedBytes,
                 gateway.ServerSendBytes
             );
+            Assert.False(transport.UsesWireIdentity);
+            Assert.Null(transport.NetworkId);
+            Assert.True(gateway.ServerSendReliable);
         }
+        [Fact]
+        public void Transport_SendToServer_UnreliablePassesFalse()
+        {
+            var gateway = new RecordingGateway(false, 200UL);
+            var transport = new SpaceEngineersNetworkTransport(gateway, 41000);
+
+            transport.SendToServer(CreateEnvelope(), NetworkDeliveryMode.Unreliable);
+
+            Assert.False(gateway.ServerSendReliable);
+        }
+
+        [Fact]
+        public void Transport_SendToPeer_UnreliablePassesFalse()
+        {
+            var gateway = new RecordingGateway(true, 100UL);
+            var transport = new SpaceEngineersNetworkTransport(gateway, 41000);
+
+            transport.SendToPeer(CreateEnvelope(), 200UL, NetworkDeliveryMode.Unreliable);
+
+            Assert.False(Assert.Single(gateway.PeerSends).Reliable);
+        }
+
+        [Fact]
+        public void Transport_SendToServer_UnreliableOverLimitThrowsBeforeSend()
+        {
+            var gateway = new RecordingGateway(false, 200UL)
+            {
+                SerializedBytes = new byte[1025]
+            };
+
+            var transport = new SpaceEngineersNetworkTransport(gateway, 41000);
+
+            Assert.Throws<InvalidOperationException>(
+                delegate
+                {
+                    transport.SendToServer(CreateEnvelope(), NetworkDeliveryMode.Unreliable);
+                }
+            );
+
+            Assert.Equal(0, gateway.ServerSendCount);
+        }
+
+        [Fact]
+        public void Transport_SendToServer_UnreliableAtLimitSucceeds()
+        {
+            var gateway = new RecordingGateway(false, 200UL)
+            {
+                SerializedBytes = new byte[1024]
+            };
+
+            var transport = new SpaceEngineersNetworkTransport(gateway, 41000);
+
+            transport.SendToServer(CreateEnvelope(), NetworkDeliveryMode.Unreliable);
+
+            Assert.Equal(1, gateway.ServerSendCount);
+        }
+
 
         private static NetworkEnvelope CreateEnvelope()
         {
@@ -229,7 +297,7 @@ namespace Mz.Networking.SpaceEngineers.Tests
         }
 
         private sealed class RecordingGateway :
-            ISpaceEngineersNetworkGateway
+            ISpaceEngineersNetworkDeliveryGateway
         {
             public bool IsServer { get; }
 
@@ -255,39 +323,34 @@ namespace Mz.Networking.SpaceEngineers.Tests
 
             public int SerializeCount { get; private set; }
 
-            public byte[] SerializedBytes { get; } =
+            public byte[] SerializedBytes { get; set; } =
                 new byte[] { 7, 7, 7 };
 
             public ushort ServerSendChannel { get; private set; }
 
             public byte[]? ServerSendBytes { get; private set; }
 
+            public int ServerSendCount { get; private set; }
+
+            public bool ServerSendReliable { get; private set; }
+
             public NetworkEnvelope? DeserializedEnvelope { get; set; }
 
             public Exception? DeserializeException { get; set; }
 
-            public RecordingGateway(
-                bool isServer,
-                ulong localPeerId
-            )
+            public RecordingGateway(bool isServer, ulong localPeerId)
             {
                 IsServer = isServer;
                 LocalPeerId = localPeerId;
             }
 
-            public void RegisterSecureMessageHandler(
-                ushort channelId,
-                Action<ushort, byte[], ulong, bool> handler
-            )
+            public void RegisterSecureMessageHandler(ushort channelId, Action<ushort, byte[], ulong, bool> handler)
             {
                 RegisteredChannel = channelId;
                 RegisteredHandler = handler;
             }
 
-            public void UnregisterSecureMessageHandler(
-                ushort channelId,
-                Action<ushort, byte[], ulong, bool> handler
-            )
+            public void UnregisterSecureMessageHandler(ushort channelId, Action<ushort, byte[], ulong, bool> handler)
             {
                 UnregisterCount++;
                 UnregisteredChannel = channelId;
@@ -308,43 +371,31 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 return DeserializedEnvelope!;
             }
 
-            public bool SendToServer(
-                ushort channelId,
-                byte[] serialized
-            )
+            public bool SendToServer(ushort channelId, byte[] serialized)
+                => SendToServer(channelId, serialized, true);
+
+            public bool SendToServer(ushort channelId, byte[] serialized, bool reliable)
             {
+                ServerSendCount++;
                 ServerSendChannel = channelId;
                 ServerSendBytes = serialized;
+                ServerSendReliable = reliable;
                 return true;
             }
 
-            public bool SendToPeer(
-                ushort channelId,
-                byte[] serialized,
-                ulong peerId
-            )
-            {
-                PeerSends.Add(
-                    new PeerSend(
-                        channelId,
-                        serialized,
-                        peerId
-                    )
-                );
+            public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId)
+                => SendToPeer(channelId, serialized, peerId, true);
 
+            public bool SendToPeer(ushort channelId, byte[] serialized, ulong peerId, bool reliable)
+            {
+                PeerSends.Add(new PeerSend(channelId, serialized, peerId, reliable));
                 return true;
             }
 
             public void GetPlayerIds(List<ulong> playerIds)
-            {
-                playerIds.AddRange(PlayerIds);
-            }
+                => playerIds.AddRange(PlayerIds);
 
-            public void Deliver(
-                byte[] serialized,
-                ulong senderPeerId,
-                bool senderIsServer
-            )
+            public void Deliver(byte[] serialized, ulong senderPeerId, bool senderIsServer)
             {
                 RegisteredHandler!(
                     RegisteredChannel,
@@ -363,15 +414,14 @@ namespace Mz.Networking.SpaceEngineers.Tests
 
             public ulong PeerId { get; }
 
-            public PeerSend(
-                ushort channelId,
-                byte[] serialized,
-                ulong peerId
-            )
+            public bool Reliable { get; }
+
+            public PeerSend(ushort channelId, byte[] serialized, ulong peerId, bool reliable)
             {
                 ChannelId = channelId;
                 Serialized = serialized;
                 PeerId = peerId;
+                Reliable = reliable;
             }
         }
     }

@@ -42,6 +42,9 @@ namespace Example.NetworkingMod
         // exactly the same value.
         private const ushort ChannelId = 45123;
 
+        // Stable network identity; this must also match the client file.
+        private const string NetworkId = "example.networking";
+
         // Message types are case-sensitive and must match the client file.
         private const string PingRequestMessage = "example.networking.ping.request";
 
@@ -55,7 +58,7 @@ namespace Example.NetworkingMod
             if (MyAPIGateway.Multiplayer == null || !MyAPIGateway.Multiplayer.IsServer)
                 return;
 
-            _network = new SpaceEngineersNetworkSession(ChannelId, OnReceiveFailure);
+            _network = new SpaceEngineersNetworkSession(ChannelId, NetworkId, OnReceiveFailure);
 
             _pingSubscription = _network.Endpoint.RegisterHandler(
                 PingRequestMessage,
@@ -141,6 +144,8 @@ namespace Example.NetworkingMod
         // These values must match ExampleNetworkServerSession exactly.
         private const ushort ChannelId = 45123;
 
+        private const string NetworkId = "example.networking";
+
         private const string PingRequestMessage = "example.networking.ping.request";
 
         private const string PingResponseMessage = "example.networking.ping.response";
@@ -161,7 +166,7 @@ namespace Example.NetworkingMod
             if (MyAPIGateway.Multiplayer == null || MyAPIGateway.Multiplayer.IsServer)
                 return;
 
-            _network = new SpaceEngineersNetworkSession(ChannelId, OnReceiveFailure);
+            _network = new SpaceEngineersNetworkSession(ChannelId, NetworkId, OnReceiveFailure);
 
             _responseSubscription = _network.Endpoint.RegisterHandler(
                 PingResponseMessage,
@@ -255,6 +260,7 @@ namespace Example.NetworkingMod
 The following values must be identical in both files:
 
 - Secure-message channel: `45123`
+- Network ID: `example.networking`
 - Request message type: `example.networking.ping.request`
 - Response message type: `example.networking.ping.response`
 

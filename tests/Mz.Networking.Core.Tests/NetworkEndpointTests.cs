@@ -40,7 +40,53 @@ namespace Mz.Networking.Tests
                 new byte[] { 1, 2, 3 },
                 envelope.Payload
             );
+
+            Assert.Equal(
+                NetworkDeliveryMode.Reliable,
+                Assert.Single(transport.ServerDeliveryModes)
+            );
         }
+        [Fact]
+        public void SendToServer_ClientUnreliable_UsesSelectedDelivery()
+        {
+            var transport = new RecordingTransport(false, 101UL);
+            var endpoint = new NetworkEndpoint(transport);
+
+            endpoint.SendToServer("Physics.State", new byte[] { 1 }, NetworkDeliveryMode.Unreliable);
+
+            Assert.Equal(
+                NetworkDeliveryMode.Unreliable,
+                Assert.Single(transport.ServerDeliveryModes)
+            );
+        }
+
+        [Fact]
+        public void SendToServer_ClientUnreliable_LegacyTransportThrows()
+        {
+            var endpoint = new NetworkEndpoint(new LegacyRecordingTransport(false, 101UL));
+
+            Assert.Throws<NotSupportedException>(
+                delegate
+                {
+                    endpoint.SendToServer("Physics.State", new byte[0], NetworkDeliveryMode.Unreliable);
+                }
+            );
+        }
+
+        [Fact]
+        public void SendToPlayer_ServerUnreliable_UsesSelectedDelivery()
+        {
+            var transport = new RecordingTransport(true, 500UL);
+            var endpoint = new NetworkEndpoint(transport);
+
+            endpoint.SendToPlayer("Physics.State", new byte[] { 1 }, 200UL, NetworkDeliveryMode.Unreliable);
+
+            Assert.Equal(
+                NetworkDeliveryMode.Unreliable,
+                Assert.Single(transport.PeerMessages).DeliveryMode
+            );
+        }
+
 
         [Fact]
         public void SendToServer_Server_DispatchesLocally()
@@ -126,6 +172,37 @@ namespace Mz.Networking.Tests
             Assert.Equal(200UL, relay.Envelope.OriginalSenderId);
             Assert.True(relay.Envelope.IsRelay);
         }
+        [Fact]
+        public void Receive_ServerRelayUnreliable_UsesSelectedDelivery()
+        {
+            var transport = new RecordingTransport(true, 500UL);
+            var endpoint = new NetworkEndpoint(transport);
+
+            using (
+                endpoint.RegisterHandler(
+                    "Physics.State",
+                    delegate(NetworkReceiveContext context)
+                    {
+                        context.RelayMode = NetworkRelayMode.ToOthers;
+                        context.RelayDeliveryMode = NetworkDeliveryMode.Unreliable;
+                    }
+                )
+            )
+            {
+                endpoint.Receive(
+                    new NetworkEnvelope("Physics.State", 200UL, false, new byte[] { 5 }),
+                    200UL,
+                    false,
+                    out NetworkReceiveContext context
+                );
+            }
+
+            Assert.Equal(
+                NetworkDeliveryMode.Unreliable,
+                Assert.Single(transport.OtherMessages).DeliveryMode
+            );
+        }
+
 
         [Fact]
         public void Receive_ServerReturnToSender_SendsOnlyToOrigin()
@@ -248,8 +325,48 @@ namespace Mz.Networking.Tests
             );
         }
 
+        [Fact]
+        public void Receive_HandlerThrows_ObservesExactExceptionAndRethrows()
+        {
+            var transport = new RecordingTransport(true, 500UL);
+            var endpoint = new NetworkEndpoint(transport);
+            var expected = new InvalidOperationException("Application handler failed.");
+            Exception? observed = null;
+
+            using (
+                endpoint.RegisterHandler(
+                    "Command.Execute",
+                    delegate
+                    {
+                        throw expected;
+                    }
+                )
+            )
+            {
+                InvalidOperationException thrown =
+                    Assert.Throws<InvalidOperationException>(
+                        delegate
+                        {
+                            endpoint.Receive(
+                                new NetworkEnvelope("Command.Execute", 200UL, false, new byte[0]),
+                                200UL,
+                                false,
+                                delegate(Exception exception)
+                                {
+                                    observed = exception;
+                                },
+                                out NetworkReceiveContext context
+                            );
+                        }
+                    );
+
+                Assert.Same(expected, thrown);
+            }
+
+            Assert.Same(expected, observed);
+        }
         private sealed class RecordingTransport :
-            INetworkTransport
+            INetworkDeliveryTransport
         {
             public bool IsServer { get; }
 
@@ -257,6 +374,9 @@ namespace Mz.Networking.Tests
 
             public List<NetworkEnvelope> ServerMessages { get; } =
                 new List<NetworkEnvelope>();
+
+            public List<NetworkDeliveryMode> ServerDeliveryModes { get; } =
+                new List<NetworkDeliveryMode>();
 
             public List<PeerRecord> PeerMessages { get; } =
                 new List<PeerRecord>();
@@ -267,10 +387,48 @@ namespace Mz.Networking.Tests
             public List<NetworkEnvelope> EveryoneMessages { get; } =
                 new List<NetworkEnvelope>();
 
-            public RecordingTransport(
-                bool isServer,
-                ulong localPeerId
-            )
+            public RecordingTransport(bool isServer, ulong localPeerId)
+            {
+                IsServer = isServer;
+                LocalPeerId = localPeerId;
+            }
+
+            public void SendToServer(NetworkEnvelope envelope)
+                => SendToServer(envelope, NetworkDeliveryMode.Reliable);
+
+            public void SendToServer(NetworkEnvelope envelope, NetworkDeliveryMode deliveryMode)
+            {
+                ServerMessages.Add(envelope);
+                ServerDeliveryModes.Add(deliveryMode);
+            }
+
+            public void SendToPeer(NetworkEnvelope envelope, ulong peerId)
+                => SendToPeer(envelope, peerId, NetworkDeliveryMode.Reliable);
+
+            public void SendToPeer(NetworkEnvelope envelope, ulong peerId, NetworkDeliveryMode deliveryMode)
+                => PeerMessages.Add(new PeerRecord(envelope, peerId, deliveryMode));
+
+            public void SendToOthers(NetworkEnvelope envelope, ulong excludedPeerId)
+                => SendToOthers(envelope, excludedPeerId, NetworkDeliveryMode.Reliable);
+
+            public void SendToOthers(NetworkEnvelope envelope, ulong excludedPeerId, NetworkDeliveryMode deliveryMode)
+                => OtherMessages.Add(new RelayRecord(envelope, excludedPeerId, deliveryMode));
+
+            public void SendToEveryone(NetworkEnvelope envelope)
+                => SendToEveryone(envelope, NetworkDeliveryMode.Reliable);
+
+            public void SendToEveryone(NetworkEnvelope envelope, NetworkDeliveryMode deliveryMode)
+                => EveryoneMessages.Add(envelope);
+        }
+
+        private sealed class LegacyRecordingTransport :
+            INetworkTransport
+        {
+            public bool IsServer { get; }
+
+            public ulong LocalPeerId { get; }
+
+            public LegacyRecordingTransport(bool isServer, ulong localPeerId)
             {
                 IsServer = isServer;
                 LocalPeerId = localPeerId;
@@ -278,40 +436,18 @@ namespace Mz.Networking.Tests
 
             public void SendToServer(NetworkEnvelope envelope)
             {
-                ServerMessages.Add(envelope);
             }
 
-            public void SendToPeer(
-                NetworkEnvelope envelope,
-                ulong peerId
-            )
+            public void SendToPeer(NetworkEnvelope envelope, ulong peerId)
             {
-                PeerMessages.Add(
-                    new PeerRecord(
-                        envelope,
-                        peerId
-                    )
-                );
             }
 
-            public void SendToOthers(
-                NetworkEnvelope envelope,
-                ulong excludedPeerId
-            )
+            public void SendToOthers(NetworkEnvelope envelope, ulong excludedPeerId)
             {
-                OtherMessages.Add(
-                    new RelayRecord(
-                        envelope,
-                        excludedPeerId
-                    )
-                );
             }
 
-            public void SendToEveryone(
-                NetworkEnvelope envelope
-            )
+            public void SendToEveryone(NetworkEnvelope envelope)
             {
-                EveryoneMessages.Add(envelope);
             }
         }
 
@@ -321,13 +457,13 @@ namespace Mz.Networking.Tests
 
             public ulong PeerId { get; }
 
-            public PeerRecord(
-                NetworkEnvelope envelope,
-                ulong peerId
-            )
+            public NetworkDeliveryMode DeliveryMode { get; }
+
+            public PeerRecord(NetworkEnvelope envelope, ulong peerId, NetworkDeliveryMode deliveryMode)
             {
                 Envelope = envelope;
                 PeerId = peerId;
+                DeliveryMode = deliveryMode;
             }
         }
 
@@ -337,13 +473,13 @@ namespace Mz.Networking.Tests
 
             public ulong ExcludedPeerId { get; }
 
-            public RelayRecord(
-                NetworkEnvelope envelope,
-                ulong excludedPeerId
-            )
+            public NetworkDeliveryMode DeliveryMode { get; }
+
+            public RelayRecord(NetworkEnvelope envelope, ulong excludedPeerId, NetworkDeliveryMode deliveryMode)
             {
                 Envelope = envelope;
                 ExcludedPeerId = excludedPeerId;
+                DeliveryMode = deliveryMode;
             }
         }
     }

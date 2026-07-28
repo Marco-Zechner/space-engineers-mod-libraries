@@ -41,6 +41,11 @@ namespace Mz.Networking
         /// Attempts to dispatch a received envelope to its registered handler.
         /// </summary>
         public bool TryDispatch(NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer, out NetworkReceiveContext context)
+            => TryDispatch(envelope, transportSenderId, isServer, transportSenderIsServer, null, out context);
+
+        internal bool TryDispatch(
+            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer,
+            Action<Exception> handlerFailureObserver, out NetworkReceiveContext context)
         {
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
@@ -53,7 +58,14 @@ namespace Mz.Networking
                 return false;
             }
 
-            context = NetworkMessageProcessor.Process(envelope, transportSenderId, isServer, transportSenderIsServer, handler);
+            context = NetworkMessageProcessor.Process(
+                envelope,
+                transportSenderId,
+                isServer,
+                transportSenderIsServer,
+                handler,
+                handlerFailureObserver
+            );
 
             return true;
         }

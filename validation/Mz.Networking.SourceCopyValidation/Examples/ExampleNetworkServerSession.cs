@@ -21,6 +21,10 @@ namespace Example.NetworkingMod
         // exactly the same value.
         private const ushort ChannelId = 45123;
 
+        // Stable application identity written to the versioned wire header.
+        private const string NetworkId =
+            "example.networking";
+
         // Message types are case-sensitive and must match the client file.
         private const string PingRequestMessage =
             "example.networking.ping.request";
@@ -42,6 +46,7 @@ namespace Example.NetworkingMod
 
             _network = new SpaceEngineersNetworkSession(
                 ChannelId,
+                NetworkId,
                 OnReceiveFailure
             );
 
