@@ -20,6 +20,9 @@ namespace Example.NetworkingMod
         // These values must match ExampleNetworkServerSession exactly.
         private const ushort ChannelId = 45123;
 
+        private const string NetworkId =
+            "example.networking";
+
         private const string PingRequestMessage =
             "example.networking.ping.request";
 
@@ -48,6 +51,7 @@ namespace Example.NetworkingMod
 
             _network = new SpaceEngineersNetworkSession(
                 ChannelId,
+                NetworkId,
                 OnReceiveFailure
             );
 

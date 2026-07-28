@@ -30,6 +30,7 @@ session during unload.
     {
         _network = new SpaceEngineersNetworkSession(
             41000,
+            "Mz.Command.Network",
             OnNetworkFailure
         );
 
@@ -57,6 +58,12 @@ session during unload.
 
 The session registers one exact secure-message callback and removes that same
 callback when disposed. Disposal is idempotent.
+
+The explicit network ID is trimmed, case-sensitive, and limited to 256 UTF-8
+bytes. It is written to a versioned Mz.Networking wire header so another
+application identity on the same channel can be classified as a conflict. The
+legacy constructor without a network ID remains available for byte-for-byte
+compatibility with existing unframed Mz.Networking traffic.
 
 ## Sending messages
 
@@ -173,8 +180,16 @@ The failure object contains:
 - channel ID;
 - immediate sender peer ID;
 - whether the sender was identified as the server;
+- failure `Kind`;
+- `IsChannelConflict`;
+- expected and observed network IDs when available;
 - the exception;
 - a copy of the serialized packet.
+
+Only packets without Mz.Networking magic and packets carrying another network
+ID are channel-conflict evidence. Unsupported versions, malformed recognized
+Mz.Networking framing, malformed own envelopes, processing failures, and
+application-handler failures are reported without marking a channel conflict.
 
 ## Source-copy use
 
@@ -196,6 +211,8 @@ checks the mod whitelist.
 This implementation provides:
 
 - fixed-channel secure-message lifecycle;
+- optional versioned wire identity with conflict classification;
+- legacy unframed-wire compatibility;
 - binary envelope serialization;
 - trusted original-sender correction;
 - forged-relay correction;

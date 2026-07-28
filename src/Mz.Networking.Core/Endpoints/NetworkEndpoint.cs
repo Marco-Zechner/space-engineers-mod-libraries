@@ -78,11 +78,27 @@ namespace Mz.Networking
         /// Processes an envelope received from the concrete transport.
         /// </summary>
         public bool Receive(NetworkEnvelope envelope, ulong transportSenderId, bool transportSenderIsServer, out NetworkReceiveContext context)
+            => Receive(envelope, transportSenderId, transportSenderIsServer, null, out context);
+
+        /// <summary>
+        /// Processes an envelope and observes exceptions thrown directly by its
+        /// registered application handler before the original exception is rethrown.
+        /// </summary>
+        public bool Receive(
+            NetworkEnvelope envelope, ulong transportSenderId, bool transportSenderIsServer,
+            Action<Exception> handlerFailureObserver, out NetworkReceiveContext context)
         {
             if (!_transport.IsServer && !transportSenderIsServer)
                 throw new InvalidOperationException("A client can only accept network messages sent by the authoritative server.");
 
-            var dispatched = _dispatcher.TryDispatch(envelope, transportSenderId, _transport.IsServer, transportSenderIsServer, out context);
+            var dispatched = _dispatcher.TryDispatch(
+                envelope,
+                transportSenderId,
+                _transport.IsServer,
+                transportSenderIsServer,
+                handlerFailureObserver,
+                out context
+            );
 
             if (!dispatched)
                 return false;

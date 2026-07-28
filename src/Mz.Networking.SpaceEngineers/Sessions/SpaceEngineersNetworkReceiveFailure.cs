@@ -3,8 +3,7 @@ using System;
 namespace Mz.Networking.SpaceEngineers
 {
     /// <summary>
-    /// Describes a secure network message that could not be deserialized or
-    /// processed.
+    /// Describes a secure network message that could not be decoded or processed.
     /// </summary>
     public sealed class SpaceEngineersNetworkReceiveFailure
     {
@@ -26,16 +25,47 @@ namespace Mz.Networking.SpaceEngineers
         public bool SenderIsServer { get; }
 
         /// <summary>
+        /// Gets the failure classification.
+        /// </summary>
+        public SpaceEngineersNetworkReceiveFailureKind Kind { get; }
+
+        /// <summary>
+        /// Gets whether the packet is evidence that another protocol or network
+        /// identity is using the configured channel.
+        /// </summary>
+        public bool IsChannelConflict =>
+            Kind == SpaceEngineersNetworkReceiveFailureKind.ForeignPacket
+            || Kind == SpaceEngineersNetworkReceiveFailureKind.NetworkMismatch;
+
+        /// <summary>
+        /// Gets the network identity expected by the receiving session.
+        /// </summary>
+        public string ExpectedNetworkId { get; }
+
+        /// <summary>
+        /// Gets the network identity observed in the packet when available.
+        /// </summary>
+        public string ObservedNetworkId { get; }
+
+        /// <summary>
         /// Gets the exception raised while processing the packet.
         /// </summary>
         public Exception Exception { get; }
 
         /// <summary>
-        /// Gets a copy of the received serialized packet.
+        /// Gets a copy of the complete received serialized packet.
         /// </summary>
         public byte[] SerializedMessage => Copy(_serializedMessage);
 
-        internal SpaceEngineersNetworkReceiveFailure(ushort channelId, byte[] serializedMessage, ulong senderPeerId, bool senderIsServer, Exception exception)
+        internal SpaceEngineersNetworkReceiveFailure(
+            ushort channelId,
+            byte[] serializedMessage,
+            ulong senderPeerId,
+            bool senderIsServer,
+            SpaceEngineersNetworkReceiveFailureKind kind,
+            string expectedNetworkId,
+            string observedNetworkId,
+            Exception exception)
         {
             if (serializedMessage == null)
                 throw new ArgumentNullException(nameof(serializedMessage));
@@ -46,6 +76,9 @@ namespace Mz.Networking.SpaceEngineers
             ChannelId = channelId;
             SenderPeerId = senderPeerId;
             SenderIsServer = senderIsServer;
+            Kind = kind;
+            ExpectedNetworkId = expectedNetworkId;
+            ObservedNetworkId = observedNetworkId;
             Exception = exception;
             _serializedMessage = Copy(serializedMessage);
         }

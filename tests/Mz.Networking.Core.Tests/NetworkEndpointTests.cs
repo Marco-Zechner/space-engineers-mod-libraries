@@ -325,6 +325,46 @@ namespace Mz.Networking.Tests
             );
         }
 
+        [Fact]
+        public void Receive_HandlerThrows_ObservesExactExceptionAndRethrows()
+        {
+            var transport = new RecordingTransport(true, 500UL);
+            var endpoint = new NetworkEndpoint(transport);
+            var expected = new InvalidOperationException("Application handler failed.");
+            Exception? observed = null;
+
+            using (
+                endpoint.RegisterHandler(
+                    "Command.Execute",
+                    delegate
+                    {
+                        throw expected;
+                    }
+                )
+            )
+            {
+                InvalidOperationException thrown =
+                    Assert.Throws<InvalidOperationException>(
+                        delegate
+                        {
+                            endpoint.Receive(
+                                new NetworkEnvelope("Command.Execute", 200UL, false, new byte[0]),
+                                200UL,
+                                false,
+                                delegate(Exception exception)
+                                {
+                                    observed = exception;
+                                },
+                                out NetworkReceiveContext context
+                            );
+                        }
+                    );
+
+                Assert.Same(expected, thrown);
+            }
+
+            Assert.Same(expected, observed);
+        }
         private sealed class RecordingTransport :
             INetworkDeliveryTransport
         {

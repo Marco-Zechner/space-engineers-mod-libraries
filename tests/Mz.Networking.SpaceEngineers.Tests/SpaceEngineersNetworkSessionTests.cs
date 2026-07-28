@@ -24,6 +24,8 @@ namespace Mz.Networking.SpaceEngineers.Tests
 
             Assert.Equal((ushort)41000, gateway.RegisteredChannel);
             Assert.NotNull(gateway.RegisteredHandler);
+            Assert.False(session.UsesWireIdentity);
+            Assert.Null(session.NetworkId);
 
             Action<ushort, byte[], ulong, bool> registered =
                 gateway.RegisteredHandler!;
@@ -129,11 +131,17 @@ namespace Mz.Networking.SpaceEngineers.Tests
             Assert.Equal(300UL, observed.SenderPeerId);
             Assert.False(observed.SenderIsServer);
             Assert.Same(expected, observed.Exception);
-
             Assert.Equal(
                 new byte[] { 4, 5, 6 },
                 observed.SerializedMessage
             );
+            Assert.Equal(
+                SpaceEngineersNetworkReceiveFailureKind.MalformedOwnPacket,
+                observed.Kind
+            );
+            Assert.False(observed.IsChannelConflict);
+            Assert.Null(observed.ExpectedNetworkId);
+            Assert.Null(observed.ObservedNetworkId);
         }
 
         [Fact]
@@ -216,7 +224,8 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 gateway.SerializedBytes,
                 gateway.ServerSendBytes
             );
-
+            Assert.False(transport.UsesWireIdentity);
+            Assert.Null(transport.NetworkId);
             Assert.True(gateway.ServerSendReliable);
         }
         [Fact]

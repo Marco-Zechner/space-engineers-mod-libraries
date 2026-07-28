@@ -29,6 +29,11 @@ namespace Mz.Networking
         public static NetworkReceiveContext Process(
             NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer,
             Action<NetworkReceiveContext> handler)
+            => Process(envelope, transportSenderId, isServer, transportSenderIsServer, handler, null);
+
+        internal static NetworkReceiveContext Process(
+            NetworkEnvelope envelope, ulong transportSenderId, bool isServer, bool transportSenderIsServer,
+            Action<NetworkReceiveContext> handler, Action<Exception> handlerFailureObserver)
         {
             if (envelope == null)
                 throw new ArgumentNullException(nameof(envelope));
@@ -51,7 +56,17 @@ namespace Mz.Networking
 
             var context = new NetworkReceiveContext(validatedEnvelope, transportSenderId, isServer, transportSenderIsServer, senderWasCorrected, relayFlagWasCorrected);
 
-            handler(context);
+            try
+            {
+                handler(context);
+            }
+            catch (Exception exception)
+            {
+                if (handlerFailureObserver != null)
+                    handlerFailureObserver(exception);
+
+                throw;
+            }
 
             ValidateRelayMode(context.RelayMode);
             ValidateDeliveryMode(context.RelayDeliveryMode);

@@ -16,7 +16,7 @@ namespace Mz.Networking.SpaceEngineers
         private readonly ushort _channelId;
 
         /// <summary>
-        /// Creates a transport over one secure-message channel.
+        /// Creates a transport using the legacy unframed envelope wire.
         /// </summary>
         public SpaceEngineersNetworkTransport(ISpaceEngineersNetworkGateway gateway, ushort channelId)
         {
@@ -27,11 +27,36 @@ namespace Mz.Networking.SpaceEngineers
             _channelId = channelId;
         }
 
+        /// <summary>
+        /// Creates a transport over one secure-message channel and stable
+        /// application network identity.
+        /// </summary>
+        public SpaceEngineersNetworkTransport(
+            ISpaceEngineersNetworkGateway gateway,
+            ushort channelId,
+            string networkId)
+            : this(gateway, channelId)
+        {
+            NetworkId = SpaceEngineersNetworkIdentity.Normalize(networkId);
+            UsesWireIdentity = true;
+        }
+
         /// <inheritdoc />
         public bool IsServer => _gateway.IsServer;
 
         /// <inheritdoc />
         public ulong LocalPeerId => _gateway.LocalPeerId;
+
+        /// <summary>
+        /// Gets whether outgoing packets use the versioned Mz.Networking wire.
+        /// </summary>
+        public bool UsesWireIdentity { get; }
+
+        /// <summary>
+        /// Gets the stable application network identity, or null for legacy
+        /// unframed transport.
+        /// </summary>
+        public string NetworkId { get; }
 
         /// <inheritdoc />
         public void SendToServer(NetworkEnvelope envelope)
@@ -106,10 +131,13 @@ namespace Mz.Networking.SpaceEngineers
             var serialized = _gateway.Serialize(envelope);
 
             if (serialized == null)
-                throw new InvalidOperationException("The Space Engineers network gateway returned no serialized message.");
+                throw new InvalidOperationException("The Space Engineers network gateway returned no serialized envelope.");
+
+            if (UsesWireIdentity)
+                serialized = SpaceEngineersNetworkWireCodec.Encode(NetworkId, serialized);
 
             if (deliveryMode == NetworkDeliveryMode.Unreliable && serialized.Length > MaximumUnreliableMessageSize)
-                throw new InvalidOperationException($"An unreliable Space Engineers network message cannot exceed {MaximumUnreliableMessageSize} bytes.");
+                throw new InvalidOperationException("An unreliable Space Engineers network message cannot exceed 1024 bytes.");
 
             return serialized;
         }
@@ -139,7 +167,7 @@ namespace Mz.Networking.SpaceEngineers
             }
 
             if (!sent)
-                throw new InvalidOperationException($"Space Engineers rejected the network message sent to peer {peerId}.");
+                throw new InvalidOperationException("Space Engineers rejected the network message sent to peer " + peerId + ".");
         }
 
         private static void EnsureDeliveryMode(NetworkDeliveryMode deliveryMode)

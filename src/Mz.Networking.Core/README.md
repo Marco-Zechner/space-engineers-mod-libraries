@@ -71,7 +71,10 @@ Each session owns one secure-message channel. The same channel ID must be used
 by every peer running the mod, and it should not collide with another protocol.
 
 Create the session during the active mod lifecycle and dispose it during
-unload.
+unload. Pass the same stable network ID on every peer. The explicit-ID overload
+uses a versioned wire header and can distinguish foreign channel traffic from
+another Mz.Networking application identity. The older overload remains
+unframed for compatibility with existing deployments.
 
 ```csharp
     using System.Text;
@@ -85,6 +88,7 @@ unload.
     {
         _network = new SpaceEngineersNetworkSession(
             45123,
+            "example.chat.network",
             failure =>
             {
                 MyLog.Default.WriteLineAndConsole(
@@ -124,8 +128,9 @@ unload.
 ```
 
 The receive-failure callback is required. It receives the channel, raw packet,
-transport sender information, and exception when deserialization or processing
-fails.
+transport sender information, failure kind, conflict flag, available network
+IDs, and exception when decoding or processing fails. Only foreign wire data
+and another network ID are marked as channel conflicts.
 
 ## Send messages
 
