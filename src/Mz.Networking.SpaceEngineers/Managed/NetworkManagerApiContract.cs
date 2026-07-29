@@ -11,6 +11,10 @@ namespace Mz.Networking.SpaceEngineers
         internal const string RegisterNetworkEndpointName =
             "RegisterNetwork";
 
+        internal const string
+            RegisterNetworkWithConflictReportingEndpointName =
+                "RegisterNetworkWithConflictReporting";
+
         private static readonly ApiEndpointContract EndpointContract =
             new ApiEndpointContract(
                 new[]
@@ -105,6 +109,33 @@ namespace Mz.Networking.SpaceEngineers
             }
 
             return endpoint;
+        }
+
+        internal static bool
+            TryGetRegisterNetworkWithConflictReportingEndpoint(
+                ApiConnection connection,
+                out Func<
+                    string,
+                    string,
+                    Version,
+                    string,
+                    string,
+                    ushort,
+                    Action<
+                        ushort,
+                        ulong,
+                        Action<ushort, ulong>
+                    >,
+                    Action
+                > endpoint)
+        {
+            if (connection == null)
+                throw new ArgumentNullException(nameof(connection));
+
+            return connection.TryGetEndpoint(
+                RegisterNetworkWithConflictReportingEndpointName,
+                out endpoint
+            );
         }
     }
 }
