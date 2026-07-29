@@ -207,6 +207,136 @@ namespace Mz.Networking.SpaceEngineers.Tests
         }
 
         [Fact]
+        public void ConflictReassignment_DefersHandlerMutationUntilAfterDelivery()
+        {
+            var gateway =
+                new RecordingGateway
+                {
+                    DeferGameThreadActions =
+                        true
+                };
+
+            var bus =
+                new InMemoryModMessageBus();
+
+            var registration =
+                new RegistrationCapture
+                {
+                    AssignDuringRegistration =
+                        true,
+
+                    RegistrationChannel =
+                        PreferredChannel,
+
+                    RegistrationGeneration =
+                        4UL
+                };
+
+            registration.ConflictReported =
+                delegate
+                {
+                    registration.Assign(
+                        NewerAssignedChannel,
+                        5UL
+                    );
+                };
+
+            using (
+                var provider =
+                    CreateVersion11Provider(
+                        bus,
+                        registration
+                    )
+            )
+            {
+                provider.Start();
+
+                using (
+                    var session =
+                        new SpaceEngineersNetworkSession(
+                            gateway,
+                            bus,
+                            CreateConfiguration()
+                        )
+                )
+                {
+                    Assert.Equal(
+                        PreferredChannel,
+                        session.ChannelId
+                    );
+
+                    Assert.Equal(
+                        4UL,
+                        session.AssignmentGeneration
+                    );
+
+                    gateway.DeliverRaw(
+                        PreferredChannel,
+                        new byte[]
+                        {
+                            1,
+                            2,
+                            3,
+                            4
+                        },
+                        200UL,
+                        true
+                    );
+
+                    Assert.Single(
+                        registration.ConflictReports
+                    );
+
+                    Assert.Equal(
+                        PreferredChannel,
+                        session.ChannelId
+                    );
+
+                    Assert.True(
+                        gateway.IsRegistered(
+                            PreferredChannel
+                        )
+                    );
+
+                    Assert.False(
+                        gateway.IsRegistered(
+                            NewerAssignedChannel
+                        )
+                    );
+
+                    Assert.Equal(
+                        1,
+                        gateway.PendingGameThreadActionCount
+                    );
+
+                    gateway.RunGameThreadActions();
+
+                    Assert.Equal(
+                        NewerAssignedChannel,
+                        session.ChannelId
+                    );
+
+                    Assert.Equal(
+                        5UL,
+                        session.AssignmentGeneration
+                    );
+
+                    Assert.False(
+                        gateway.IsRegistered(
+                            PreferredChannel
+                        )
+                    );
+
+                    Assert.True(
+                        gateway.IsRegistered(
+                            NewerAssignedChannel
+                        )
+                    );
+                }
+            }
+        }
+
+        [Fact]
         public void Version10Provider_UsesLegacyEndpointWithoutConflictReporting()
         {
             var gateway =
@@ -476,6 +606,13 @@ namespace Mz.Networking.SpaceEngineers.Tests
             } =
                 new List<ConflictReport>();
 
+            public Action<ConflictReport>?
+                ConflictReported
+            {
+                get;
+                set;
+            }
+
             public Action RegisterLegacy(
                 string modId,
                 string modDisplayName,
@@ -568,12 +705,18 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 ulong generation
             )
             {
-                ConflictReports.Add(
+                var report =
                     new ConflictReport(
                         channelId,
                         generation
-                    )
+                    );
+
+                ConflictReports.Add(
+                    report
                 );
+
+                if (ConflictReported != null)
+                    ConflictReported(report);
             }
         }
 
@@ -696,7 +839,8 @@ namespace Mz.Networking.SpaceEngineers.Tests
         }
 
         private sealed class RecordingGateway :
-            ISpaceEngineersNetworkDeliveryGateway
+            ISpaceEngineersNetworkDeliveryGateway,
+            ISpaceEngineersNetworkSchedulingGateway
         {
             private readonly Dictionary<
                 ushort,
@@ -706,6 +850,12 @@ namespace Mz.Networking.SpaceEngineers.Tests
                     ushort,
                     Action<ushort, byte[], ulong, bool>
                 >();
+
+            private readonly List<Action>
+                _gameThreadActions =
+                    new List<Action>();
+
+            private bool _isDelivering;
 
             public bool IsServer =>
                 true;
@@ -719,11 +869,62 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 private set;
             }
 
+            public bool DeferGameThreadActions
+            {
+                get;
+                set;
+            }
+
+            public int PendingGameThreadActionCount =>
+                _gameThreadActions.Count;
+
+            public void InvokeOnGameThread(
+                Action action
+            )
+            {
+                if (action == null)
+                {
+                    throw
+                        new ArgumentNullException(
+                            nameof(action)
+                        );
+                }
+
+                if (!DeferGameThreadActions)
+                {
+                    action();
+                    return;
+                }
+
+                _gameThreadActions.Add(
+                    action
+                );
+            }
+
+            public void RunGameThreadActions()
+            {
+                Action[] actions =
+                    _gameThreadActions.ToArray();
+
+                _gameThreadActions.Clear();
+
+                for (
+                    int index = 0;
+                    index < actions.Length;
+                    index++
+                )
+                {
+                    actions[index]();
+                }
+            }
+
             public void RegisterSecureMessageHandler(
                 ushort channelId,
                 Action<ushort, byte[], ulong, bool> handler
             )
             {
+                ThrowIfDelivering();
+
                 _handlers[channelId] =
                     handler;
             }
@@ -733,6 +934,8 @@ namespace Mz.Networking.SpaceEngineers.Tests
                 Action<ushort, byte[], ulong, bool> handler
             )
             {
+                ThrowIfDelivering();
+
                 Action<ushort, byte[], ulong, bool>
                     registered;
 
@@ -850,14 +1053,47 @@ namespace Mz.Networking.SpaceEngineers.Tests
                         );
                 }
 
-                handler(
-                    channelId,
-                    Copy(
-                        serialized
-                    ),
-                    senderPeerId,
-                    senderIsServer
-                );
+                _isDelivering =
+                    true;
+
+                try
+                {
+                    handler(
+                        channelId,
+                        Copy(
+                            serialized
+                        ),
+                        senderPeerId,
+                        senderIsServer
+                    );
+                }
+                finally
+                {
+                    _isDelivering =
+                        false;
+                }
+            }
+
+            public bool IsRegistered(
+                ushort channelId
+            )
+            {
+                return
+                    _handlers.ContainsKey(
+                        channelId
+                    );
+            }
+
+            private void ThrowIfDelivering()
+            {
+                if (!_isDelivering)
+                    return;
+
+                throw
+                    new InvalidOperationException(
+                        "Secure-message registrations cannot change "
+                        + "while handlers are being enumerated."
+                    );
             }
 
             private static byte[] Copy(

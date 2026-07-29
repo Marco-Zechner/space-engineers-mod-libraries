@@ -778,34 +778,80 @@ namespace Mz.Networking.SpaceEngineers
             Action<ushort, ulong> conflictReporter)
         {
             if (
-                _disposed
-                || IsForcedChannel
-                || _activeNetworkManagerProviderInstanceId
-                    != providerInstanceId
+                !CanApplyManagedAssignment(
+                    providerInstanceId,
+                    generation
+                )
             )
             {
                 return;
             }
 
+            if (channelId != ChannelId)
+            {
+                var schedulingGateway =
+                    _gateway
+                        as ISpaceEngineersNetworkSchedulingGateway;
+
+                if (schedulingGateway != null)
+                {
+                    schedulingGateway.InvokeOnGameThread(
+                        delegate
+                        {
+                            ApplyManagedAssignmentImmediately(
+                                providerInstanceId,
+                                channelId,
+                                generation,
+                                conflictReporter
+                            );
+                        }
+                    );
+
+                    return;
+                }
+            }
+
+            ApplyManagedAssignmentImmediately(
+                providerInstanceId,
+                channelId,
+                generation,
+                conflictReporter
+            );
+        }
+
+        private void ApplyManagedAssignmentImmediately(
+            Guid providerInstanceId,
+            ushort channelId,
+            ulong generation,
+            Action<ushort, ulong> conflictReporter)
+        {
             if (
-                _activeAssignmentGeneration.HasValue
-                && generation <= _activeAssignmentGeneration.Value
+                !CanApplyManagedAssignment(
+                    providerInstanceId,
+                    generation
+                )
             )
             {
                 return;
             }
 
-            var previousChannel = ChannelId;
+            var previousChannel =
+                ChannelId;
 
             if (channelId != previousChannel)
                 ChangeChannel(channelId);
 
-            _activeAssignmentGeneration = generation;
+            _activeAssignmentGeneration =
+                generation;
+
             _activeNetworkManagerConflictReporter =
                 conflictReporter;
+
             _activeAssignmentConflictReported =
                 false;
-            AssignmentGeneration = generation;
+
+            AssignmentGeneration =
+                generation;
 
             PublishChannelAssignment(
                 new SpaceEngineersNetworkChannelAssignmentEventArgs(
@@ -814,6 +860,26 @@ namespace Mz.Networking.SpaceEngineers
                     generation
                 )
             );
+        }
+
+        private bool CanApplyManagedAssignment(
+            Guid providerInstanceId,
+            ulong generation)
+        {
+            if (
+                _disposed
+                || IsForcedChannel
+                || _activeNetworkManagerProviderInstanceId
+                    != providerInstanceId
+            )
+            {
+                return false;
+            }
+
+            return
+                !_activeAssignmentGeneration.HasValue
+                || generation
+                    > _activeAssignmentGeneration.Value;
         }
 
         private void PublishChannelAssignment(
