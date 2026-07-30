@@ -12,7 +12,8 @@ namespace Mz.Networking.SpaceEngineers
     /// </summary>
     public sealed class SpaceEngineersNetworkGateway :
         ISpaceEngineersNetworkDeliveryGateway,
-        ISpaceEngineersNetworkDiagnosticGateway
+        ISpaceEngineersNetworkDiagnosticGateway,
+        ISpaceEngineersNetworkSchedulingGateway
     {
         /// <inheritdoc />
         public bool IsServer => GetMultiplayer().IsServer;
@@ -36,6 +37,15 @@ namespace Mz.Networking.SpaceEngineers
                 throw new ArgumentNullException(nameof(handler));
 
             GetMultiplayer().UnregisterSecureMessageHandler(channelId, handler);
+        }
+
+        /// <inheritdoc />
+        public void InvokeOnGameThread(Action action)
+        {
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
+            GetUtilities().InvokeOnGameThread(action);
         }
 
         /// <inheritdoc />

@@ -19,6 +19,9 @@ namespace Mz.Networking.SpaceEngineers
         private Guid? _connectedNetworkManagerProviderInstanceId;
         private Guid? _activeNetworkManagerProviderInstanceId;
         private ulong? _activeAssignmentGeneration;
+        private Action<ushort, ulong>
+            _activeNetworkManagerConflictReporter;
+        private bool _activeAssignmentConflictReported;
         private SpaceEngineersManagedNetworkConfiguration
             _managedConfiguration;
 
@@ -525,6 +528,10 @@ namespace Mz.Networking.SpaceEngineers
                     diagnostic
                 );
 
+            ReportManagedConflict(
+                failure
+            );
+
             if (_receiveFailureHandler == null)
             {
                 PublishDiagnostic(failure);
@@ -538,6 +545,45 @@ namespace Mz.Networking.SpaceEngineers
             finally
             {
                 PublishDiagnostic(failure);
+            }
+        }
+
+        private void ReportManagedConflict(
+            SpaceEngineersNetworkReceiveFailure failure)
+        {
+            if (
+                failure == null
+                || !failure.IsChannelConflict
+                || _disposed
+                || IsForcedChannel
+                || !_activeNetworkManagerProviderInstanceId.HasValue
+                || !_activeAssignmentGeneration.HasValue
+                || _activeNetworkManagerConflictReporter == null
+                || _activeAssignmentConflictReported
+                || failure.ChannelId != ChannelId
+            )
+            {
+                return;
+            }
+
+            var reportConflict =
+                _activeNetworkManagerConflictReporter;
+
+            var generation =
+                _activeAssignmentGeneration.Value;
+
+            _activeAssignmentConflictReported =
+                true;
+
+            try
+            {
+                reportConflict(
+                    failure.ChannelId,
+                    generation
+                );
+            }
+            catch
+            {
             }
         }
 
@@ -585,33 +631,90 @@ namespace Mz.Networking.SpaceEngineers
                         eventArgs.Connection
                     );
 
+                Func<
+                    string,
+                    string,
+                    Version,
+                    string,
+                    string,
+                    ushort,
+                    Action<
+                        ushort,
+                        ulong,
+                        Action<ushort, ulong>
+                    >,
+                    Action
+                > registerNetworkWithConflictReporting;
+
+                var supportsConflictReporting =
+                    NetworkManagerApiContract
+                        .TryGetRegisterNetworkWithConflictReportingEndpoint(
+                            eventArgs.Connection,
+                            out registerNetworkWithConflictReporting
+                        );
+
                 _activeNetworkManagerProviderInstanceId =
                     providerInstanceId;
 
-                var unregister =
-                    registerNetwork(
-                        _managedConfiguration.ModId,
-                        _managedConfiguration.ModDisplayName,
-                        new Version(
-                            _managedConfiguration.ModVersion.Major,
-                            _managedConfiguration.ModVersion.Minor,
-                            _managedConfiguration.ModVersion.Patch
-                        ),
-                        _managedConfiguration.NetworkId,
-                        _managedConfiguration.NetworkName,
-                        _managedConfiguration.PreferredChannel,
-                        delegate(
-                            ushort channelId,
-                            ulong generation
-                        )
-                        {
-                            ApplyManagedAssignment(
-                                providerInstanceId,
-                                channelId,
-                                generation
-                            );
-                        }
-                    );
+                Action unregister;
+
+                if (supportsConflictReporting)
+                {
+                    unregister =
+                        registerNetworkWithConflictReporting(
+                            _managedConfiguration.ModId,
+                            _managedConfiguration.ModDisplayName,
+                            new Version(
+                                _managedConfiguration.ModVersion.Major,
+                                _managedConfiguration.ModVersion.Minor,
+                                _managedConfiguration.ModVersion.Patch
+                            ),
+                            _managedConfiguration.NetworkId,
+                            _managedConfiguration.NetworkName,
+                            _managedConfiguration.PreferredChannel,
+                            delegate(
+                                ushort channelId,
+                                ulong generation,
+                                Action<ushort, ulong> reportConflict
+                            )
+                            {
+                                ApplyManagedAssignment(
+                                    providerInstanceId,
+                                    channelId,
+                                    generation,
+                                    reportConflict
+                                );
+                            }
+                        );
+                }
+                else
+                {
+                    unregister =
+                        registerNetwork(
+                            _managedConfiguration.ModId,
+                            _managedConfiguration.ModDisplayName,
+                            new Version(
+                                _managedConfiguration.ModVersion.Major,
+                                _managedConfiguration.ModVersion.Minor,
+                                _managedConfiguration.ModVersion.Patch
+                            ),
+                            _managedConfiguration.NetworkId,
+                            _managedConfiguration.NetworkName,
+                            _managedConfiguration.PreferredChannel,
+                            delegate(
+                                ushort channelId,
+                                ulong generation
+                            )
+                            {
+                                ApplyManagedAssignment(
+                                    providerInstanceId,
+                                    channelId,
+                                    generation,
+                                    null
+                                );
+                            }
+                        );
+                }
 
                 if (unregister == null)
                 {
@@ -671,6 +774,96 @@ namespace Mz.Networking.SpaceEngineers
         private void ApplyManagedAssignment(
             Guid providerInstanceId,
             ushort channelId,
+            ulong generation,
+            Action<ushort, ulong> conflictReporter)
+        {
+            if (
+                !CanApplyManagedAssignment(
+                    providerInstanceId,
+                    generation
+                )
+            )
+            {
+                return;
+            }
+
+            if (channelId != ChannelId)
+            {
+                var schedulingGateway =
+                    _gateway
+                        as ISpaceEngineersNetworkSchedulingGateway;
+
+                if (schedulingGateway != null)
+                {
+                    schedulingGateway.InvokeOnGameThread(
+                        delegate
+                        {
+                            ApplyManagedAssignmentImmediately(
+                                providerInstanceId,
+                                channelId,
+                                generation,
+                                conflictReporter
+                            );
+                        }
+                    );
+
+                    return;
+                }
+            }
+
+            ApplyManagedAssignmentImmediately(
+                providerInstanceId,
+                channelId,
+                generation,
+                conflictReporter
+            );
+        }
+
+        private void ApplyManagedAssignmentImmediately(
+            Guid providerInstanceId,
+            ushort channelId,
+            ulong generation,
+            Action<ushort, ulong> conflictReporter)
+        {
+            if (
+                !CanApplyManagedAssignment(
+                    providerInstanceId,
+                    generation
+                )
+            )
+            {
+                return;
+            }
+
+            var previousChannel =
+                ChannelId;
+
+            if (channelId != previousChannel)
+                ChangeChannel(channelId);
+
+            _activeAssignmentGeneration =
+                generation;
+
+            _activeNetworkManagerConflictReporter =
+                conflictReporter;
+
+            _activeAssignmentConflictReported =
+                false;
+
+            AssignmentGeneration =
+                generation;
+
+            PublishChannelAssignment(
+                new SpaceEngineersNetworkChannelAssignmentEventArgs(
+                    previousChannel,
+                    channelId,
+                    generation
+                )
+            );
+        }
+
+        private bool CanApplyManagedAssignment(
+            Guid providerInstanceId,
             ulong generation)
         {
             if (
@@ -680,32 +873,13 @@ namespace Mz.Networking.SpaceEngineers
                     != providerInstanceId
             )
             {
-                return;
+                return false;
             }
 
-            if (
-                _activeAssignmentGeneration.HasValue
-                && generation <= _activeAssignmentGeneration.Value
-            )
-            {
-                return;
-            }
-
-            var previousChannel = ChannelId;
-
-            if (channelId != previousChannel)
-                ChangeChannel(channelId);
-
-            _activeAssignmentGeneration = generation;
-            AssignmentGeneration = generation;
-
-            PublishChannelAssignment(
-                new SpaceEngineersNetworkChannelAssignmentEventArgs(
-                    previousChannel,
-                    channelId,
-                    generation
-                )
-            );
+            return
+                !_activeAssignmentGeneration.HasValue
+                || generation
+                    > _activeAssignmentGeneration.Value;
         }
 
         private void PublishChannelAssignment(
@@ -769,6 +943,11 @@ namespace Mz.Networking.SpaceEngineers
 
         private void ReleaseNetworkManagerRegistration()
         {
+            _activeNetworkManagerConflictReporter =
+                null;
+            _activeAssignmentConflictReported =
+                false;
+
             var unregister = _networkManagerUnregister;
             _networkManagerUnregister = null;
 
