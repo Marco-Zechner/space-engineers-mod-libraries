@@ -6,13 +6,18 @@ Space Engineers mods.
 The library is split into two source-copy-safe layers:
 
 - `Mz.Networking.Core` contains envelopes, handler registration, sender
-  validation, routing decisions, and the transport-independent endpoint.
+  validation, routing decisions, delivery modes, and application sequence
+  helpers.
 - `Mz.Networking.SpaceEngineers` connects the core to the Space Engineers
-  secure multiplayer message API and binary serializer.
+  secure multiplayer API, versioned wire framing, diagnostics, and optional
+  managed-channel discovery.
 
-The current adapter owns one caller-selected `ushort` channel. Dynamic channel
-allocation and coordinator leasing are intentionally outside this first
-transport slice.
+The package has exact dependencies on `Mz.ApiProtocol` `0.2.5` and
+`Mz.SemanticVersioning` `0.1.1`.
+
+A session may use a legacy unframed fixed channel, a fixed channel with
+versioned network identity, or a managed channel that starts on a preferred
+fallback and accepts newer NetworkManager assignments.
 
 ## Basic lifecycle
 
@@ -65,6 +70,52 @@ application identity on the same channel can be classified as a conflict. The
 legacy constructor without a network ID remains available for byte-for-byte
 compatibility with existing unframed Mz.Networking traffic.
 
+## Managed channels and NetworkManagerMod
+
+`NetworkManagerMod` is an optional provider for the `Mz.NetworkManager` API.
+`Mz.Networking.SpaceEngineers` discovers it through `Mz.ApiProtocol`; the
+library does not bundle or require the provider mod.
+
+    var configuration =
+        new SpaceEngineersManagedNetworkConfiguration(
+            "Mz.Command",
+            "Command Mod",
+            new SemanticVersion(1, 0, 0),
+            "Mz.Command.Network",
+            "Command network",
+            41000,
+            null
+        );
+
+    _network =
+        new SpaceEngineersNetworkSession(
+            configuration
+        );
+
+The session registers the preferred channel immediately, so networking remains
+available while no provider is connected. A compatible provider can return a
+channel and provider-scoped generation. Only a strictly newer generation from
+the active provider is accepted. Channel changes are deferred through the
+Space Engineers game-thread scheduler when available, and
+`ChannelAssignmentApplied` is raised after the assignment is active.
+
+Public managed state is available through `ChannelId`,
+`AssignmentGeneration`, `IsNetworkManagerConnected`, `NetworkManagerError`,
+and `IsForcedChannel`. Supplying a non-null forced channel disables discovery
+and reassignment.
+
+NetworkManager API 1.0 exposes `RegisterNetwork`. API 1.1 also exposes
+`RegisterNetworkWithConflictReporting`. With API 1.1, Mz.Networking reports one
+active `ForeignPacket` or `NetworkMismatch` conflict for the current channel
+and generation. NetworkManager validates the report, persists a
+per-logical-network channel blacklist, and may issue a replacement assignment.
+Duplicate, stale, wrong-channel, disconnected, and unregistered reports are
+ignored.
+
+NetworkManager calculates assignments process-locally rather than synchronizing
+them from the server. Every peer should load the same logical-network
+registration set so deterministic assignments match.
+
 ## Sending messages
 
 Application payloads are opaque `byte[]` values. Application code owns their
@@ -79,6 +130,12 @@ A client sends a message to the authoritative server through the endpoint:
 
 When called by the server, `SendToServer` dispatches locally without sending a
 multiplayer packet.
+
+Reliable delivery is the default. Use the overload taking
+`NetworkDeliveryMode.Unreliable` for frequent replaceable state. Space
+Engineers rejects unreliable packets larger than 1024 bytes after envelope
+serialization and optional Mz.Networking framing. A relay handler can set
+`RelayDeliveryMode` independently from `RelayMode`.
 
 The server can send directly to one player:
 
@@ -226,13 +283,16 @@ visible at the integration boundary.
 
 Space Engineers mods can source-copy all `.cs` files from:
 
+- `src/Mz.SemanticVersioning`
+- `src/Mz.ApiProtocol.Core`
+- `src/Mz.ApiProtocol.SpaceEngineers`
 - `src/Mz.Networking.Core`
 - `src/Mz.Networking.SpaceEngineers`
 
 The Space Engineers layer requires the game's `ProtoBuf.Net.Core`,
 `Sandbox.Common`, and `VRage.Game` assemblies.
 
-`validation/Mz.Networking.SourceCopyValidation` compiles both source folders as
+`validation/Mz.Networking.SourceCopyValidation` compiles the package and dependency source folders as
 linked files under `Mal.Mdk2.ModAnalyzers`. The adapter project references this
 validation project as a build dependency, so normal solution verification also
 checks the mod whitelist.
@@ -241,25 +301,25 @@ checks the mod whitelist.
 
 This implementation provides:
 
-- fixed-channel secure-message lifecycle;
-- optional versioned wire identity with conflict classification;
+- reliable and unreliable delivery selection;
+- wrap-aware application sequence helpers;
+- fixed and forced secure-message channels;
+- optional NetworkManager-managed assignment and reassignment;
+- provider-generation validation and conflict reporting;
+- versioned wire identity with conflict classification;
 - legacy unframed-wire compatibility;
+- bounded structured receive diagnostics;
 - binary envelope serialization;
-- trusted original-sender correction;
-- forged-relay correction;
+- trusted original-sender and relay correction;
 - message-type handler ownership;
-- client-to-server sends;
-- server-to-player sends;
-- server relay decisions;
-- transport-independent core tests;
-- Space Engineers adapter tests;
+- client-to-server, server-to-player, and server relay sends;
+- transport-independent and Space Engineers adapter tests;
 - MDK source-copy validation.
 
-It does not yet provide:
+It does not provide:
 
-- dynamic channel leasing;
-- a known control channel;
-- coordinator or ModManager integration;
+- authoritative cross-peer synchronization of managed registrations;
 - automatic application-payload serialization;
 - request/response correlation;
-- retries or delivery guarantees.
+- retries beyond the selected transport delivery mode;
+- guaranteed delivery for unreliable packets.

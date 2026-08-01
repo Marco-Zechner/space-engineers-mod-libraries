@@ -5,8 +5,9 @@ using Mz.ApiProtocol.SpaceEngineers;
 namespace Mz.Networking.SpaceEngineers
 {
     /// <summary>
-    /// Owns one fixed Space Engineers secure-message channel and exposes its
-    /// transport-independent network endpoint.
+    /// Owns one active Space Engineers secure-message registration, which may
+    /// remain fixed or move when a managed assignment is accepted, and exposes
+    /// its transport-independent network endpoint.
     /// </summary>
     public sealed class SpaceEngineersNetworkSession : IDisposable
     {

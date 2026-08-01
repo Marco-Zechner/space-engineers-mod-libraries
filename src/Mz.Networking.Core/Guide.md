@@ -4,7 +4,7 @@ The package README explains envelopes, trusted sender validation, handlers, rela
 
 ## Setup
 
-Install `Mz.Networking@0.1.2` in one Space Engineers mod. Copy both files below into that same mod.
+Install `Mz.Networking@0.2.0` in one Space Engineers mod. Copy both files below into that same mod. This example deliberately uses one fixed channel; see the package README for NetworkManager-managed and forced-channel sessions.
 
 The example is intended for a multiplayer server with at least one remote client:
 
