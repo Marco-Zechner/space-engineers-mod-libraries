@@ -10,8 +10,8 @@ The package contains:
 - `Mz.Networking.SpaceEngineers`  -  secure-message serialization, transport,
   and session lifecycle integration.
 
-`Mz.SemanticVersioning` is an exact package dependency shared by all
-library packages in this repository.
+`Mz.Networking` has exact package dependencies on `Mz.ApiProtocol` `0.2.5`
+and `Mz.SemanticVersioning` `0.1.1`.
 
 For complete server and client session components, see the
 [copy-paste example](Guide.md).
@@ -28,14 +28,14 @@ After installing SELibs, run these commands from the root of the mod project:
 
 ```shell
     selibs init
-    selibs add Mz.Networking@0.1.2
+    selibs add Mz.Networking@0.2.0
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
 
 SELibs installs both Networking source components and the exact
-`Mz.SemanticVersioning` dependency. It records their checksums and selected
-versions. Inspect that state with:
+`Mz.ApiProtocol` and `Mz.SemanticVersioning` dependencies. It records their
+checksums and selected versions. Inspect that state with:
 
 ```shell
     selibs status
@@ -48,6 +48,8 @@ repository and copy these complete folders:
 
 ```text
     src/Mz.SemanticVersioning
+    src/Mz.ApiProtocol.Core
+    src/Mz.ApiProtocol.SpaceEngineers
     src/Mz.Networking.Core
     src/Mz.Networking.SpaceEngineers
 ```
@@ -56,25 +58,29 @@ Place them as sibling folders under the mod's script library directory:
 
 ```text
     Data/Scripts/ExampleMod/Libraries/Mz.SemanticVersioning
+    Data/Scripts/ExampleMod/Libraries/Mz.ApiProtocol.Core
+    Data/Scripts/ExampleMod/Libraries/Mz.ApiProtocol.SpaceEngineers
     Data/Scripts/ExampleMod/Libraries/Mz.Networking.Core
     Data/Scripts/ExampleMod/Libraries/Mz.Networking.SpaceEngineers
 ```
 
-Compile all contained `.cs` files as part of the mod. Networking `0.1.2`
-requires `Mz.SemanticVersioning` `0.1.1`. The Space Engineers component also
-depends on the Core component, so use the exact dependency versions declared
-by the selected package manifest.
+Compile all contained `.cs` files as part of the mod. Networking `0.2.0`
+requires `Mz.ApiProtocol` `0.2.5` and `Mz.SemanticVersioning` `0.1.1`. The
+Space Engineers component also depends on the Core component, so use the exact
+dependency versions declared by the selected package manifest.
 
 ## Create a Space Engineers network session
 
-Each session owns one secure-message channel. The same channel ID must be used
-by every peer running the mod, and it should not collide with another protocol.
+Each session owns one active secure-message channel. A fixed session keeps its
+caller-selected channel. A managed session starts immediately on its preferred
+fallback channel and can move when NetworkManager supplies a newer assignment.
 
 Create the session during the active mod lifecycle and dispose it during
-unload. Pass the same stable network ID on every peer. The explicit-ID overload
-uses a versioned wire header and can distinguish foreign channel traffic from
-another Mz.Networking application identity. The older overload remains
-unframed for compatibility with existing deployments.
+unload. Pass the same stable network ID on every peer. Explicit-ID and managed
+sessions use a versioned wire header and can distinguish foreign channel
+traffic from another Mz.Networking application identity. The oldest
+channel-only overload remains unframed for compatibility with existing
+deployments.
 
 ```csharp
     using System.Text;
@@ -127,6 +133,87 @@ unframed for compatibility with existing deployments.
     }
 ```
 
+## Use NetworkManager-managed channels
+
+`NetworkManagerMod` is a separate, optional runtime coordinator. It publishes
+the `Mz.NetworkManager` API through `Mz.ApiProtocol`; the Mz.Networking package
+does not bundle the mod and does not require it to be enabled.
+
+A managed session is usable immediately on its preferred fallback channel:
+
+    using Mz.SemanticVersioning;
+
+    var configuration =
+        new SpaceEngineersManagedNetworkConfiguration(
+            "Example.Mod",
+            "Example Mod",
+            new SemanticVersion(1, 2, 3),
+            "example.chat.network",
+            "Example chat network",
+            45123,
+            null
+        );
+
+    _network =
+        new SpaceEngineersNetworkSession(
+            configuration
+        );
+
+    _network.ChannelAssignmentApplied += assignment =>
+    {
+        MyLog.Default.WriteLineAndConsole(
+            "Network channel "
+            + assignment.PreviousChannel
+            + " -> "
+            + assignment.ChannelId
+            + ", generation "
+            + assignment.Generation
+        );
+    };
+
+The constructor values identify the consuming mod, its version, the stable
+logical network, the preferred fallback channel, and an optional forced
+channel. Use the same logical-network metadata and active registration set on
+every peer.
+
+The session exposes:
+
+- `ChannelId` - the currently active secure-message channel.
+- `AssignmentGeneration` - the newest accepted provider generation.
+- `IsNetworkManagerConnected` - whether a valid provider registration is active.
+- `NetworkManagerError` - the latest discovery or registration error.
+- `IsForcedChannel` - whether discovery and reassignment are disabled.
+- `ChannelAssignmentApplied` - an event raised after an assignment is active.
+
+To force a channel and disable NetworkManager discovery, pass that channel as
+the final constructor argument:
+
+    var configuration =
+        new SpaceEngineersManagedNetworkConfiguration(
+            "Example.Mod",
+            "Example Mod",
+            new SemanticVersion(1, 2, 3),
+            "example.chat.network",
+            "Example chat network",
+            45123,
+            45123
+        );
+
+Compatible NetworkManager API 1.0 providers supply deterministic assignments
+through `RegisterNetwork`. API 1.1 additionally supplies
+`RegisterNetworkWithConflictReporting`. When conflict reporting is available,
+Mz.Networking reports only active `ForeignPacket` and `NetworkMismatch`
+diagnostics, at most once for each accepted assignment.
+
+NetworkManager validates the reported channel and generation, persists the
+logical network's rejected channel, and may issue a newer assignment. Stale,
+duplicate, wrong-channel, disconnected, forced-channel, malformed-own-packet,
+and application-handler failures cannot trigger managed reassignment.
+
+Assignments are calculated independently inside each game process; they are
+not server-authoritative synchronization. Every peer should load the same
+logical-network registration set so deterministic assignments match.
+
 `SpaceEngineersNetworkSession.Diagnostic` publishes receive failures containing
 the channel, raw packet, transport sender information, failure kind, conflict
 flag, available network IDs, recommended severity, stable diagnostic code,
@@ -159,6 +246,20 @@ A client sends to the authoritative server with:
 
 When the local peer is the server, `SendToServer` dispatches locally instead
 of performing a network round trip.
+
+Reliable delivery is the default. Frequent replaceable state may request
+unreliable delivery explicitly:
+
+    _network.Endpoint.SendToServer(
+        "example.state",
+        payload,
+        NetworkDeliveryMode.Unreliable
+    );
+
+Space Engineers unreliable packets are limited to 1024 bytes after envelope
+serialization and optional Mz.Networking wire framing. Oversized unreliable
+messages are rejected before sending. Custom legacy transports and gateways
+that do not implement the delivery extensions support reliable sends only.
 
 Only the server may send directly to one player:
 
@@ -228,7 +329,8 @@ Example:
 ```
 
 The server applies the relay after the handler returns. Relayed envelopes are
-marked as relays by the trusted server.
+marked as relays by the trusted server. Set `context.RelayDeliveryMode` when a
+relay should use unreliable delivery; its default is reliable.
 
 ## Latest-only unreliable state
 

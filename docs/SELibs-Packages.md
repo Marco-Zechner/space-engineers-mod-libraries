@@ -10,7 +10,7 @@ SELibs.
 | `Mz.SemanticVersioning` | `Mz.SemanticVersioning` | None |
 | `Mz.ApiProtocol` | `Mz.ApiProtocol.Core`, `Mz.ApiProtocol.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
 | `Mz.Logging` | `Mz.Logging.Core`, `Mz.Logging.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
-| `Mz.Networking` | `Mz.Networking.Core`, `Mz.Networking.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
+| `Mz.Networking` | `Mz.Networking.Core`, `Mz.Networking.SpaceEngineers` | `Mz.ApiProtocol` `0.2.5`, `Mz.SemanticVersioning` `0.1.1` |
 
 Each package archive contains only its own folders. Dependencies are separate
 SELibs packages and are not duplicated inside dependent archives.
@@ -27,7 +27,7 @@ Examples:
     release/Mz.SemanticVersioning/0.1.1
     release/Mz.ApiProtocol/0.2.2
     release/Mz.Logging/0.1.1
-    release/Mz.Networking/0.1.2
+    release/Mz.Networking/0.2.0
 
 Both values are matched exactly. Namespace casing must be identical to the
 version-file namespace, and the tag version must equal `Major.Minor.Patch`.

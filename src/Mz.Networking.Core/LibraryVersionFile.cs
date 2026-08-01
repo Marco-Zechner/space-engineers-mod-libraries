@@ -16,12 +16,12 @@ namespace Mz.Networking
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
-        public const int Minor = 1;
+        public const int Minor = 2;
 
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 3;
+        public const int Patch = 0;
 
         /// <summary>
         /// Gets the version string.
@@ -35,6 +35,18 @@ namespace Mz.Networking
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.2.0",
+                    new[]
+                    {
+                        "Added reliable and unreliable delivery selection with Space Engineers size validation.",
+                        "Added wrap-aware application sequence comparison and tracking helpers.",
+                        "Added versioned network identity and bounded structured receive diagnostics.",
+                        "Added optional NetworkManager channel assignment, generation-checked reassignment, and active conflict reporting.",
+                        "Added fallback and forced-channel managed-session modes while preserving legacy fixed-channel compatibility.",
+                        "Added the exact Mz.ApiProtocol dependency and expanded source-copy validation."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.1.3",
                     new[]

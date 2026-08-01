@@ -5,8 +5,8 @@ using System.Linq;
 namespace Mz.Networking.SpaceEngineers
 {
     /// <summary>
-    /// Sends network envelopes over one fixed Space Engineers secure-message
-    /// channel.
+    /// Sends network envelopes over the currently active Space Engineers
+    /// secure-message channel.
     /// </summary>
     public sealed class SpaceEngineersNetworkTransport : INetworkDeliveryTransport
     {
