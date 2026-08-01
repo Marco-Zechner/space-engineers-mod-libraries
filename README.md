@@ -12,7 +12,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | --- | --- | --- |
 | `Mz.ApiProtocol` | [`0.2.5`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.5) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
 | `Mz.Logging` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1) | [Guide](src/Mz.Logging.Core/README.md) |
-| `Mz.Networking` | [`0.1.3`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.3) | [Guide](src/Mz.Networking.Core/README.md) |
+| `Mz.Networking` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.1.1) | [Guide](src/Mz.SemanticVersioning/README.md) |
 
 ## Latest changes
@@ -31,9 +31,13 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.Networking
 
-- Latest stable release: [`0.1.3`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.1.3)
-- Checked and enforced code style and formatting.
-- Improved code style in the Guide codeblocks.
+- Latest stable release: [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0)
+- Added reliable and unreliable delivery selection with Space Engineers size validation.
+- Added wrap-aware application sequence comparison and tracking helpers.
+- Added versioned network identity and bounded structured receive diagnostics.
+- Added optional NetworkManager channel assignment, generation-checked reassignment, and active conflict reporting.
+- Added fallback and forced-channel managed-session modes while preserving legacy fixed-channel compatibility.
+- Added the exact Mz.ApiProtocol dependency and expanded source-copy validation.
 
 ### Mz.SemanticVersioning
 
