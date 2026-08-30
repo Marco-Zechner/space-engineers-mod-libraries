@@ -231,6 +231,30 @@ namespace Mz.Toml.Internal
             {
                 var c = value[i];
 
+                if (c >= 0xD800 &&
+                    c <= 0xDBFF)
+                {
+                    if (i + 1 >= value.Length ||
+                        value[i + 1] < 0xDC00 ||
+                        value[i + 1] > 0xDFFF)
+                    {
+                        throw new InvalidOperationException(
+                            "Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
+                    }
+
+                    sb.Append(c);
+                    sb.Append(value[i + 1]);
+                    i++;
+                    continue;
+                }
+
+                if (c >= 0xDC00 &&
+                    c <= 0xDFFF)
+                {
+                    throw new InvalidOperationException(
+                        "Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
+                }
+
                 switch (c)
                 {
                     case '\b':
@@ -282,7 +306,6 @@ namespace Mz.Toml.Internal
 
             sb.Append('"');
         }
-
         private static bool IsBareKey(
             string key)
         {
