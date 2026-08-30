@@ -49,6 +49,19 @@ namespace Mz.Toml.Internal
                     }
                 }
 
+                if (pair.Value.Kind ==
+                    TomlNodeKind.Array)
+                {
+                    var array =
+                        (TomlArray)pair.Value;
+
+                    if (array.DefinitionKind ==
+                        TomlArrayDefinitionKind.ArrayOfTables)
+                    {
+                        continue;
+                    }
+                }
+
                 AppendKey(
                     sb,
                     pair.Key);
@@ -74,47 +87,127 @@ namespace Mz.Toml.Internal
         {
             foreach (var pair in table)
             {
-                if (pair.Value.Kind !=
+                if (pair.Value.Kind ==
                     TomlNodeKind.Table)
+                {
+                    var child =
+                        (TomlTable)pair.Value;
+
+                    if (child.DefinitionKind ==
+                        TomlTableDefinitionKind.Inline)
+                    {
+                        continue;
+                    }
+
+                    path.Add(pair.Key);
+
+                    if (wroteAnything)
+                        sb.Append('\n');
+
+                    AppendHeader(
+                        sb,
+                        path);
+
+                    sb.Append('\n');
+
+                    AppendValueEntries(
+                        sb,
+                        child);
+
+                    wroteAnything = true;
+
+                    AppendChildTables(
+                        sb,
+                        child,
+                        path,
+                        ref wroteAnything);
+
+                    path.RemoveAt(
+                        path.Count - 1);
+
+                    continue;
+                }
+
+                if (pair.Value.Kind !=
+                    TomlNodeKind.Array)
                 {
                     continue;
                 }
 
-                var child =
-                    (TomlTable)pair.Value;
+                var array =
+                    (TomlArray)pair.Value;
 
-                if (child.DefinitionKind ==
-                    TomlTableDefinitionKind.Inline)
+                if (array.DefinitionKind !=
+                    TomlArrayDefinitionKind.ArrayOfTables)
                 {
                     continue;
                 }
 
                 path.Add(pair.Key);
 
-                if (wroteAnything)
+                for (var i = 0;
+                     i < array.Count;
+                     i++)
+                {
+                    var node =
+                        array[i];
+
+                    if (node.Kind !=
+                        TomlNodeKind.Table)
+                    {
+                        throw new InvalidOperationException(
+                            "An array-of-tables node contains a non-table element.");
+                    }
+
+                    var element =
+                        (TomlTable)node;
+
+                    if (wroteAnything)
+                        sb.Append('\n');
+
+                    AppendArrayTableHeader(
+                        sb,
+                        path);
+
                     sb.Append('\n');
 
-                AppendHeader(
-                    sb,
-                    path);
+                    AppendValueEntries(
+                        sb,
+                        element);
 
-                sb.Append('\n');
+                    wroteAnything = true;
 
-                AppendValueEntries(
-                    sb,
-                    child);
-
-                wroteAnything = true;
-
-                AppendChildTables(
-                    sb,
-                    child,
-                    path,
-                    ref wroteAnything);
+                    AppendChildTables(
+                        sb,
+                        element,
+                        path,
+                        ref wroteAnything);
+                }
 
                 path.RemoveAt(
                     path.Count - 1);
             }
+        }
+
+        private static void AppendArrayTableHeader(
+            StringBuilder sb,
+            IList<string> path)
+        {
+            sb.Append("[[");
+
+            for (var i = 0;
+                 i < path.Count;
+                 i++)
+            {
+                if (i > 0)
+                    sb.Append('.');
+
+                AppendKey(
+                    sb,
+                    path[i]);
+            }
+
+            sb.Append("]]");
         }
 
         private static void AppendHeader(

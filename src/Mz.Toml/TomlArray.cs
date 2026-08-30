@@ -14,18 +14,33 @@ namespace Mz.Toml
     {
         private readonly List<TomlNode> _items;
         private readonly IReadOnlyList<TomlNode> _readOnlyItems;
+        private readonly TomlArrayDefinitionKind _definitionKind;
 
         /// <summary>
         /// Initializes an empty programmatic TOML array.
         /// </summary>
         public TomlArray()
-            : this(0, 0)
+            : this(
+                0,
+                0,
+                TomlArrayDefinitionKind.Static)
         {
         }
 
         internal TomlArray(
             int line,
             int column)
+            : this(
+                line,
+                column,
+                TomlArrayDefinitionKind.Static)
+        {
+        }
+
+        internal TomlArray(
+            int line,
+            int column,
+            TomlArrayDefinitionKind definitionKind)
             : base(
                 TomlNodeKind.Array,
                 line,
@@ -35,6 +50,13 @@ namespace Mz.Toml
             _readOnlyItems =
                 new TomlReadOnlyList<TomlNode>(
                     _items);
+            _definitionKind =
+                definitionKind;
+        }
+
+        internal TomlArrayDefinitionKind DefinitionKind
+        {
+            get { return _definitionKind; }
         }
 
         /// <summary>

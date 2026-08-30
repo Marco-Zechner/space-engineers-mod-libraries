@@ -146,17 +146,5 @@ namespace Mz.Toml.Tests
                 Assert.Single(result.Diagnostics).Code);
         }
 
-        [Fact]
-        public void Array_Of_Tables_Remains_Explicitly_Unsupported()
-        {
-            var result = Toml.TryParse(
-                "[[items]]\n");
-
-            Assert.False(result.IsSuccess);
-
-            Assert.Equal(
-                TomlDiagnosticCode.UnsupportedSyntax,
-                Assert.Single(result.Diagnostics).Code);
-        }
     }
 }

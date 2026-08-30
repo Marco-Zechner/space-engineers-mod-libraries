@@ -89,21 +89,6 @@ namespace Mz.Toml.Tests
         }
 
         [Fact]
-        public void Arrays_Of_Tables_Are_Explicitly_Unsupported_For_Now()
-        {
-            var result =
-                Toml.TryParse(
-                    "[[items]]\n");
-
-            Assert.False(
-                result.IsSuccess);
-
-            Assert.Equal(
-                TomlDiagnosticCode.UnsupportedSyntax,
-                result.Diagnostics[0].Code);
-        }
-
-        [Fact]
         public void Control_Character_In_Full_Line_Comment_Is_Rejected()
         {
             var result = Toml.TryParse("# invalid" + '\u0001' + "\n");
