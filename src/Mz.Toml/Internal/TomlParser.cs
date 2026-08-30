@@ -1336,61 +1336,45 @@ namespace Mz.Toml.Internal
             }
 
             bool isFloat;
+            long integerValue;
+            double floatValue;
+            bool rangeError;
 
-            if (IsDecimalNumber(
+            if (TryParseTomlNumber(
                 token,
-                out isFloat))
+                out isFloat,
+                out integerValue,
+                out floatValue,
+                out rangeError))
             {
                 if (isFloat)
                 {
-                    double value;
-
-                    if (!double.TryParse(
-                            token,
-                            NumberStyles.Float,
-                            CultureInfo.InvariantCulture,
-                            out value) ||
-                        double.IsInfinity(value) ||
-                        double.IsNaN(value))
-                    {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.InvalidNumber,
-                            "Floating-point value is outside the supported TOML range.",
-                            line,
-                            column);
-                        return false;
-                    }
-
                     node = new TomlValue(
                         TomlValueKind.Float,
-                        value,
+                        floatValue,
                         line,
                         column);
-                    return true;
                 }
-
-                long integerValue;
-
-                if (!long.TryParse(
-                    token,
-                    NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out integerValue))
+                else
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidNumber,
-                        "Integer value is outside the signed 64-bit TOML range.",
+                    node = new TomlValue(
+                        TomlValueKind.Integer,
+                        integerValue,
                         line,
                         column);
-                    return false;
                 }
 
-                node = new TomlValue(
-                    TomlValueKind.Integer,
-                    integerValue,
+                return true;
+            }
+
+            if (rangeError)
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.InvalidNumber,
+                    "Numeric value is outside the supported TOML range.",
                     line,
                     column);
-                return true;
+                return false;
             }
 
             diagnostic = Error(
@@ -1405,6 +1389,355 @@ namespace Mz.Toml.Internal
             return false;
         }
 
+        private static bool TryParseTomlNumber(
+            string token,
+            out bool isFloat,
+            out long integerValue,
+            out double floatValue,
+            out bool rangeError)
+        {
+            isFloat = false;
+            integerValue = 0;
+            floatValue = 0.0;
+            rangeError = false;
+
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            if (token.Length >= 2 &&
+                token[0] == '0')
+            {
+                int numberBase;
+
+                switch (token[1])
+                {
+                    case 'x':
+                        numberBase = 16;
+                        break;
+
+                    case 'o':
+                        numberBase = 8;
+                        break;
+
+                    case 'b':
+                        numberBase = 2;
+                        break;
+
+                    default:
+                        numberBase = 0;
+                        break;
+                }
+
+                if (numberBase != 0)
+                {
+                    return TryParseBaseInteger(
+                        token,
+                        numberBase,
+                        out integerValue,
+                        out rangeError);
+                }
+            }
+
+            var index = 0;
+
+            if (token[index] == '+' ||
+                token[index] == '-')
+            {
+                index++;
+
+                if (index >= token.Length)
+                    return false;
+            }
+
+            var integerStart = index;
+            int integerDigits;
+
+            if (!ConsumeDecimalDigits(
+                token,
+                ref index,
+                out integerDigits))
+            {
+                return false;
+            }
+
+            if (token[integerStart] == '0' &&
+                integerDigits > 1)
+            {
+                return false;
+            }
+
+            var hasFraction = false;
+            var hasExponent = false;
+
+            if (index < token.Length &&
+                token[index] == '.')
+            {
+                hasFraction = true;
+                index++;
+
+                int fractionDigits;
+
+                if (!ConsumeDecimalDigits(
+                    token,
+                    ref index,
+                    out fractionDigits))
+                {
+                    return false;
+                }
+            }
+
+            if (index < token.Length &&
+                (token[index] == 'e' ||
+                 token[index] == 'E'))
+            {
+                hasExponent = true;
+                index++;
+
+                if (index < token.Length &&
+                    (token[index] == '+' ||
+                     token[index] == '-'))
+                {
+                    index++;
+                }
+
+                int exponentDigits;
+
+                if (!ConsumeDecimalDigits(
+                    token,
+                    ref index,
+                    out exponentDigits))
+                {
+                    return false;
+                }
+            }
+
+            if (index != token.Length)
+                return false;
+
+            var normalized =
+                RemoveNumericUnderscores(token);
+
+            if (hasFraction ||
+                hasExponent)
+            {
+                isFloat = true;
+
+                if (!double.TryParse(
+                        normalized,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out floatValue) ||
+                    double.IsInfinity(floatValue) ||
+                    double.IsNaN(floatValue))
+                {
+                    rangeError = true;
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (!long.TryParse(
+                    normalized,
+                    NumberStyles.AllowLeadingSign,
+                    CultureInfo.InvariantCulture,
+                    out integerValue))
+            {
+                rangeError = true;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryParseBaseInteger(
+            string token,
+            int numberBase,
+            out long value,
+            out bool rangeError)
+        {
+            value = 0;
+            rangeError = false;
+
+            var index = 2;
+
+            if (index >= token.Length)
+                return false;
+
+            var firstDigit =
+                DigitValue(
+                    token[index],
+                    numberBase);
+
+            if (firstDigit < 0)
+                return false;
+
+            ulong accumulated = 0;
+
+            while (index < token.Length)
+            {
+                var digit =
+                    DigitValue(
+                        token[index],
+                        numberBase);
+
+                if (digit >= 0)
+                {
+                    var unsignedDigit =
+                        (ulong)digit;
+
+                    if (accumulated >
+                        ((ulong)long.MaxValue -
+                         unsignedDigit) /
+                        (ulong)numberBase)
+                    {
+                        rangeError = true;
+                        return false;
+                    }
+
+                    accumulated =
+                        accumulated *
+                        (ulong)numberBase +
+                        unsignedDigit;
+
+                    index++;
+                    continue;
+                }
+
+                if (token[index] == '_')
+                {
+                    if (index == 2 ||
+                        index + 1 >= token.Length ||
+                        DigitValue(
+                            token[index - 1],
+                            numberBase) < 0 ||
+                        DigitValue(
+                            token[index + 1],
+                            numberBase) < 0)
+                    {
+                        return false;
+                    }
+
+                    index++;
+                    continue;
+                }
+
+                return false;
+            }
+
+            value = (long)accumulated;
+            return true;
+        }
+
+        private static int DigitValue(
+            char c,
+            int numberBase)
+        {
+            int value;
+
+            if (c >= '0' &&
+                c <= '9')
+            {
+                value = c - '0';
+            }
+            else if (c >= 'a' &&
+                     c <= 'f')
+            {
+                value =
+                    10 +
+                    c -
+                    'a';
+            }
+            else if (c >= 'A' &&
+                     c <= 'F')
+            {
+                value =
+                    10 +
+                    c -
+                    'A';
+            }
+            else
+            {
+                return -1;
+            }
+
+            return value < numberBase
+                ? value
+                : -1;
+        }
+
+        private static bool ConsumeDecimalDigits(
+            string token,
+            ref int index,
+            out int digitCount)
+        {
+            digitCount = 0;
+
+            if (index >= token.Length ||
+                !IsAsciiDigit(token[index]))
+            {
+                return false;
+            }
+
+            index++;
+            digitCount++;
+
+            while (index < token.Length)
+            {
+                if (IsAsciiDigit(token[index]))
+                {
+                    index++;
+                    digitCount++;
+                    continue;
+                }
+
+                if (token[index] == '_')
+                {
+                    if (index + 1 >= token.Length ||
+                        !IsAsciiDigit(
+                            token[index + 1]))
+                    {
+                        return false;
+                    }
+
+                    index += 2;
+                    digitCount++;
+                    continue;
+                }
+
+                break;
+            }
+
+            return true;
+        }
+
+        private static string RemoveNumericUnderscores(
+            string token)
+        {
+            if (token.IndexOf('_') < 0)
+                return token;
+
+            var sb =
+                new StringBuilder(
+                    token.Length);
+
+            for (var i = 0;
+                 i < token.Length;
+                 i++)
+            {
+                if (token[i] != '_')
+                    sb.Append(token[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        private static bool IsAsciiDigit(
+            char c)
+        {
+            return c >= '0' &&
+                   c <= '9';
+        }
         private bool ParseEscape(
             StringBuilder sb,
             out TomlDiagnostic diagnostic)
@@ -1642,93 +1975,6 @@ namespace Mz.Toml.Internal
         private char Current
         {
             get { return _text[_index]; }
-        }
-
-        private static bool IsDecimalNumber(
-            string token,
-            out bool isFloat)
-        {
-            isFloat = false;
-
-            if (string.IsNullOrEmpty(token))
-                return false;
-
-            var i = 0;
-
-            if (token[i] == '+' ||
-                token[i] == '-')
-            {
-                i++;
-
-                if (i >= token.Length)
-                    return false;
-            }
-
-            var integerStart = i;
-
-            while (i < token.Length &&
-                   IsDigit(token[i]))
-            {
-                i++;
-            }
-
-            if (i == integerStart)
-                return false;
-
-            var integerLength =
-                i - integerStart;
-
-            if (integerLength > 1 &&
-                token[integerStart] == '0')
-            {
-                return false;
-            }
-
-            if (i < token.Length &&
-                token[i] == '.')
-            {
-                isFloat = true;
-                i++;
-
-                var fractionalStart = i;
-
-                while (i < token.Length &&
-                       IsDigit(token[i]))
-                {
-                    i++;
-                }
-
-                if (i == fractionalStart)
-                    return false;
-            }
-
-            if (i < token.Length &&
-                (token[i] == 'e' ||
-                 token[i] == 'E'))
-            {
-                isFloat = true;
-                i++;
-
-                if (i < token.Length &&
-                    (token[i] == '+' ||
-                     token[i] == '-'))
-                {
-                    i++;
-                }
-
-                var exponentStart = i;
-
-                while (i < token.Length &&
-                       IsDigit(token[i]))
-                {
-                    i++;
-                }
-
-                if (i == exponentStart)
-                    return false;
-            }
-
-            return i == token.Length;
         }
 
         private static bool LooksNumeric(

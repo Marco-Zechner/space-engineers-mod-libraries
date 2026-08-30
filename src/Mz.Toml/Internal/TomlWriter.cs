@@ -189,6 +189,14 @@ namespace Mz.Toml.Internal
                         return;
                     }
 
+                    if (number == 0.0 &&
+                        double.IsNegativeInfinity(
+                            1.0 / number))
+                    {
+                        sb.Append("-0.0");
+                        return;
+                    }
+
                     var text =
                         number.ToString(
                             "R",
