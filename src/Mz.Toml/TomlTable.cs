@@ -15,21 +15,35 @@ namespace Mz.Toml
         private readonly List<string> _keys;
         private readonly IReadOnlyList<string> _readOnlyKeys;
         private readonly Dictionary<string, TomlNode> _values;
+        private TomlTableDefinitionKind _definitionKind;
 
         /// <summary>
         /// Initializes an empty programmatic TOML table.
         /// </summary>
         public TomlTable()
-            : this(0, 0)
+            : this(
+                0,
+                0,
+                TomlTableDefinitionKind.Programmatic)
         {
         }
 
-        internal TomlTable(int line, int column)
+        internal TomlTable(
+            int line,
+            int column,
+            TomlTableDefinitionKind definitionKind)
             : base(TomlNodeKind.Table, line, column)
         {
             _keys = new List<string>();
             _readOnlyKeys = new TomlReadOnlyList<string>(_keys);
             _values = new Dictionary<string, TomlNode>(StringComparer.Ordinal);
+            _definitionKind = definitionKind;
+        }
+
+        internal TomlTableDefinitionKind DefinitionKind
+        {
+            get { return _definitionKind; }
+            set { _definitionKind = value; }
         }
 
         /// <summary>
@@ -80,11 +94,12 @@ namespace Mz.Toml
 
         /// <summary>
         /// Adds or replaces a node while preserving deterministic key order.
+        /// Empty keys are valid TOML keys and are written quoted.
         /// </summary>
         public void Set(string key, TomlNode value)
         {
-            if (string.IsNullOrEmpty(key))
-                throw new ArgumentException("TOML key cannot be null or empty.", "key");
+            if (key == null)
+                throw new ArgumentNullException("key");
 
             if (value == null)
                 throw new ArgumentNullException("value");
@@ -103,7 +118,10 @@ namespace Mz.Toml
             for (var i = 0; i < _keys.Count; i++)
             {
                 var key = _keys[i];
-                yield return new KeyValuePair<string, TomlNode>(key, _values[key]);
+
+                yield return new KeyValuePair<string, TomlNode>(
+                    key,
+                    _values[key]);
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
@@ -7,6 +8,8 @@ namespace Mz.Toml.Internal
     internal sealed class TomlParser
     {
         private readonly string _text;
+        private readonly TomlTable _root;
+        private TomlTable _currentTable;
         private int _index;
         private int _line;
         private int _column;
@@ -17,6 +20,13 @@ namespace Mz.Toml.Internal
             _index = 0;
             _line = 1;
             _column = 1;
+
+            _root = new TomlTable(
+                1,
+                1,
+                TomlTableDefinitionKind.Root);
+
+            _currentTable = _root;
         }
 
         public static TomlParseResult Parse(string text)
@@ -26,8 +36,6 @@ namespace Mz.Toml.Internal
 
         private TomlParseResult ParseDocument()
         {
-            var root = new TomlTable(1, 1);
-
             while (!IsEnd)
             {
                 TomlDiagnostic diagnostic;
@@ -38,16 +46,25 @@ namespace Mz.Toml.Internal
                 if (IsEnd)
                     break;
 
-                if (!ParseAssignment(root, out diagnostic))
-                    return Failure(diagnostic);
+                if (Current == '[')
+                {
+                    if (!ParseTableHeader(out diagnostic))
+                        return Failure(diagnostic);
+                }
+                else
+                {
+                    if (!ParseAssignment(out diagnostic))
+                        return Failure(diagnostic);
+                }
             }
 
             return new TomlParseResult(
-                new TomlDocument(root),
+                new TomlDocument(_root),
                 new TomlDiagnostic[0]);
         }
 
-        private bool SkipDocumentTrivia(out TomlDiagnostic diagnostic)
+        private bool SkipDocumentTrivia(
+            out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
@@ -87,97 +104,27 @@ namespace Mz.Toml.Internal
         }
 
         private bool ParseAssignment(
-            TomlTable root,
             out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
-            var keyLine = _line;
-            var keyColumn = _column;
+            List<TomlKeyPart> parts;
 
-            if (Current == '[')
+            if (!ParseKeyPath(
+                '=',
+                false,
+                out parts,
+                out diagnostic))
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.UnsupportedSyntax,
-                    "Table headers are not implemented yet.",
-                    _line,
-                    _column);
-                return false;
-            }
-
-            if (Current == '"' || Current == '\'')
-            {
-                diagnostic = Error(
-                    TomlDiagnosticCode.UnsupportedSyntax,
-                    "Quoted keys are not implemented yet.",
-                    _line,
-                    _column);
-                return false;
-            }
-
-            var keyStart = _index;
-
-            while (!IsEnd && IsBareKeyCharacter(Current))
-                AdvanceCharacter();
-
-            if (_index == keyStart)
-            {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidKey,
-                    "Expected a TOML key.",
-                    _line,
-                    _column);
-                return false;
-            }
-
-            var key = _text.Substring(keyStart, _index - keyStart);
-
-            SkipHorizontalWhitespace();
-
-            if (!IsEnd && Current == '.')
-            {
-                diagnostic = Error(
-                    TomlDiagnosticCode.UnsupportedSyntax,
-                    "Dotted keys are not implemented yet.",
-                    _line,
-                    _column);
-                return false;
-            }
-
-            if (IsEnd || Current != '=')
-            {
-                var code =
-                    !IsEnd &&
-                    !IsHorizontalWhitespace(Current) &&
-                    !IsNewlineStart(Current) &&
-                    Current != '#'
-                        ? TomlDiagnosticCode.InvalidKey
-                        : TomlDiagnosticCode.MissingEquals;
-
-                diagnostic = Error(
-                    code,
-                    code == TomlDiagnosticCode.InvalidKey
-                        ? "Unexpected character in TOML key."
-                        : "Expected '=' after the key.",
-                    _line,
-                    _column);
-                return false;
-            }
-
-            if (root.ContainsKey(key))
-            {
-                diagnostic = Error(
-                    TomlDiagnosticCode.DuplicateKey,
-                    "The key '" + key + "' is already defined.",
-                    keyLine,
-                    keyColumn);
                 return false;
             }
 
             AdvanceCharacter();
             SkipHorizontalWhitespace();
 
-            if (IsEnd || Current == '#' || IsNewlineStart(Current))
+            if (IsEnd ||
+                Current == '#' ||
+                IsNewlineStart(Current))
             {
                 diagnostic = Error(
                     TomlDiagnosticCode.MissingValue,
@@ -187,9 +134,14 @@ namespace Mz.Toml.Internal
                 return false;
             }
 
-            TomlNode node;
-            if (!ParseValue(out node, out diagnostic))
+            TomlNode value;
+
+            if (!ParseValue(
+                out value,
+                out diagnostic))
+            {
                 return false;
+            }
 
             SkipHorizontalWhitespace();
 
@@ -215,7 +167,455 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            root.Set(key, node);
+            return AssignKeyPath(
+                _currentTable,
+                parts,
+                value,
+                out diagnostic);
+        }
+
+        private bool ParseTableHeader(
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+
+            var headerLine = _line;
+            var headerColumn = _column;
+
+            AdvanceCharacter();
+
+            if (!IsEnd && Current == '[')
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.UnsupportedSyntax,
+                    "Arrays of tables are not implemented yet.",
+                    headerLine,
+                    headerColumn);
+                return false;
+            }
+
+            List<TomlKeyPart> parts;
+
+            if (!ParseKeyPath(
+                ']',
+                true,
+                out parts,
+                out diagnostic))
+            {
+                return false;
+            }
+
+            AdvanceCharacter();
+            SkipHorizontalWhitespace();
+
+            if (!IsEnd && Current == '#')
+            {
+                if (!SkipComment(out diagnostic))
+                    return false;
+            }
+
+            if (!IsEnd)
+            {
+                if (!IsNewlineStart(Current))
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TrailingCharacters,
+                        "Unexpected characters after the table header.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                if (!ConsumeNewline(out diagnostic))
+                    return false;
+            }
+
+            TomlTable table;
+
+            if (!ResolveTableHeader(
+                parts,
+                out table,
+                out diagnostic))
+            {
+                return false;
+            }
+
+            _currentTable = table;
+            return true;
+        }
+
+        private bool ParseKeyPath(
+            char terminator,
+            bool tableHeader,
+            out List<TomlKeyPart> parts,
+            out TomlDiagnostic diagnostic)
+        {
+            parts = new List<TomlKeyPart>();
+            diagnostic = null;
+
+            SkipHorizontalWhitespace();
+
+            while (true)
+            {
+                if (IsEnd ||
+                    IsNewlineStart(Current) ||
+                    Current == '#' ||
+                    Current == '.' ||
+                    Current == terminator)
+                {
+                    diagnostic = Error(
+                        tableHeader
+                            ? TomlDiagnosticCode.InvalidTable
+                            : TomlDiagnosticCode.InvalidKey,
+                        "Expected a TOML key segment.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                var line = _line;
+                var column = _column;
+                string key;
+
+                if (Current == '"')
+                {
+                    if (!ParseBasicStringText(
+                        out key,
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+                }
+                else if (Current == '\'')
+                {
+                    if (!ParseLiteralKey(
+                        out key,
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var start = _index;
+
+                    while (!IsEnd &&
+                           IsBareKeyCharacter(Current))
+                    {
+                        AdvanceCharacter();
+                    }
+
+                    if (_index == start)
+                    {
+                        diagnostic = Error(
+                            TomlDiagnosticCode.InvalidKey,
+                            "Expected a bare or quoted TOML key.",
+                            _line,
+                            _column);
+                        return false;
+                    }
+
+                    key = _text.Substring(
+                        start,
+                        _index - start);
+                }
+
+                parts.Add(
+                    new TomlKeyPart(
+                        key,
+                        line,
+                        column));
+
+                SkipHorizontalWhitespace();
+
+                if (IsEnd ||
+                    IsNewlineStart(Current) ||
+                    Current == '#')
+                {
+                    diagnostic = Error(
+                        tableHeader
+                            ? TomlDiagnosticCode.InvalidTable
+                            : TomlDiagnosticCode.MissingEquals,
+                        tableHeader
+                            ? "Expected ']' after the table name."
+                            : "Expected '=' after the key.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                if (Current == terminator)
+                    return true;
+
+                if (Current != '.')
+                {
+                    diagnostic = Error(
+                        tableHeader
+                            ? TomlDiagnosticCode.InvalidTable
+                            : TomlDiagnosticCode.InvalidKey,
+                        "Expected '.' or '" +
+                        terminator +
+                        "' after the key segment.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                AdvanceCharacter();
+                SkipHorizontalWhitespace();
+
+                if (IsEnd ||
+                    IsNewlineStart(Current) ||
+                    Current == '#' ||
+                    Current == '.' ||
+                    Current == terminator)
+                {
+                    diagnostic = Error(
+                        tableHeader
+                            ? TomlDiagnosticCode.InvalidTable
+                            : TomlDiagnosticCode.InvalidKey,
+                        "Expected a key segment after '.'.",
+                        _line,
+                        _column);
+                    return false;
+                }
+            }
+        }
+
+        private bool ParseLiteralKey(
+            out string value,
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+
+            var startLine = _line;
+            var startColumn = _column;
+
+            AdvanceCharacter();
+
+            var sb = new StringBuilder();
+
+            while (!IsEnd)
+            {
+                var c = Current;
+
+                if (c == '\'')
+                {
+                    AdvanceCharacter();
+                    value = sb.ToString();
+                    return true;
+                }
+
+                if (IsNewlineStart(c))
+                {
+                    value = null;
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidKey,
+                        "Unterminated literal quoted key.",
+                        startLine,
+                        startColumn);
+                    return false;
+                }
+
+                if ((c < 0x20 && c != '\t') ||
+                    c == 0x7F)
+                {
+                    value = null;
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidKey,
+                        "Control character in literal quoted key.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                sb.Append(c);
+                AdvanceCharacter();
+            }
+
+            value = null;
+            diagnostic = Error(
+                TomlDiagnosticCode.InvalidKey,
+                "Unterminated literal quoted key.",
+                startLine,
+                startColumn);
+            return false;
+        }
+
+        private bool AssignKeyPath(
+            TomlTable startTable,
+            IList<TomlKeyPart> parts,
+            TomlNode value,
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+
+            var table = startTable;
+
+            for (var i = 0; i < parts.Count - 1; i++)
+            {
+                var part = parts[i];
+                TomlNode existing;
+
+                if (!table.TryGetValue(
+                    part.Value,
+                    out existing))
+                {
+                    var created = new TomlTable(
+                        part.Line,
+                        part.Column,
+                        TomlTableDefinitionKind.DottedKey);
+
+                    table.Set(
+                        part.Value,
+                        created);
+
+                    table = created;
+                    continue;
+                }
+
+                if (existing.Kind != TomlNodeKind.Table)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TableConflict,
+                        "Key '" +
+                        part.Value +
+                        "' is already defined as a value and cannot be used as a table.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
+
+                var existingTable =
+                    (TomlTable)existing;
+
+                if (existingTable.DefinitionKind ==
+                    TomlTableDefinitionKind.Explicit)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TableConflict,
+                        "Table '" +
+                        part.Value +
+                        "' was already explicitly defined and cannot be extended through a dotted key.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
+
+                table = existingTable;
+            }
+
+            var finalPart = parts[parts.Count - 1];
+
+            if (table.ContainsKey(finalPart.Value))
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.DuplicateKey,
+                    "The key '" +
+                    finalPart.Value +
+                    "' is already defined.",
+                    finalPart.Line,
+                    finalPart.Column);
+                return false;
+            }
+
+            table.Set(
+                finalPart.Value,
+                value);
+
+            return true;
+        }
+
+        private bool ResolveTableHeader(
+            IList<TomlKeyPart> parts,
+            out TomlTable result,
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+            result = null;
+
+            var table = _root;
+
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var part = parts[i];
+                var isLeaf = i == parts.Count - 1;
+
+                TomlNode existing;
+
+                if (!table.TryGetValue(
+                    part.Value,
+                    out existing))
+                {
+                    var created = new TomlTable(
+                        part.Line,
+                        part.Column,
+                        isLeaf
+                            ? TomlTableDefinitionKind.Explicit
+                            : TomlTableDefinitionKind.Implicit);
+
+                    table.Set(
+                        part.Value,
+                        created);
+
+                    table = created;
+                    continue;
+                }
+
+                if (existing.Kind != TomlNodeKind.Table)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TableConflict,
+                        "Key '" +
+                        part.Value +
+                        "' is already defined as a value and cannot be used as a table.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
+
+                var existingTable =
+                    (TomlTable)existing;
+
+                if (isLeaf)
+                {
+                    if (existingTable.DefinitionKind ==
+                        TomlTableDefinitionKind.Implicit)
+                    {
+                        existingTable.DefinitionKind =
+                            TomlTableDefinitionKind.Explicit;
+
+                        table = existingTable;
+                        continue;
+                    }
+
+                    if (existingTable.DefinitionKind ==
+                        TomlTableDefinitionKind.DottedKey)
+                    {
+                        diagnostic = Error(
+                            TomlDiagnosticCode.TableConflict,
+                            "Table '" +
+                            part.Value +
+                            "' was already defined by a dotted key and cannot be redefined by a table header.",
+                            part.Line,
+                            part.Column);
+                        return false;
+                    }
+
+                    diagnostic = Error(
+                        TomlDiagnosticCode.DuplicateTable,
+                        "Table '" +
+                        part.Value +
+                        "' is already explicitly defined.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
+
+                table = existingTable;
+            }
+
+            result = table;
             return true;
         }
 
@@ -228,15 +628,29 @@ namespace Mz.Toml.Internal
 
             if (Current == '"')
             {
-                TomlValue stringValue;
-                if (!ParseBasicString(out stringValue, out diagnostic))
-                    return false;
+                var line = _line;
+                var column = _column;
+                string text;
 
-                node = stringValue;
+                if (!ParseBasicStringText(
+                    out text,
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                node = new TomlValue(
+                    TomlValueKind.String,
+                    text,
+                    line,
+                    column);
+
                 return true;
             }
 
-            if (Current == '\'' || Current == '[' || Current == '{')
+            if (Current == '\'' ||
+                Current == '[' ||
+                Current == '{')
             {
                 diagnostic = Error(
                     TomlDiagnosticCode.UnsupportedSyntax,
@@ -246,7 +660,79 @@ namespace Mz.Toml.Internal
                 return false;
             }
 
-            return ParseBareValue(out node, out diagnostic);
+            return ParseBareValue(
+                out node,
+                out diagnostic);
+        }
+
+        private bool ParseBasicStringText(
+            out string value,
+            out TomlDiagnostic diagnostic)
+        {
+            value = null;
+            diagnostic = null;
+
+            var sourceLine = _line;
+            var sourceColumn = _column;
+
+            AdvanceCharacter();
+
+            var sb = new StringBuilder();
+
+            while (!IsEnd)
+            {
+                var c = Current;
+
+                if (c == '"')
+                {
+                    AdvanceCharacter();
+                    value = sb.ToString();
+                    return true;
+                }
+
+                if (IsNewlineStart(c))
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidString,
+                        "Unterminated TOML basic string.",
+                        sourceLine,
+                        sourceColumn);
+                    return false;
+                }
+
+                if (c == '\\')
+                {
+                    if (!ParseEscape(
+                        sb,
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if ((c < 0x20 && c != '\t') ||
+                    c == 0x7F)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidString,
+                        "Unescaped control character in TOML basic string.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                sb.Append(c);
+                AdvanceCharacter();
+            }
+
+            diagnostic = Error(
+                TomlDiagnosticCode.InvalidString,
+                "Unterminated TOML basic string.",
+                sourceLine,
+                sourceColumn);
+            return false;
         }
 
         private bool ParseBareValue(
@@ -268,7 +754,9 @@ namespace Mz.Toml.Internal
                 AdvanceCharacter();
             }
 
-            var token = _text.Substring(start, _index - start);
+            var token = _text.Substring(
+                start,
+                _index - start);
 
             if (token == "true")
             {
@@ -290,7 +778,8 @@ namespace Mz.Toml.Internal
                 return true;
             }
 
-            if (token == "inf" || token == "+inf")
+            if (token == "inf" ||
+                token == "+inf")
             {
                 node = new TomlValue(
                     TomlValueKind.Float,
@@ -310,7 +799,9 @@ namespace Mz.Toml.Internal
                 return true;
             }
 
-            if (token == "nan" || token == "+nan" || token == "-nan")
+            if (token == "nan" ||
+                token == "+nan" ||
+                token == "-nan")
             {
                 node = new TomlValue(
                     TomlValueKind.Float,
@@ -321,11 +812,15 @@ namespace Mz.Toml.Internal
             }
 
             bool isFloat;
-            if (IsDecimalNumber(token, out isFloat))
+
+            if (IsDecimalNumber(
+                token,
+                out isFloat))
             {
                 if (isFloat)
                 {
                     double value;
+
                     if (!double.TryParse(
                             token,
                             NumberStyles.Float,
@@ -351,6 +846,7 @@ namespace Mz.Toml.Internal
                 }
 
                 long integerValue;
+
                 if (!long.TryParse(
                     token,
                     NumberStyles.AllowLeadingSign,
@@ -377,79 +873,11 @@ namespace Mz.Toml.Internal
                 LooksNumeric(token)
                     ? TomlDiagnosticCode.InvalidNumber
                     : TomlDiagnosticCode.InvalidValue,
-                "Unrecognized or unsupported TOML value '" + token + "'.",
+                "Unrecognized or unsupported TOML value '" +
+                token +
+                "'.",
                 line,
                 column);
-            return false;
-        }
-
-        private bool ParseBasicString(
-            out TomlValue value,
-            out TomlDiagnostic diagnostic)
-        {
-            value = null;
-            diagnostic = null;
-
-            var sourceLine = _line;
-            var sourceColumn = _column;
-
-            AdvanceCharacter();
-
-            var sb = new StringBuilder();
-
-            while (!IsEnd)
-            {
-                var c = Current;
-
-                if (c == '"')
-                {
-                    AdvanceCharacter();
-
-                    value = new TomlValue(
-                        TomlValueKind.String,
-                        sb.ToString(),
-                        sourceLine,
-                        sourceColumn);
-                    return true;
-                }
-
-                if (IsNewlineStart(c))
-                {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unterminated TOML basic string.",
-                        sourceLine,
-                        sourceColumn);
-                    return false;
-                }
-
-                if (c == '\\')
-                {
-                    if (!ParseEscape(sb, out diagnostic))
-                        return false;
-
-                    continue;
-                }
-
-                if ((c < 0x20 && c != '\t') || c == 0x7F)
-                {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unescaped control character in TOML basic string.",
-                        _line,
-                        _column);
-                    return false;
-                }
-
-                sb.Append(c);
-                AdvanceCharacter();
-            }
-
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidString,
-                "Unterminated TOML basic string.",
-                sourceLine,
-                sourceColumn);
             return false;
         }
 
@@ -464,7 +892,8 @@ namespace Mz.Toml.Internal
 
             AdvanceCharacter();
 
-            if (IsEnd || IsNewlineStart(Current))
+            if (IsEnd ||
+                IsNewlineStart(Current))
             {
                 diagnostic = Error(
                     TomlDiagnosticCode.InvalidEscape,
@@ -526,7 +955,9 @@ namespace Mz.Toml.Internal
                 default:
                     diagnostic = Error(
                         TomlDiagnosticCode.InvalidEscape,
-                        "Unknown TOML escape sequence '\\" + escaped + "'.",
+                        "Unknown TOML escape sequence '\\" +
+                        escaped +
+                        "'.",
                         escapeLine,
                         escapeColumn);
                     return false;
@@ -571,16 +1002,20 @@ namespace Mz.Toml.Internal
                 AdvanceCharacter();
             }
 
-            var hex = _text.Substring(start, digitCount);
+            var hex = _text.Substring(
+                start,
+                digitCount);
 
             int codePoint;
+
             if (!int.TryParse(
                     hex,
                     NumberStyles.AllowHexSpecifier,
                     CultureInfo.InvariantCulture,
                     out codePoint) ||
                 codePoint > 0x10FFFF ||
-                (codePoint >= 0xD800 && codePoint <= 0xDFFF))
+                (codePoint >= 0xD800 &&
+                 codePoint <= 0xDFFF))
             {
                 diagnostic = Error(
                     TomlDiagnosticCode.InvalidEscape,
@@ -590,11 +1025,41 @@ namespace Mz.Toml.Internal
                 return false;
             }
 
-            sb.Append(char.ConvertFromUtf32(codePoint));
+            sb.Append(
+                char.ConvertFromUtf32(codePoint));
+
             return true;
         }
 
-        private bool ConsumeNewline(out TomlDiagnostic diagnostic)
+        private bool SkipComment(
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+
+            while (!IsEnd &&
+                   !IsNewlineStart(Current))
+            {
+                var c = Current;
+
+                if ((c < 0x20 && c != '\t') ||
+                    c == 0x7F)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidComment,
+                        "Control characters other than tab are not permitted in TOML comments.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                AdvanceCharacter();
+            }
+
+            return true;
+        }
+
+        private bool ConsumeNewline(
+            out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
@@ -612,7 +1077,8 @@ namespace Mz.Toml.Internal
             if (Current != '\r')
                 return false;
 
-            if (_index + 1 >= _text.Length || _text[_index + 1] != '\n')
+            if (_index + 1 >= _text.Length ||
+                _text[_index + 1] != '\n')
             {
                 diagnostic = Error(
                     TomlDiagnosticCode.InvalidNewline,
@@ -628,34 +1094,13 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool SkipComment(out TomlDiagnostic diagnostic)
-        {
-            diagnostic = null;
-
-            while (!IsEnd && !IsNewlineStart(Current))
-            {
-                var c = Current;
-
-                if ((c < 0x20 && c != '\t') || c == 0x7F)
-                {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidComment,
-                        "Control characters other than tab are not permitted in TOML comments.",
-                        _line,
-                        _column);
-                    return false;
-                }
-
-                AdvanceCharacter();
-            }
-
-            return true;
-        }
-
         private void SkipHorizontalWhitespace()
         {
-            while (!IsEnd && IsHorizontalWhitespace(Current))
+            while (!IsEnd &&
+                   IsHorizontalWhitespace(Current))
+            {
                 AdvanceCharacter();
+            }
         }
 
         private void AdvanceCharacter()
@@ -685,7 +1130,8 @@ namespace Mz.Toml.Internal
 
             var i = 0;
 
-            if (token[i] == '+' || token[i] == '-')
+            if (token[i] == '+' ||
+                token[i] == '-')
             {
                 i++;
 
@@ -695,46 +1141,63 @@ namespace Mz.Toml.Internal
 
             var integerStart = i;
 
-            while (i < token.Length && IsDigit(token[i]))
+            while (i < token.Length &&
+                   IsDigit(token[i]))
+            {
                 i++;
+            }
 
             if (i == integerStart)
                 return false;
 
-            var integerLength = i - integerStart;
-            if (integerLength > 1 && token[integerStart] == '0')
-                return false;
+            var integerLength =
+                i - integerStart;
 
-            if (i < token.Length && token[i] == '.')
+            if (integerLength > 1 &&
+                token[integerStart] == '0')
+            {
+                return false;
+            }
+
+            if (i < token.Length &&
+                token[i] == '.')
             {
                 isFloat = true;
                 i++;
 
                 var fractionalStart = i;
 
-                while (i < token.Length && IsDigit(token[i]))
+                while (i < token.Length &&
+                       IsDigit(token[i]))
+                {
                     i++;
+                }
 
                 if (i == fractionalStart)
                     return false;
             }
 
             if (i < token.Length &&
-                (token[i] == 'e' || token[i] == 'E'))
+                (token[i] == 'e' ||
+                 token[i] == 'E'))
             {
                 isFloat = true;
                 i++;
 
                 if (i < token.Length &&
-                    (token[i] == '+' || token[i] == '-'))
+                    (token[i] == '+' ||
+                     token[i] == '-'))
                 {
                     i++;
                 }
 
                 var exponentStart = i;
 
-                while (i < token.Length && IsDigit(token[i]))
+                while (i < token.Length &&
+                       IsDigit(token[i]))
+                {
                     i++;
+                }
 
                 if (i == exponentStart)
                     return false;
@@ -743,7 +1206,8 @@ namespace Mz.Toml.Internal
             return i == token.Length;
         }
 
-        private static bool LooksNumeric(string token)
+        private static bool LooksNumeric(
+            string token)
         {
             if (string.IsNullOrEmpty(token))
                 return false;
@@ -753,7 +1217,8 @@ namespace Mz.Toml.Internal
                    token[0] == '-';
         }
 
-        private static bool IsBareKeyCharacter(char c)
+        private static bool IsBareKeyCharacter(
+            char c)
         {
             return (c >= 'A' && c <= 'Z') ||
                    (c >= 'a' && c <= 'z') ||
@@ -764,7 +1229,8 @@ namespace Mz.Toml.Internal
 
         private static bool IsDigit(char c)
         {
-            return c >= '0' && c <= '9';
+            return c >= '0' &&
+                   c <= '9';
         }
 
         private static bool IsHexDigit(char c)
@@ -774,14 +1240,18 @@ namespace Mz.Toml.Internal
                    (c >= 'a' && c <= 'f');
         }
 
-        private static bool IsHorizontalWhitespace(char c)
+        private static bool IsHorizontalWhitespace(
+            char c)
         {
-            return c == ' ' || c == '\t';
+            return c == ' ' ||
+                   c == '\t';
         }
 
-        private static bool IsNewlineStart(char c)
+        private static bool IsNewlineStart(
+            char c)
         {
-            return c == '\n' || c == '\r';
+            return c == '\n' ||
+                   c == '\r';
         }
 
         private static TomlDiagnostic Error(

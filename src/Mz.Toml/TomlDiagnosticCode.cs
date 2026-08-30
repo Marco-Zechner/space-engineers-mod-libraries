@@ -62,6 +62,21 @@ namespace Mz.Toml
         DuplicateKey,
 
         /// <summary>
+        /// A table header explicitly defines a table more than once.
+        /// </summary>
+        DuplicateTable,
+
+        /// <summary>
+        /// A table or dotted-key path conflicts with an existing definition.
+        /// </summary>
+        TableConflict,
+
+        /// <summary>
+        /// A table header is malformed.
+        /// </summary>
+        InvalidTable,
+
+        /// <summary>
         /// Unexpected non-comment characters follow a parsed value.
         /// </summary>
         TrailingCharacters

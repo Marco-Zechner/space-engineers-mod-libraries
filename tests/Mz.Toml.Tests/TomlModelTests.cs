@@ -28,6 +28,19 @@ namespace Mz.Toml.Tests
         }
 
         [Fact]
+        public void Empty_Programmatic_Key_Is_Allowed_And_Quoted()
+        {
+            var document = new TomlDocument();
+
+            document.Root.Set(
+                "",
+                TomlValue.FromInteger(1));
+
+            Assert.Equal(
+                "\"\" = 1\n",
+                Toml.Write(document));
+        }
+        [Fact]
         public void Parse_Diagnostics_Do_Not_Expose_Mutable_Collection()
         {
             var result = Toml.TryParse("broken\n");
