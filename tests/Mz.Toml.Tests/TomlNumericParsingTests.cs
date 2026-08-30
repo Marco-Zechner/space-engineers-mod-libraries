@@ -1,322 +1,248 @@
-using System;
-using Mz.Toml;
 using Xunit;
 
-namespace Mz.Toml.Tests
+namespace Mz.Toml.Tests;
+
+public sealed class TomlNumericParsingTests
 {
-    public sealed class TomlNumericParsingTests
+    [Fact]
+    public void Parses_Signed_Decimal_Integer_Range()
     {
-        [Fact]
-        public void Parses_Signed_Decimal_Integer_Range()
-        {
-            var document = Toml.Parse(
-                "max = 9223372036854775807\n" +
-                "min = -9223372036854775808\n" +
-                "plus = +42\n" +
-                "minus = -42\n");
+        var document = Toml.Parse(
+            """
+            max = 9223372036854775807
+            min = -9223372036854775808
+            plus = +42
+            minus = -42
 
-            Assert.Equal(
-                long.MaxValue,
-                Value(document.Root, "max").AsInteger());
+            """);
 
-            Assert.Equal(
-                long.MinValue,
-                Value(document.Root, "min").AsInteger());
+        Assert.Equal(long.MaxValue, document.Root.AsValue("max").AsInteger());
 
-            Assert.Equal(
-                42L,
-                Value(document.Root, "plus").AsInteger());
+        Assert.Equal(long.MinValue, document.Root.AsValue("min").AsInteger());
 
-            Assert.Equal(
-                -42L,
-                Value(document.Root, "minus").AsInteger());
-        }
+        Assert.Equal(42L, document.Root.AsValue("plus").AsInteger());
 
-        [Fact]
-        public void Parses_Integer_Bases_And_Underscores()
-        {
-            var document = Toml.Parse(
-                "hex = 0xdead_beef\n" +
-                "oct = 0o7_6_5\n" +
-                "bin = 0b1_0_1\n" +
-                "decimal = 9_007_199_254_740_991\n");
+        Assert.Equal(-42L, document.Root.AsValue("minus").AsInteger());
+    }
 
-            Assert.Equal(
-                3735928559L,
-                Value(document.Root, "hex").AsInteger());
+    [Fact]
+    public void Parses_Integer_Bases_And_Underscores()
+    {
+        var document = Toml.Parse("""
+            hex = 0xdead_beef
+            oct = 0o7_6_5
+            bin = 0b1_0_1
+            decimal = 9_007_199_254_740_991
 
-            Assert.Equal(
-                501L,
-                Value(document.Root, "oct").AsInteger());
+            """);
 
-            Assert.Equal(
-                5L,
-                Value(document.Root, "bin").AsInteger());
+        Assert.Equal(3735928559L, document.Root.AsValue("hex").AsInteger());
 
-            Assert.Equal(
-                9007199254740991L,
-                Value(document.Root, "decimal").AsInteger());
-        }
+        Assert.Equal(501L, document.Root.AsValue("oct").AsInteger());
 
-        [Fact]
-        public void Base_Integer_Leading_Zeroes_Are_Valid()
-        {
-            var document = Toml.Parse(
-                "hex = 0x00987\n" +
-                "oct = 0o000755\n" +
-                "bin = 0b000101\n");
+        Assert.Equal(5L, document.Root.AsValue("bin").AsInteger());
 
-            Assert.Equal(
-                2439L,
-                Value(document.Root, "hex").AsInteger());
+        Assert.Equal(9007199254740991L, document.Root.AsValue("decimal").AsInteger());
+    }
 
-            Assert.Equal(
-                493L,
-                Value(document.Root, "oct").AsInteger());
+    [Fact]
+    public void Base_Integer_Leading_Zeroes_Are_Valid()
+    {
+        var document = Toml.Parse("""
+            hex = 0x00987
+            oct = 0o000755
+            bin = 0b000101
 
-            Assert.Equal(
-                5L,
-                Value(document.Root, "bin").AsInteger());
-        }
+            """);
 
-        [Theory]
-        [InlineData("value = 01\n")]
-        [InlineData("value = -01\n")]
-        [InlineData("value = +01\n")]
-        [InlineData("value = 0_0\n")]
-        [InlineData("value = +0_1\n")]
-        public void Decimal_Integer_Leading_Zeroes_Are_Rejected(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+        Assert.Equal(2439L, document.Root.AsValue("hex").AsInteger());
 
-        [Theory]
-        [InlineData("value = +0xff\n")]
-        [InlineData("value = -0xff\n")]
-        [InlineData("value = +0o755\n")]
-        [InlineData("value = -0o755\n")]
-        [InlineData("value = +0b1\n")]
-        [InlineData("value = -0b1\n")]
-        public void Base_Integers_Cannot_Have_A_Sign(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+        Assert.Equal(493L, document.Root.AsValue("oct").AsInteger());
 
-        [Theory]
-        [InlineData("value = 0X1\n")]
-        [InlineData("value = 0O1\n")]
-        [InlineData("value = 0B1\n")]
-        [InlineData("value = 0x_1\n")]
-        [InlineData("value = 0x1_\n")]
-        [InlineData("value = 0x1__2\n")]
-        [InlineData("value = 0o778\n")]
-        [InlineData("value = 0b0012\n")]
-        public void Invalid_Base_Integer_Syntax_Is_Rejected(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+        Assert.Equal(5L, document.Root.AsValue("bin").AsInteger());
+    }
 
-        [Theory]
-        [InlineData("value = 9223372036854775808\n")]
-        [InlineData("value = -9223372036854775809\n")]
-        [InlineData("value = 0x8000000000000000\n")]
-        public void Integer_Overflow_Is_Rejected(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+    [Theory]
+    [InlineData("value = 01\n")]
+    [InlineData("value = -01\n")]
+    [InlineData("value = +01\n")]
+    [InlineData("value = 0_0\n")]
+    [InlineData("value = +0_1\n")]
+    public void Decimal_Integer_Leading_Zeroes_Are_Rejected(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-        [Fact]
-        public void Parses_Fractions_And_Exponents()
-        {
-            var document = Toml.Parse(
-                "fraction = +3.1415\n" +
-                "lower = 3e-2\n" +
-                "upper = 3E+2\n" +
-                "mixed = -3.1e2\n" +
-                "underscores = 3_141.592_7\n" +
-                "expUnderscore = 3e1_4\n");
+    [Theory]
+    [InlineData("value = +0xff\n")]
+    [InlineData("value = -0xff\n")]
+    [InlineData("value = +0o755\n")]
+    [InlineData("value = -0o755\n")]
+    [InlineData("value = +0b1\n")]
+    [InlineData("value = -0b1\n")]
+    public void Base_Integers_Cannot_Have_A_Sign(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-            Assert.Equal(
-                3.1415,
-                Value(document.Root, "fraction").AsFloat());
+    [Theory]
+    [InlineData("value = 0X1\n")]
+    [InlineData("value = 0O1\n")]
+    [InlineData("value = 0B1\n")]
+    [InlineData("value = 0x_1\n")]
+    [InlineData("value = 0x1_\n")]
+    [InlineData("value = 0x1__2\n")]
+    [InlineData("value = 0o778\n")]
+    [InlineData("value = 0b0012\n")]
+    public void Invalid_Base_Integer_Syntax_Is_Rejected(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-            Assert.Equal(
-                0.03,
-                Value(document.Root, "lower").AsFloat());
+    [Theory]
+    [InlineData("value = 9223372036854775808\n")]
+    [InlineData("value = -9223372036854775809\n")]
+    [InlineData("value = 0x8000000000000000\n")]
+    public void Integer_Overflow_Is_Rejected(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-            Assert.Equal(
-                300.0,
-                Value(document.Root, "upper").AsFloat());
+    [Fact]
+    public void Parses_Fractions_And_Exponents()
+    {
+        var document = Toml.Parse("""
+            fraction = +3.1415
+            lower = 3e-2
+            upper = 3E+2
+            mixed = -3.1e2
+            underscores = 3_141.592_7
+            expUnderscore = 3e1_4
 
-            Assert.Equal(
-                -310.0,
-                Value(document.Root, "mixed").AsFloat());
+            """);
 
-            Assert.Equal(
-                3141.5927,
-                Value(document.Root, "underscores").AsFloat());
+        Assert.Equal(3.1415, document.Root.AsValue("fraction").AsFloat());
 
-            Assert.Equal(
-                3.0e14,
-                Value(document.Root, "expUnderscore").AsFloat());
-        }
+        Assert.Equal(0.03, document.Root.AsValue("lower").AsFloat());
 
-        [Theory]
-        [InlineData("value = .1\n")]
-        [InlineData("value = -.1\n")]
-        [InlineData("value = 1.\n")]
-        [InlineData("value = 1.e2\n")]
-        [InlineData("value = 1_.2\n")]
-        [InlineData("value = 1._2\n")]
-        [InlineData("value = 1.2_e2\n")]
-        [InlineData("value = 1e_2\n")]
-        [InlineData("value = 1e2_\n")]
-        [InlineData("value = 1e__2\n")]
-        [InlineData("value = 03.14\n")]
-        [InlineData("value = -03.14\n")]
-        public void Invalid_Float_Syntax_Is_Rejected(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+        Assert.Equal(300.0, document.Root.AsValue("upper").AsFloat());
 
-        [Fact]
-        public void Parses_Special_Floats()
-        {
-            var document = Toml.Parse(
-                "inf = inf\n" +
-                "plusInf = +inf\n" +
-                "minusInf = -inf\n" +
-                "nan = nan\n" +
-                "plusNan = +nan\n" +
-                "minusNan = -nan\n");
+        Assert.Equal(-310.0, document.Root.AsValue("mixed").AsFloat());
 
-            Assert.True(
-                double.IsPositiveInfinity(
-                    Value(document.Root, "inf").AsFloat()));
+        Assert.Equal(3141.5927, document.Root.AsValue("underscores").AsFloat());
 
-            Assert.True(
-                double.IsPositiveInfinity(
-                    Value(document.Root, "plusInf").AsFloat()));
+        Assert.Equal(3.0e14, document.Root.AsValue("expUnderscore").AsFloat());
+    }
 
-            Assert.True(
-                double.IsNegativeInfinity(
-                    Value(document.Root, "minusInf").AsFloat()));
+    [Theory]
+    [InlineData("value = .1\n")]
+    [InlineData("value = -.1\n")]
+    [InlineData("value = 1.\n")]
+    [InlineData("value = 1.e2\n")]
+    [InlineData("value = 1_.2\n")]
+    [InlineData("value = 1._2\n")]
+    [InlineData("value = 1.2_e2\n")]
+    [InlineData("value = 1e_2\n")]
+    [InlineData("value = 1e2_\n")]
+    [InlineData("value = 1e__2\n")]
+    [InlineData("value = 03.14\n")]
+    [InlineData("value = -03.14\n")]
+    public void Invalid_Float_Syntax_Is_Rejected(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-            Assert.True(
-                double.IsNaN(
-                    Value(document.Root, "nan").AsFloat()));
+    [Fact]
+    public void Parses_Special_Floats()
+    {
+        var document = Toml.Parse("""
+            inf = inf
+            plusInf = +inf
+            minusInf = -inf
+            nan = nan
+            plusNan = +nan
+            minusNan = -nan
 
-            Assert.True(
-                double.IsNaN(
-                    Value(document.Root, "plusNan").AsFloat()));
+            """);
 
-            Assert.True(
-                double.IsNaN(
-                    Value(document.Root, "minusNan").AsFloat()));
-        }
+        Assert.True(double.IsPositiveInfinity(document.Root.AsValue("inf").AsFloat()));
 
-        [Theory]
-        [InlineData("value = Inf\n")]
-        [InlineData("value = NaN\n")]
-        [InlineData("value = in_f\n")]
-        [InlineData("value = na_n\n")]
-        [InlineData("value = in\n")]
-        [InlineData("value = na\n")]
-        public void Invalid_Special_Floats_Are_Rejected(
-            string text)
-        {
-            Assert.False(
-                Toml.TryParse(text).IsSuccess);
-        }
+        Assert.True(double.IsPositiveInfinity(document.Root.AsValue("plusInf").AsFloat()));
 
-        [Fact]
-        public void Negative_Floating_Zero_Is_Preserved()
-        {
-            var document = Toml.Parse(
-                "fraction = -0.0\n" +
-                "exponent = -0e0\n");
+        Assert.True(double.IsNegativeInfinity(document.Root.AsValue("minusInf").AsFloat()));
 
-            AssertNegativeZero(
-                Value(document.Root, "fraction").AsFloat());
+        Assert.True(double.IsNaN(document.Root.AsValue("nan").AsFloat()));
 
-            AssertNegativeZero(
-                Value(document.Root, "exponent").AsFloat());
-        }
+        Assert.True(double.IsNaN(document.Root.AsValue("plusNan").AsFloat()));
 
-        [Fact]
-        public void Writer_Preserves_Negative_Floating_Zero()
-        {
-            var document = Toml.Parse(
-                "value = -0.0\n");
+        Assert.True(double.IsNaN(document.Root.AsValue("minusNan").AsFloat()));
+    }
 
-            var text = Toml.Write(document);
+    [Theory]
+    [InlineData("value = Inf\n")]
+    [InlineData("value = NaN\n")]
+    [InlineData("value = in_f\n")]
+    [InlineData("value = na_n\n")]
+    [InlineData("value = in\n")]
+    [InlineData("value = na\n")]
+    public void Invalid_Special_Floats_Are_Rejected(string text) 
+        => Assert.False(Toml.TryParse(text).IsSuccess);
 
-            Assert.Equal(
-                "value = -0.0\n",
-                text);
+    [Fact]
+    public void Negative_Floating_Zero_Is_Preserved()
+    {
+        var document = Toml.Parse("""
+            fraction = -0.0
+            exponent = -0e0
 
-            AssertNegativeZero(
-                Value(
-                    Toml.Parse(text).Root,
-                    "value").AsFloat());
-        }
+            """);
 
-        [Fact]
-        public void Writer_Canonicalizes_Base_And_Underscored_Integers()
-        {
-            var document = Toml.Parse(
-                "hex = 0xdead_beef\n" +
-                "decimal = 1_000\n");
+        AssertNegativeZero(document.Root.AsValue("fraction").AsFloat());
 
-            Assert.Equal(
-                "hex = 3735928559\n" +
-                "decimal = 1000\n",
-                Toml.Write(document));
-        }
+        AssertNegativeZero(document.Root.AsValue("exponent").AsFloat());
+    }
 
-        [Fact]
-        public void Writer_Canonicalizes_Special_Floats()
-        {
-            var document = Toml.Parse(
-                "a = +inf\n" +
-                "b = -inf\n" +
-                "c = -nan\n");
+    [Fact]
+    public void Writer_Preserves_Negative_Floating_Zero()
+    {
+        var document = Toml.Parse("value = -0.0\n");
 
-            Assert.Equal(
-                "a = inf\n" +
-                "b = -inf\n" +
-                "c = nan\n",
-                Toml.Write(document));
-        }
+        var text = Toml.Write(document);
 
-        private static void AssertNegativeZero(
-            double value)
-        {
-            Assert.Equal(
-                0.0,
-                value);
+        Assert.Equal("value = -0.0\n", text);
 
-            Assert.True(
-                double.IsNegativeInfinity(
-                    1.0 / value));
-        }
+        AssertNegativeZero(Toml.Parse(text).Root.AsValue("value").AsFloat());
+    }
 
-        private static TomlValue Value(
-            TomlTable table,
-            string key)
-        {
-            return Assert.IsType<TomlValue>(
-                table[key]);
-        }
+    [Fact]
+    public void Writer_Canonicalizes_Base_And_Underscored_Integers()
+    {
+        var document = Toml.Parse("""
+            hex = 0xdead_beef
+            decimal = 1_000
+
+            """);
+
+        Assert.Equal("""
+            hex = 3735928559
+            decimal = 1000
+
+            """, 
+            Toml.Write(document));
+    }
+
+    [Fact]
+    public void Writer_Canonicalizes_Special_Floats()
+    {
+        var document = Toml.Parse("""
+            a = +inf
+            b = -inf
+            c = -nan
+
+            """);
+
+        Assert.Equal("""
+            a = inf
+            b = -inf
+            c = nan
+
+            """,
+            Toml.Write(document));
+    }
+
+    private static void AssertNegativeZero(double value)
+    {
+        Assert.Equal(0.0, value);
+        Assert.True(double.IsNegativeInfinity(1.0 / value));
     }
 }
