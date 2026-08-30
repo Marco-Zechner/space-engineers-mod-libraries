@@ -306,6 +306,30 @@ namespace Mz.Toml.Internal
                             : "false");
                     return;
 
+                case TomlValueKind.OffsetDateTime:
+                    sb.Append(
+                        value.AsOffsetDateTime()
+                            .ToString());
+                    return;
+
+                case TomlValueKind.LocalDateTime:
+                    sb.Append(
+                        value.AsLocalDateTime()
+                            .ToString());
+                    return;
+
+                case TomlValueKind.LocalDate:
+                    sb.Append(
+                        value.AsLocalDate()
+                            .ToString());
+                    return;
+
+                case TomlValueKind.LocalTime:
+                    sb.Append(
+                        value.AsLocalTime()
+                            .ToString());
+                    return;
+
                 default:
                     throw new InvalidOperationException(
                         "Unsupported TOML scalar kind: " +

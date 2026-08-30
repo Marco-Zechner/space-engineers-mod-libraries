@@ -1621,14 +1621,29 @@ namespace Mz.Toml.Internal
             var line = _line;
             var column = _column;
 
-            while (!IsEnd &&
-                   !IsHorizontalWhitespace(Current) &&
-                   !IsNewlineStart(Current) &&
-                   Current != '#' &&
-                   Current != ',' &&
-                   Current != ']' &&
-                   Current != '}')
+            while (!IsEnd)
             {
+                if (IsNewlineStart(Current) ||
+                    Current == '#' ||
+                    Current == ',' ||
+                    Current == ']' ||
+                    Current == '}')
+                {
+                    break;
+                }
+
+                if (IsHorizontalWhitespace(Current))
+                {
+                    if (ShouldConsumeDateTimeSpace(
+                            start))
+                    {
+                        AdvanceCharacter();
+                        continue;
+                    }
+
+                    break;
+                }
+
                 AdvanceCharacter();
             }
 
@@ -1689,6 +1704,31 @@ namespace Mz.Toml.Internal
                 return true;
             }
 
+            TomlValue temporalValue;
+
+            if (TomlTemporalParser.TryParse(
+                    token,
+                    line,
+                    column,
+                    out temporalValue))
+            {
+                node = temporalValue;
+                return true;
+            }
+
+            if (TomlTemporalParser.LooksTemporal(
+                    token))
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.InvalidDateTime,
+                    "Malformed TOML date or time value '" +
+                    token +
+                    "'.",
+                    line,
+                    column);
+                return false;
+            }
+
             bool isFloat;
             long integerValue;
             double floatValue;
@@ -1741,6 +1781,36 @@ namespace Mz.Toml.Internal
                 line,
                 column);
             return false;
+        }
+
+        private bool ShouldConsumeDateTimeSpace(
+            int start)
+        {
+            if (Current != ' ' ||
+                _index != start + 10 ||
+                start < 0 ||
+                start + 11 >= _text.Length)
+            {
+                return false;
+            }
+
+            if (!IsAsciiDigit(_text[start]) ||
+                !IsAsciiDigit(_text[start + 1]) ||
+                !IsAsciiDigit(_text[start + 2]) ||
+                !IsAsciiDigit(_text[start + 3]) ||
+                _text[start + 4] != '-' ||
+                !IsAsciiDigit(_text[start + 5]) ||
+                !IsAsciiDigit(_text[start + 6]) ||
+                _text[start + 7] != '-' ||
+                !IsAsciiDigit(_text[start + 8]) ||
+                !IsAsciiDigit(_text[start + 9]))
+            {
+                return false;
+            }
+
+            return
+                IsAsciiDigit(
+                    _text[start + 11]);
         }
 
         private static bool TryParseTomlNumber(

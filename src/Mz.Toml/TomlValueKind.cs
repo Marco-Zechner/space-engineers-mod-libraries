@@ -23,6 +23,26 @@ namespace Mz.Toml
         /// <summary>
         /// A TOML Boolean value.
         /// </summary>
-        Boolean
+        Boolean,
+
+        /// <summary>
+        /// A TOML offset date-time value.
+        /// </summary>
+        OffsetDateTime,
+
+        /// <summary>
+        /// A TOML local date-time value.
+        /// </summary>
+        LocalDateTime,
+
+        /// <summary>
+        /// A TOML local date value.
+        /// </summary>
+        LocalDate,
+
+        /// <summary>
+        /// A TOML local time value.
+        /// </summary>
+        LocalTime
     }
 }

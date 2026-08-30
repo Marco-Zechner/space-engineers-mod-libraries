@@ -52,6 +52,11 @@ namespace Mz.Toml
         InvalidNumber,
 
         /// <summary>
+        /// A TOML date or time literal is malformed.
+        /// </summary>
+        InvalidDateTime,
+
+        /// <summary>
         /// A value token is not recognized.
         /// </summary>
         InvalidValue,

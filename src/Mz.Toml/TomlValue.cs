@@ -65,6 +65,70 @@ namespace Mz.Toml
         }
 
         /// <summary>
+        /// Creates a TOML offset date-time value.
+        /// </summary>
+        public static TomlValue FromOffsetDateTime(
+            TomlOffsetDateTime value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return new TomlValue(
+                TomlValueKind.OffsetDateTime,
+                value,
+                0,
+                0);
+        }
+
+        /// <summary>
+        /// Creates a TOML local date-time value.
+        /// </summary>
+        public static TomlValue FromLocalDateTime(
+            TomlLocalDateTime value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return new TomlValue(
+                TomlValueKind.LocalDateTime,
+                value,
+                0,
+                0);
+        }
+
+        /// <summary>
+        /// Creates a TOML local date value.
+        /// </summary>
+        public static TomlValue FromLocalDate(
+            TomlLocalDate value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return new TomlValue(
+                TomlValueKind.LocalDate,
+                value,
+                0,
+                0);
+        }
+
+        /// <summary>
+        /// Creates a TOML local time value.
+        /// </summary>
+        public static TomlValue FromLocalTime(
+            TomlLocalTime value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return new TomlValue(
+                TomlValueKind.LocalTime,
+                value,
+                0,
+                0);
+        }
+
+        /// <summary>
         /// Returns the value as a string.
         /// </summary>
         public string AsString()
@@ -98,6 +162,42 @@ namespace Mz.Toml
         {
             RequireKind(TomlValueKind.Boolean);
             return (bool)_value;
+        }
+
+        /// <summary>
+        /// Returns the value as an offset date-time.
+        /// </summary>
+        public TomlOffsetDateTime AsOffsetDateTime()
+        {
+            RequireKind(TomlValueKind.OffsetDateTime);
+            return (TomlOffsetDateTime)_value;
+        }
+
+        /// <summary>
+        /// Returns the value as a local date-time.
+        /// </summary>
+        public TomlLocalDateTime AsLocalDateTime()
+        {
+            RequireKind(TomlValueKind.LocalDateTime);
+            return (TomlLocalDateTime)_value;
+        }
+
+        /// <summary>
+        /// Returns the value as a local date.
+        /// </summary>
+        public TomlLocalDate AsLocalDate()
+        {
+            RequireKind(TomlValueKind.LocalDate);
+            return (TomlLocalDate)_value;
+        }
+
+        /// <summary>
+        /// Returns the value as a local time.
+        /// </summary>
+        public TomlLocalTime AsLocalTime()
+        {
+            RequireKind(TomlValueKind.LocalTime);
+            return (TomlLocalTime)_value;
         }
 
         private void RequireKind(TomlValueKind expected)
