@@ -84,6 +84,11 @@ namespace Mz.Toml
         /// <summary>
         /// Unexpected non-comment characters follow a parsed value.
         /// </summary>
-        TrailingCharacters
+        TrailingCharacters,
+
+        /// <summary>
+        /// The input byte sequence is not valid UTF-8 TOML text.
+        /// </summary>
+        InvalidEncoding
     }
 }

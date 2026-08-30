@@ -3,7 +3,7 @@ using System;
 namespace Mz.Toml
 {
     /// <summary>
-    /// Exception thrown by <see cref="Toml.Parse"/> when TOML text is invalid.
+    /// Exception thrown by <see cref="Toml.Parse(string)"/> when TOML text is invalid.
     /// </summary>
     public sealed class TomlParseException : FormatException
     {

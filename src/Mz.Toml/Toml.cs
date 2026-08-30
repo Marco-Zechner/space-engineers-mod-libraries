@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace Mz.Toml
 {
@@ -7,6 +8,11 @@ namespace Mz.Toml
     /// </summary>
     public static class Toml
     {
+        private static readonly UTF8Encoding StrictUtf8 =
+            new UTF8Encoding(
+                false,
+                true);
+
         /// <summary>
         /// Parses TOML text and throws <see cref="TomlParseException"/> on failure.
         /// </summary>
@@ -30,6 +36,68 @@ namespace Mz.Toml
             return Internal.TomlParser.Parse(text);
         }
 
+        /// <summary>
+        /// Parses UTF-8 encoded TOML bytes and throws
+        /// <see cref="TomlParseException"/> on failure.
+        /// A single UTF-8 BOM is accepted only at the start of the input.
+        /// </summary>
+        public static TomlDocument Parse(byte[] utf8)
+        {
+            var result = TryParse(utf8);
+            if (result.IsSuccess)
+                return result.Document;
+
+            throw new TomlParseException(result.Diagnostics[0]);
+        }
+
+        /// <summary>
+        /// Parses UTF-8 encoded TOML bytes without throwing for invalid
+        /// encoding or TOML syntax.
+        /// A single UTF-8 BOM is accepted only at the start of the input.
+        /// </summary>
+        public static TomlParseResult TryParse(byte[] utf8)
+        {
+            if (utf8 == null)
+                throw new ArgumentNullException("utf8");
+
+            var offset = 0;
+            var count = utf8.Length;
+
+            if (count >= 3 &&
+                utf8[0] == 0xEF &&
+                utf8[1] == 0xBB &&
+                utf8[2] == 0xBF)
+            {
+                offset = 3;
+                count -= 3;
+            }
+
+            string text;
+
+            try
+            {
+                text =
+                    StrictUtf8.GetString(
+                        utf8,
+                        offset,
+                        count);
+            }
+            catch (DecoderFallbackException)
+            {
+                return new TomlParseResult(
+                    null,
+                    new[]
+                    {
+                        new TomlDiagnostic(
+                            TomlDiagnosticCode.InvalidEncoding,
+                            "The TOML input is not valid UTF-8.",
+                            1,
+                            1)
+                    });
+            }
+
+            return TryParse(text);
+        }
         /// <summary>
         /// Writes a TOML document using deterministic formatting.
         /// </summary>
