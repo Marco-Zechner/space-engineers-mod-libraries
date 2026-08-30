@@ -13,6 +13,11 @@ namespace Mz.Toml
         /// <summary>
         /// A scalar TOML value.
         /// </summary>
-        Value
+        Value,
+
+        /// <summary>
+        /// An ordered TOML array.
+        /// </summary>
+        Array
     }
 }

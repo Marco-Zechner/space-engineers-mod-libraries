@@ -6,6 +6,7 @@ namespace Mz.Toml.Internal
         Programmatic,
         Implicit,
         Explicit,
-        DottedKey
+        DottedKey,
+        Inline
     }
 }

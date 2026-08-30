@@ -13,7 +13,7 @@ namespace Mz.Toml.Internal
             var sb = new StringBuilder();
 
             var wroteAnything =
-                AppendScalarEntries(
+                AppendValueEntries(
                     sb,
                     document.Root);
 
@@ -28,7 +28,7 @@ namespace Mz.Toml.Internal
             return sb.ToString();
         }
 
-        private static bool AppendScalarEntries(
+        private static bool AppendValueEntries(
             StringBuilder sb,
             TomlTable table)
         {
@@ -39,15 +39,14 @@ namespace Mz.Toml.Internal
                 if (pair.Value.Kind ==
                     TomlNodeKind.Table)
                 {
-                    continue;
-                }
+                    var child =
+                        (TomlTable)pair.Value;
 
-                if (pair.Value.Kind !=
-                    TomlNodeKind.Value)
-                {
-                    throw new InvalidOperationException(
-                        "Unsupported TOML node kind: " +
-                        pair.Value.Kind);
+                    if (child.DefinitionKind !=
+                        TomlTableDefinitionKind.Inline)
+                    {
+                        continue;
+                    }
                 }
 
                 AppendKey(
@@ -56,9 +55,9 @@ namespace Mz.Toml.Internal
 
                 sb.Append(" = ");
 
-                AppendValue(
+                AppendNode(
                     sb,
-                    (TomlValue)pair.Value);
+                    pair.Value);
 
                 sb.Append('\n');
                 wroteAny = true;
@@ -84,6 +83,12 @@ namespace Mz.Toml.Internal
                 var child =
                     (TomlTable)pair.Value;
 
+                if (child.DefinitionKind ==
+                    TomlTableDefinitionKind.Inline)
+                {
+                    continue;
+                }
+
                 path.Add(pair.Key);
 
                 if (wroteAnything)
@@ -95,7 +100,7 @@ namespace Mz.Toml.Internal
 
                 sb.Append('\n');
 
-                AppendScalarEntries(
+                AppendValueEntries(
                     sb,
                     child);
 
@@ -146,6 +151,87 @@ namespace Mz.Toml.Internal
             AppendBasicString(
                 sb,
                 key);
+        }
+
+        private static void AppendNode(
+            StringBuilder sb,
+            TomlNode node)
+        {
+            switch (node.Kind)
+            {
+                case TomlNodeKind.Value:
+                    AppendValue(
+                        sb,
+                        (TomlValue)node);
+                    return;
+
+                case TomlNodeKind.Array:
+                    AppendArray(
+                        sb,
+                        (TomlArray)node);
+                    return;
+
+                case TomlNodeKind.Table:
+                    AppendInlineTable(
+                        sb,
+                        (TomlTable)node);
+                    return;
+
+                default:
+                    throw new InvalidOperationException(
+                        "Unsupported TOML node kind: " +
+                        node.Kind);
+            }
+        }
+
+        private static void AppendArray(
+            StringBuilder sb,
+            TomlArray array)
+        {
+            sb.Append('[');
+
+            for (var i = 0;
+                 i < array.Count;
+                 i++)
+            {
+                if (i > 0)
+                    sb.Append(", ");
+
+                AppendNode(
+                    sb,
+                    array[i]);
+            }
+
+            sb.Append(']');
+        }
+
+        private static void AppendInlineTable(
+            StringBuilder sb,
+            TomlTable table)
+        {
+            sb.Append('{');
+
+            var first = true;
+
+            foreach (var pair in table)
+            {
+                if (!first)
+                    sb.Append(", ");
+
+                AppendKey(
+                    sb,
+                    pair.Key);
+
+                sb.Append(" = ");
+
+                AppendNode(
+                    sb,
+                    pair.Value);
+
+                first = false;
+            }
+
+            sb.Append('}');
         }
 
         private static void AppendValue(
@@ -314,6 +400,7 @@ namespace Mz.Toml.Internal
 
             sb.Append('"');
         }
+
         private static bool IsBareKey(
             string key)
         {

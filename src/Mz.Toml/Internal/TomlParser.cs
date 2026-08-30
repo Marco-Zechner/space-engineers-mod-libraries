@@ -495,6 +495,19 @@ namespace Mz.Toml.Internal
                     (TomlTable)existing;
 
                 if (existingTable.DefinitionKind ==
+                    TomlTableDefinitionKind.Inline)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TableConflict,
+                        "Inline table '" +
+                        part.Value +
+                        "' is immutable and cannot be extended through a dotted key.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
+
+                if (existingTable.DefinitionKind ==
                     TomlTableDefinitionKind.Explicit)
                 {
                     diagnostic = Error(
@@ -581,6 +594,19 @@ namespace Mz.Toml.Internal
 
                 var existingTable =
                     (TomlTable)existing;
+
+                if (existingTable.DefinitionKind ==
+                    TomlTableDefinitionKind.Inline)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.TableConflict,
+                        "Inline table '" +
+                        part.Value +
+                        "' is immutable and cannot be extended or redefined by a table header.",
+                        part.Line,
+                        part.Column);
+                    return false;
+                }
 
                 if (isLeaf)
                 {
@@ -699,20 +725,345 @@ namespace Mz.Toml.Internal
                 return true;
             }
 
-            if (Current == '[' ||
-                Current == '{')
+            if (Current == '[')
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.UnsupportedSyntax,
-                    "This TOML value form is not implemented yet.",
-                    _line,
-                    _column);
-                return false;
+                return ParseArray(
+                    out node,
+                    out diagnostic);
+            }
+
+            if (Current == '{')
+            {
+                return ParseInlineTable(
+                    out node,
+                    out diagnostic);
             }
 
             return ParseBareValue(
                 out node,
                 out diagnostic);
+        }
+
+        private bool ParseArray(
+            out TomlNode node,
+            out TomlDiagnostic diagnostic)
+        {
+            node = null;
+            diagnostic = null;
+
+            var line = _line;
+            var column = _column;
+
+            AdvanceCharacter();
+
+            var array =
+                new TomlArray(
+                    line,
+                    column);
+
+            if (!SkipArrayTrivia(
+                out diagnostic))
+            {
+                return false;
+            }
+
+            if (IsEnd)
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.InvalidValue,
+                    "Unterminated TOML array.",
+                    line,
+                    column);
+                return false;
+            }
+
+            if (Current == ']')
+            {
+                AdvanceCharacter();
+                node = array;
+                return true;
+            }
+
+            while (true)
+            {
+                TomlNode value;
+
+                if (!ParseValue(
+                    out value,
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                array.Add(value);
+
+                if (!SkipArrayTrivia(
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                if (IsEnd)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Unterminated TOML array.",
+                        line,
+                        column);
+                    return false;
+                }
+
+                if (Current == ']')
+                {
+                    AdvanceCharacter();
+                    node = array;
+                    return true;
+                }
+
+                if (Current != ',')
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Expected ',' or ']' after a TOML array element.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                AdvanceCharacter();
+
+                if (!SkipArrayTrivia(
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                if (IsEnd)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Unterminated TOML array.",
+                        line,
+                        column);
+                    return false;
+                }
+
+                if (Current == ']')
+                {
+                    AdvanceCharacter();
+                    node = array;
+                    return true;
+                }
+            }
+        }
+
+        private bool ParseInlineTable(
+            out TomlNode node,
+            out TomlDiagnostic diagnostic)
+        {
+            node = null;
+            diagnostic = null;
+
+            var line = _line;
+            var column = _column;
+
+            AdvanceCharacter();
+            SkipHorizontalWhitespace();
+
+            var table =
+                new TomlTable(
+                    line,
+                    column,
+                    TomlTableDefinitionKind.Inline);
+
+            if (IsEnd)
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.InvalidValue,
+                    "Unterminated TOML inline table.",
+                    line,
+                    column);
+                return false;
+            }
+
+            if (Current == '}')
+            {
+                AdvanceCharacter();
+                node = table;
+                return true;
+            }
+
+            if (IsNewlineStart(Current) ||
+                Current == '#')
+            {
+                diagnostic = Error(
+                    TomlDiagnosticCode.InvalidValue,
+                    "TOML 1.0 inline tables cannot contain line breaks or comments between entries.",
+                    _line,
+                    _column);
+                return false;
+            }
+
+            while (true)
+            {
+                List<TomlKeyPart> parts;
+
+                if (!ParseKeyPath(
+                    '=',
+                    false,
+                    out parts,
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                AdvanceCharacter();
+                SkipHorizontalWhitespace();
+
+                if (IsEnd ||
+                    Current == '}' ||
+                    Current == ',' ||
+                    Current == '#' ||
+                    IsNewlineStart(Current))
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.MissingValue,
+                        "Expected a value after '=' in the TOML inline table.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                TomlNode value;
+
+                if (!ParseValue(
+                    out value,
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                if (!AssignKeyPath(
+                    table,
+                    parts,
+                    value,
+                    out diagnostic))
+                {
+                    return false;
+                }
+
+                SkipHorizontalWhitespace();
+
+                if (IsEnd)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Unterminated TOML inline table.",
+                        line,
+                        column);
+                    return false;
+                }
+
+                if (Current == '}')
+                {
+                    AdvanceCharacter();
+                    node = table;
+                    return true;
+                }
+
+                if (Current != ',')
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Expected ',' or '}' after a TOML inline-table entry.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                AdvanceCharacter();
+                SkipHorizontalWhitespace();
+
+                if (IsEnd)
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "Unterminated TOML inline table.",
+                        line,
+                        column);
+                    return false;
+                }
+
+                if (Current == '}')
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "TOML 1.0 inline tables do not permit a trailing comma.",
+                        _line,
+                        _column);
+                    return false;
+                }
+
+                if (IsNewlineStart(Current) ||
+                    Current == '#')
+                {
+                    diagnostic = Error(
+                        TomlDiagnosticCode.InvalidValue,
+                        "TOML 1.0 inline tables cannot contain line breaks or comments between entries.",
+                        _line,
+                        _column);
+                    return false;
+                }
+            }
+        }
+
+        private bool SkipArrayTrivia(
+            out TomlDiagnostic diagnostic)
+        {
+            diagnostic = null;
+
+            while (!IsEnd)
+            {
+                SkipHorizontalWhitespace();
+
+                if (IsEnd)
+                    return true;
+
+                if (Current == '#')
+                {
+                    if (!SkipComment(
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+
+                    if (IsEnd)
+                        return true;
+
+                    if (!ConsumeNewline(
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (IsNewlineStart(Current))
+                {
+                    if (!ConsumeNewline(
+                        out diagnostic))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                return true;
+            }
+
+            return true;
         }
 
         private bool ParseBasicStringText(
@@ -1273,7 +1624,10 @@ namespace Mz.Toml.Internal
             while (!IsEnd &&
                    !IsHorizontalWhitespace(Current) &&
                    !IsNewlineStart(Current) &&
-                   Current != '#')
+                   Current != '#' &&
+                   Current != ',' &&
+                   Current != ']' &&
+                   Current != '}')
             {
                 AdvanceCharacter();
             }
