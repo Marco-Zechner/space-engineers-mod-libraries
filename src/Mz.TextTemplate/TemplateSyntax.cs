@@ -19,7 +19,37 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Name identifying a template tag.
         /// </summary>
-        TagName = 2
+        TagName = 2,
+
+        /// <summary>
+        /// Name identifying a named argument.
+        /// </summary>
+        ArgumentName = 3,
+
+        /// <summary>
+        /// Equals sign joining a named argument to its value.
+        /// </summary>
+        AssignmentOperator = 4,
+
+        /// <summary>
+        /// Unquoted value with no more specific lexical classification.
+        /// </summary>
+        BareValue = 5,
+
+        /// <summary>
+        /// Numeric-looking unquoted argument value.
+        /// </summary>
+        NumberValue = 6,
+
+        /// <summary>
+        /// Boolean argument literal.
+        /// </summary>
+        BooleanValue = 7,
+
+        /// <summary>
+        /// Double-quoted string argument value.
+        /// </summary>
+        StringValue = 8
     }
 
     /// <summary>

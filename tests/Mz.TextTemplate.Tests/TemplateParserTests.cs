@@ -252,11 +252,46 @@ namespace Mz.TextTemplate.Tests
             Assert.Equal(string.Empty, tag.Name);
         }
 
+        [Fact]
+        public void Parse_WhitespaceAfterTagName_StartsPositionalArgument()
+        {
+            var result =
+                TemplateParser.Parse(
+                    "{{rank server}}"
+                );
+
+            Assert.False(result.HasErrors);
+
+            var tag =
+                Assert.IsType<TemplateTagNode>(
+                    Assert.Single(result.Document.Nodes)
+                );
+
+            Assert.Equal("rank", tag.Name);
+
+            var argument =
+                Assert.IsType<TemplatePositionalArgument>(
+                    Assert.Single(tag.Arguments)
+                );
+
+            Assert.Equal(
+                TemplateArgumentValueKind.Bare,
+                argument.Value.Kind
+            );
+            Assert.Equal(
+                "server",
+                argument.Value.Text
+            );
+            Assert.Equal(
+                new SourceSpan(7, 6),
+                argument.Value.Span
+            );
+        }
         [Theory]
         [InlineData("1name", 2)]
         [InlineData("rank..server", 7)]
         [InlineData("rank.", 6)]
-        [InlineData("rank server", 6)]
+
         [InlineData("rank/server", 6)]
         public void Parse_InvalidTagName_ReportsOffendingCharacter(
             string name,
@@ -358,6 +393,42 @@ namespace Mz.TextTemplate.Tests
             );
         }
 
+        [Fact]
+        public void Parse_MultilineLiteral_PreservesAllNewlinesExactly()
+        {
+            const string source =
+                "\nalpha\n\nomega\n";
+
+            var result =
+                TemplateParser.Parse(source);
+
+            Assert.False(result.HasErrors);
+            Assert.Equal(source, result.Source);
+            Assert.Empty(result.Diagnostics);
+
+            var textNode =
+                Assert.IsType<TemplateTextNode>(
+                    Assert.Single(result.Document.Nodes)
+                );
+
+            Assert.Equal(source, textNode.Text);
+            Assert.Equal(
+                new SourceSpan(0, source.Length),
+                textNode.Span
+            );
+
+            var syntax =
+                Assert.Single(result.SyntaxSpans);
+
+            Assert.Equal(
+                TemplateSyntaxKind.LiteralText,
+                syntax.Kind
+            );
+            Assert.Equal(
+                new SourceSpan(0, source.Length),
+                syntax.Span
+            );
+        }
         [Fact]
         public void Parse_Null_ThrowsArgumentNullException()
         {

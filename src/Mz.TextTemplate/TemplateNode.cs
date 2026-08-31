@@ -73,25 +73,57 @@ namespace Mz.TextTemplate
     }
 
     /// <summary>
-    /// Represents a template tag such as "{{name}}".
+    /// Represents a template tag such as "{{name}}" or "{{tab 4}}".
     /// </summary>
     public sealed class TemplateTagNode : TemplateNode
     {
+        private readonly TemplateArgument[] _arguments;
+
         /// <summary>
-        /// Creates a template tag node.
+        /// Creates a template tag node without arguments.
         /// </summary>
         public TemplateTagNode(
             string name,
             SourceSpan span,
             SourceSpan nameSpan
         )
+            : this(
+                name,
+                span,
+                nameSpan,
+                new TemplateArgument[0]
+            )
+        {
+        }
+
+        /// <summary>
+        /// Creates a template tag node with parsed arguments.
+        /// </summary>
+        public TemplateTagNode(
+            string name,
+            SourceSpan span,
+            SourceSpan nameSpan,
+            TemplateArgument[] arguments
+        )
             : base(TemplateNodeKind.Tag, span)
         {
             if (name == null)
                 throw new ArgumentNullException("name");
 
+            if (arguments == null)
+                throw new ArgumentNullException("arguments");
+
             Name = name;
             NameSpan = nameSpan;
+
+            _arguments =
+                new TemplateArgument[arguments.Length];
+
+            Array.Copy(
+                arguments,
+                _arguments,
+                arguments.Length
+            );
         }
 
         /// <summary>
@@ -103,5 +135,25 @@ namespace Mz.TextTemplate
         /// Gets the exact source span occupied by the tag name.
         /// </summary>
         public SourceSpan NameSpan { get; private set; }
+
+        /// <summary>
+        /// Gets a defensive copy of parsed arguments in source order.
+        /// </summary>
+        public TemplateArgument[] Arguments
+        {
+            get
+            {
+                var copy =
+                    new TemplateArgument[_arguments.Length];
+
+                Array.Copy(
+                    _arguments,
+                    copy,
+                    _arguments.Length
+                );
+
+                return copy;
+            }
+        }
     }
 }
