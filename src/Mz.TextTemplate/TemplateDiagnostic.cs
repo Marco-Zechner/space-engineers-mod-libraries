@@ -40,10 +40,10 @@ namespace Mz.TextTemplate
         )
         {
             if (code == null)
-                throw new ArgumentNullException("code");
+                throw new ArgumentNullException(nameof(code));
 
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
 
             Code = code;
             Severity = severity;

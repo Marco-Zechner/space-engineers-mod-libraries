@@ -40,13 +40,13 @@ namespace Mz.TextTemplate
         )
         {
             if (rootNodes == null)
-                throw new ArgumentNullException("rootNodes");
+                throw new ArgumentNullException(nameof(rootNodes));
 
             if (diagnostics == null)
-                throw new ArgumentNullException("diagnostics");
+                throw new ArgumentNullException(nameof(diagnostics));
 
             if (syntaxSpans == null)
-                throw new ArgumentNullException("syntaxSpans");
+                throw new ArgumentNullException(nameof(syntaxSpans));
 
             _rootNodes = rootNodes;
             _diagnostics = diagnostics;

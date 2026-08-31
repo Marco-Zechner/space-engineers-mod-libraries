@@ -20,16 +20,16 @@ namespace Mz.TextTemplate
         )
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
 
             if (document == null)
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(document));
 
             if (diagnostics == null)
-                throw new ArgumentNullException("diagnostics");
+                throw new ArgumentNullException(nameof(diagnostics));
 
             if (syntaxSpans == null)
-                throw new ArgumentNullException("syntaxSpans");
+                throw new ArgumentNullException(nameof(syntaxSpans));
 
             Source = source;
             Document = document;

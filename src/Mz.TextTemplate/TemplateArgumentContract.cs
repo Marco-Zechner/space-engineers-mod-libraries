@@ -83,22 +83,16 @@ namespace Mz.TextTemplate
         )
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             if (name.Length == 0)
             {
-                throw new ArgumentException(
-                    "Template named argument definition name cannot be empty.",
-                    "name"
-                );
+                throw new ArgumentException("Template named argument definition name cannot be empty.", nameof(name));
             }
 
             if (TemplateNameRules.FindInvalidArgumentNameOffset(name) >= 0)
             {
-                throw new ArgumentException(
-                    "Template named argument definition name is not syntactically valid.",
-                    "name"
-                );
+                throw new ArgumentException("Template named argument definition name is not syntactically valid.", nameof(name));
             }
 
             _allowedValueKinds =
@@ -189,10 +183,10 @@ namespace Mz.TextTemplate
         )
         {
             if (positionalArguments == null)
-                throw new ArgumentNullException("positionalArguments");
+                throw new ArgumentNullException(nameof(positionalArguments));
 
             if (namedArguments == null)
-                throw new ArgumentNullException("namedArguments");
+                throw new ArgumentNullException(nameof(namedArguments));
 
             _positionalArguments =
                 new TemplatePositionalArgumentDefinition[
@@ -212,10 +206,7 @@ namespace Mz.TextTemplate
 
                 if (definition == null)
                 {
-                    throw new ArgumentException(
-                        "Positional argument definitions cannot contain null entries.",
-                        "positionalArguments"
-                    );
+                    throw new ArgumentException("Positional argument definitions cannot contain null entries.", nameof(positionalArguments));
                 }
 
                 if (!definition.Required)
@@ -224,10 +215,7 @@ namespace Mz.TextTemplate
                 }
                 else if (optionalPositionalSeen)
                 {
-                    throw new ArgumentException(
-                        "Required positional arguments cannot follow optional positional arguments.",
-                        "positionalArguments"
-                    );
+                    throw new ArgumentException("Required positional arguments cannot follow optional positional arguments.", nameof(positionalArguments));
                 }
 
                 _positionalArguments[index] =
@@ -255,10 +243,7 @@ namespace Mz.TextTemplate
 
                 if (definition == null)
                 {
-                    throw new ArgumentException(
-                        "Named argument definitions cannot contain null entries.",
-                        "namedArguments"
-                    );
+                    throw new ArgumentException("Named argument definitions cannot contain null entries.", nameof(namedArguments));
                 }
 
                 if (
@@ -366,7 +351,7 @@ namespace Mz.TextTemplate
 
     internal static class TemplateArgumentValueKindRules
     {
-        public static TemplateArgumentValueKind[] CopyAndValidate(
+        internal static TemplateArgumentValueKind[] CopyAndValidate(
             TemplateArgumentValueKind[] kinds,
             string parameterName
         )
@@ -430,7 +415,7 @@ namespace Mz.TextTemplate
             return copy;
         }
 
-        public static bool Contains(
+        internal static bool Contains(
             TemplateArgumentValueKind[] kinds,
             TemplateArgumentValueKind kind
         )

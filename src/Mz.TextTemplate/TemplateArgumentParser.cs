@@ -4,7 +4,7 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateArgumentParser
     {
-        public static void Parse(
+        internal static void Parse(
             string source,
             ref int position,
             int close,

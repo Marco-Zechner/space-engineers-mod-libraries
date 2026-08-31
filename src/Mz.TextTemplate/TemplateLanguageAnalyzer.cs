@@ -70,10 +70,10 @@ namespace Mz.TextTemplate
         )
         {
             if (parseResult == null)
-                throw new ArgumentNullException("parseResult");
+                throw new ArgumentNullException(nameof(parseResult));
 
             if (language == null)
-                throw new ArgumentNullException("language");
+                throw new ArgumentNullException(nameof(language));
 
             TemplateDiagnostic[] parserDiagnostics =
                 parseResult.Diagnostics;

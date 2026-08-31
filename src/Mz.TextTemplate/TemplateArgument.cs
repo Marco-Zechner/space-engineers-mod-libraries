@@ -66,10 +66,10 @@ namespace Mz.TextTemplate
         )
         {
             if (rawText == null)
-                throw new ArgumentNullException("rawText");
+                throw new ArgumentNullException(nameof(rawText));
 
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
 
             Kind = kind;
             RawText = rawText;
@@ -121,7 +121,7 @@ namespace Mz.TextTemplate
         )
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             Kind = kind;
             Span = span;
@@ -184,7 +184,7 @@ namespace Mz.TextTemplate
             )
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             Name = name;
             NameSpan = nameSpan;

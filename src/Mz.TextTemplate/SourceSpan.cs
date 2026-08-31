@@ -14,22 +14,13 @@ namespace Mz.TextTemplate
         public SourceSpan(int start, int length)
         {
             if (start < 0)
-                throw new ArgumentException(
-                    "Source span start cannot be negative.",
-                    "start"
-                );
+                throw new ArgumentException("Source span start cannot be negative.", nameof(start));
 
             if (length < 0)
-                throw new ArgumentException(
-                    "Source span length cannot be negative.",
-                    "length"
-                );
+                throw new ArgumentException("Source span length cannot be negative.", nameof(length));
 
             if (length > int.MaxValue - start)
-                throw new ArgumentException(
-                    "Source span end cannot exceed Int32.MaxValue.",
-                    "length"
-                );
+                throw new ArgumentException("Source span end cannot exceed Int32.MaxValue.", nameof(length));
 
             Start = start;
             Length = length;

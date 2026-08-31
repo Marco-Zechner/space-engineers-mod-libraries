@@ -19,13 +19,13 @@ namespace Mz.TextTemplate
         )
         {
             if (parseResult == null)
-                throw new ArgumentNullException("parseResult");
+                throw new ArgumentNullException(nameof(parseResult));
 
             if (diagnostics == null)
-                throw new ArgumentNullException("diagnostics");
+                throw new ArgumentNullException(nameof(diagnostics));
 
             if (syntaxSpans == null)
-                throw new ArgumentNullException("syntaxSpans");
+                throw new ArgumentNullException(nameof(syntaxSpans));
 
             ParseResult = parseResult;
 

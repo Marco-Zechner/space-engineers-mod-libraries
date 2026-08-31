@@ -66,7 +66,7 @@ namespace Mz.TextTemplate
             : base(TemplateNodeKind.Text, span)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
 
             Text = text;
         }
@@ -113,10 +113,10 @@ namespace Mz.TextTemplate
             : base(TemplateNodeKind.Tag, span)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             if (arguments == null)
-                throw new ArgumentNullException("arguments");
+                throw new ArgumentNullException(nameof(arguments));
 
             Name = name;
             NameSpan = nameSpan;
@@ -188,13 +188,13 @@ namespace Mz.TextTemplate
             : base(TemplateNodeKind.Block, span)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             if (arguments == null)
-                throw new ArgumentNullException("arguments");
+                throw new ArgumentNullException(nameof(arguments));
 
             if (children == null)
-                throw new ArgumentNullException("children");
+                throw new ArgumentNullException(nameof(children));
 
             Name = name;
             OpenTagSpan = openTagSpan;

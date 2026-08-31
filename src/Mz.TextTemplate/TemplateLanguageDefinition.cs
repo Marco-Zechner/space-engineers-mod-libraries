@@ -49,33 +49,24 @@ namespace Mz.TextTemplate
         )
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             if (name.Length == 0)
-                throw new ArgumentException(
-                    "Template tag definition name cannot be empty.",
-                    "name"
-                );
+                throw new ArgumentException("Template tag definition name cannot be empty.", nameof(name));
 
             if (TemplateNameRules.FindInvalidConstructNameOffset(name) >= 0)
-                throw new ArgumentException(
-                    "Template tag definition name is not syntactically valid.",
-                    "name"
-                );
+                throw new ArgumentException("Template tag definition name is not syntactically valid.", nameof(name));
 
             if (
                 role != TemplateTagRole.Value
                 && role != TemplateTagRole.Command
             )
             {
-                throw new ArgumentException(
-                    "Unsupported template tag role.",
-                    "role"
-                );
+                throw new ArgumentException("Unsupported template tag role.", nameof(role));
             }
 
             if (argumentContract == null)
-                throw new ArgumentNullException("argumentContract");
+                throw new ArgumentNullException(nameof(argumentContract));
 
             Name = name;
             Role = role;
@@ -125,22 +116,16 @@ namespace Mz.TextTemplate
         )
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             if (name.Length == 0)
-                throw new ArgumentException(
-                    "Template block definition name cannot be empty.",
-                    "name"
-                );
+                throw new ArgumentException("Template block definition name cannot be empty.", nameof(name));
 
             if (TemplateNameRules.FindInvalidConstructNameOffset(name) >= 0)
-                throw new ArgumentException(
-                    "Template block definition name is not syntactically valid.",
-                    "name"
-                );
+                throw new ArgumentException("Template block definition name is not syntactically valid.", nameof(name));
 
             if (argumentContract == null)
-                throw new ArgumentNullException("argumentContract");
+                throw new ArgumentNullException(nameof(argumentContract));
 
             Name = name;
             ArgumentContract = argumentContract;
@@ -178,10 +163,10 @@ namespace Mz.TextTemplate
         )
         {
             if (tags == null)
-                throw new ArgumentNullException("tags");
+                throw new ArgumentNullException(nameof(tags));
 
             if (blocks == null)
-                throw new ArgumentNullException("blocks");
+                throw new ArgumentNullException(nameof(blocks));
 
             _tags =
                 new TemplateTagDefinition[tags.Length];
@@ -202,10 +187,7 @@ namespace Mz.TextTemplate
 
                 if (definition == null)
                 {
-                    throw new ArgumentException(
-                        "Template tag definitions cannot contain null entries.",
-                        "tags"
-                    );
+                    throw new ArgumentException("Template tag definitions cannot contain null entries.", nameof(tags));
                 }
 
                 if (
@@ -247,10 +229,7 @@ namespace Mz.TextTemplate
 
                 if (definition == null)
                 {
-                    throw new ArgumentException(
-                        "Template block definitions cannot contain null entries.",
-                        "blocks"
-                    );
+                    throw new ArgumentException("Template block definitions cannot contain null entries.", nameof(blocks));
                 }
 
                 if (

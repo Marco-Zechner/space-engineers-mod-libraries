@@ -87,7 +87,7 @@ namespace Mz.TextTemplate
         public static TemplateParseResult Parse(string source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
 
             var rootNodes =
                 new List<TemplateNode>();

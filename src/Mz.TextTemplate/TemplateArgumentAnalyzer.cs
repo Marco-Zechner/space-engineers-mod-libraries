@@ -5,7 +5,7 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateArgumentAnalyzer
     {
-        public static void Analyze(
+        internal static void Analyze(
             TemplateArgument[] arguments,
             SourceSpan constructNameSpan,
             TemplateArgumentContract contract,

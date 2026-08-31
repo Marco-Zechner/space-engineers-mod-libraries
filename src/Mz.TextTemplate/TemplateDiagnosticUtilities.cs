@@ -4,7 +4,7 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateDiagnosticUtilities
     {
-        public static bool HasCodeWithinSpan(
+        internal static bool HasCodeWithinSpan(
             TemplateDiagnostic[] diagnostics,
             string code,
             SourceSpan span
@@ -25,7 +25,7 @@ namespace Mz.TextTemplate
             return false;
         }
 
-        public static void SortBySource(IList<TemplateDiagnostic> diagnostics)
+        internal static void SortBySource(IList<TemplateDiagnostic> diagnostics)
         {
             for (int index = 1; index < diagnostics.Count; index++)
             {

@@ -13,7 +13,7 @@ namespace Mz.TextTemplate
         internal TemplateDocument(IList<TemplateNode> nodes)
         {
             if (nodes == null)
-                throw new ArgumentNullException("nodes");
+                throw new ArgumentNullException(nameof(nodes));
 
             _nodes = new TemplateNode[nodes.Count];
 

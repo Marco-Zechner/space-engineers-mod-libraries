@@ -2,7 +2,7 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateNameRules
     {
-        public static int FindInvalidConstructNameOffset(string name)
+        internal static int FindInvalidConstructNameOffset(string name)
         {
             int index = 0;
 
@@ -31,7 +31,7 @@ namespace Mz.TextTemplate
             return -1;
         }
 
-        public static int FindInvalidArgumentNameOffset(string name)
+        internal static int FindInvalidArgumentNameOffset(string name)
         {
             if (name.Length == 0 || !IsIdentifierStart(name[0]))
                 return 0;
