@@ -251,7 +251,7 @@ public sealed class TomlStringParsingTests
         var document = new TomlDocument();
 
         document.Root.Set("bad", TomlValue.FromString(new string(['\uD800' ])));
-        
+
         Assert.Throws<InvalidOperationException>(() => Toml.Write(document));
     }
 
@@ -260,7 +260,7 @@ public sealed class TomlStringParsingTests
     {
         var document = new TomlDocument();
         var value = char.ConvertFromUtf32(0x10AF1);
-        
+
         document.Root.Set("value", TomlValue.FromString(value));
         var reparsed = Toml.Parse(Toml.Write(document));
 

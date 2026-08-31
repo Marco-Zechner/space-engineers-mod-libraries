@@ -16,15 +16,8 @@ namespace Mz.Toml
         /// <summary>
         /// Initializes a TOML offset date-time with a known UTC offset.
         /// </summary>
-        public TomlOffsetDateTime(
-            TomlLocalDate date,
-            TomlLocalTime time,
-            int offsetMinutes)
-            : this(
-                date,
-                time,
-                offsetMinutes,
-                false)
+        public TomlOffsetDateTime(TomlLocalDate date, TomlLocalTime time, int offsetMinutes)
+            : this(date, time, offsetMinutes, false)
         {
         }
 
@@ -33,27 +26,21 @@ namespace Mz.Toml
         /// Set <paramref name="isUnknownLocalOffset"/> only for the RFC 3339
         /// negative-zero offset spelling -00:00.
         /// </summary>
-        public TomlOffsetDateTime(
-            TomlLocalDate date,
-            TomlLocalTime time,
-            int offsetMinutes,
-            bool isUnknownLocalOffset)
+        public TomlOffsetDateTime(TomlLocalDate date, TomlLocalTime time, int offsetMinutes, bool isUnknownLocalOffset)
         {
             if (date == null)
-                throw new ArgumentNullException("date");
+                throw new ArgumentNullException(nameof(date));
 
             if (time == null)
-                throw new ArgumentNullException("time");
+                throw new ArgumentNullException(nameof(time));
 
-            if (offsetMinutes < -1439 ||
-                offsetMinutes > 1439)
+            if (offsetMinutes < -1439 || offsetMinutes > 1439)
             {
                 throw new ArgumentException(
                     "TOML numeric UTC offsets must be between -23:59 and +23:59.");
             }
 
-            if (isUnknownLocalOffset &&
-                offsetMinutes != 0)
+            if (isUnknownLocalOffset && offsetMinutes != 0)
             {
                 throw new ArgumentException(
                     "The RFC 3339 unknown-local-offset marker is only valid with offset 00:00.");
@@ -62,8 +49,7 @@ namespace Mz.Toml
             _date = date;
             _time = time;
             _offsetMinutes = offsetMinutes;
-            _isUnknownLocalOffset =
-                isUnknownLocalOffset;
+            _isUnknownLocalOffset = isUnknownLocalOffset;
         }
 
         /// <summary>
@@ -80,15 +66,8 @@ namespace Mz.Toml
             string fractionalSeconds,
             int offsetMinutes)
             : this(
-                new TomlLocalDate(
-                    year,
-                    month,
-                    day),
-                new TomlLocalTime(
-                    hour,
-                    minute,
-                    second,
-                    fractionalSeconds),
+                new TomlLocalDate(year, month, day),
+                new TomlLocalTime(hour, minute, second, fractionalSeconds),
                 offsetMinutes,
                 false)
         {
@@ -109,15 +88,8 @@ namespace Mz.Toml
             int offsetMinutes,
             bool isUnknownLocalOffset)
             : this(
-                new TomlLocalDate(
-                    year,
-                    month,
-                    day),
-                new TomlLocalTime(
-                    hour,
-                    minute,
-                    second,
-                    fractionalSeconds),
+                new TomlLocalDate(year, month, day),
+                new TomlLocalTime(hour, minute, second, fractionalSeconds),
                 offsetMinutes,
                 isUnknownLocalOffset)
         {
@@ -126,35 +98,23 @@ namespace Mz.Toml
         /// <summary>
         /// Gets the local date component before applying the offset.
         /// </summary>
-        public TomlLocalDate Date
-        {
-            get { return _date; }
-        }
+        public TomlLocalDate Date => _date;
 
         /// <summary>
         /// Gets the local time component before applying the offset.
         /// </summary>
-        public TomlLocalTime Time
-        {
-            get { return _time; }
-        }
+        public TomlLocalTime Time => _time;
 
         /// <summary>
         /// Gets the signed UTC offset in minutes.
         /// </summary>
-        public int OffsetMinutes
-        {
-            get { return _offsetMinutes; }
-        }
+        public int OffsetMinutes => _offsetMinutes;
 
         /// <summary>
         /// Gets whether the value used RFC 3339's -00:00 marker indicating
         /// that the local UTC offset is unknown.
         /// </summary>
-        public bool IsUnknownLocalOffset
-        {
-            get { return _isUnknownLocalOffset; }
-        }
+        public bool IsUnknownLocalOffset => _isUnknownLocalOffset;
 
         /// <summary>
         /// Returns a deterministic TOML offset-date-time spelling.
@@ -163,10 +123,7 @@ namespace Mz.Toml
         /// </summary>
         public override string ToString()
         {
-            var text =
-                _date.ToString() +
-                "T" +
-                _time.ToString();
+            var text = _date.ToString() + "T" + _time.ToString();
 
             if (_isUnknownLocalOffset)
                 return text + "-00:00";
@@ -174,29 +131,13 @@ namespace Mz.Toml
             if (_offsetMinutes == 0)
                 return text + "Z";
 
-            var absolute =
-                _offsetMinutes < 0
-                    ? -_offsetMinutes
-                    : _offsetMinutes;
+            var absolute = _offsetMinutes < 0 ? -_offsetMinutes : _offsetMinutes;
+            var offsetHour = absolute / 60;
+            var offsetMinute = absolute % 60;
 
-            var offsetHour =
-                absolute / 60;
-
-            var offsetMinute =
-                absolute % 60;
-
-            return
-                text +
-                (_offsetMinutes < 0
-                    ? "-"
-                    : "+") +
-                offsetHour.ToString(
-                    "D2",
-                    CultureInfo.InvariantCulture) +
-                ":" +
-                offsetMinute.ToString(
-                    "D2",
-                    CultureInfo.InvariantCulture);
+            return text + (_offsetMinutes < 0 ? "-" : "+") +
+                   offsetHour.ToString("D2", CultureInfo.InvariantCulture) + ":" +
+                   offsetMinute.ToString("D2", CultureInfo.InvariantCulture);
         }
     }
 }

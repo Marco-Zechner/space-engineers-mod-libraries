@@ -31,7 +31,7 @@ public sealed class TomlTemporalTests
     public void Offset_DateTime_Accepts_Toml_10_Separators(string text)
     {
         var document = Toml.Parse($"value = {text}\n");
-            
+
         Assert.Equal("value = 1987-07-05T17:45:00Z\n", Toml.Write(document));
     }
 
@@ -97,7 +97,7 @@ public sealed class TomlTemporalTests
     [Theory]
     [InlineData("0001-01-01")]
     [InlineData("9999-12-31")]
-    public void Local_Date_Supports_Toml_Year_Bounds(string text) 
+    public void Local_Date_Supports_Toml_Year_Bounds(string text)
         => Assert.True(Toml.TryParse($"a = {text}\n").IsSuccess);
 
     [Theory]
@@ -107,7 +107,7 @@ public sealed class TomlTemporalTests
     [InlineData("2000-01-00")]
     [InlineData("2000-01-32")]
     [InlineData("2001-02-29")]
-    public void Invalid_Local_Dates_Are_Rejected(string text) 
+    public void Invalid_Local_Dates_Are_Rejected(string text)
         => Assert.False(Toml.TryParse($"a = {text}\n").IsSuccess);
 
     [Theory]
@@ -118,7 +118,7 @@ public sealed class TomlTemporalTests
     [InlineData("01:0:00")]
     [InlineData("01:00:0")]
     [InlineData("01:00:00.")]
-    public void Invalid_Local_Times_Are_Rejected(string text) 
+    public void Invalid_Local_Times_Are_Rejected(string text)
         => Assert.False(Toml.TryParse($"a = {text}\n").IsSuccess);
 
     [Fact]
@@ -134,7 +134,7 @@ public sealed class TomlTemporalTests
     [Theory]
     [InlineData("+23:59", 1439)]
     [InlineData("-23:59", -1439)]
-    public void Supports_Full_Toml_Numeric_Offset_Field_Range(string offset, int expectedMinutes) 
+    public void Supports_Full_Toml_Numeric_Offset_Field_Range(string offset, int expectedMinutes)
     {
         var document = Toml.Parse($"a = 2000-01-01T00:00:00{offset}\n");
         var value = document.Root.AsValue("a");
@@ -148,7 +148,7 @@ public sealed class TomlTemporalTests
     [InlineData("+01")]
     [InlineData("+0100")]
     [InlineData("+01:0")]
-    public void Invalid_Offsets_Are_Rejected(string offset) 
+    public void Invalid_Offsets_Are_Rejected(string offset)
         => Assert.False(Toml.TryParse($"a = 2000-01-01T00:00:00{offset}\n").IsSuccess);
 
     [Theory]
@@ -156,7 +156,7 @@ public sealed class TomlTemporalTests
     [InlineData("1979-05-27T07:32")]
     [InlineData("1979-05-27 07:32Z")]
     [InlineData("1979-05-27 07:32-07:00")]
-    public void Toml_11_Optional_Seconds_Remain_Rejected(string text) 
+    public void Toml_11_Optional_Seconds_Remain_Rejected(string text)
         => Assert.False(Toml.TryParse($"a = {text}\n").IsSuccess);
 
     [Fact]
@@ -240,5 +240,5 @@ public sealed class TomlTemporalTests
         document.Root.Set("value", TomlValue.FromOffsetDateTime(dateTime));
 
         Assert.Equal("value = 2000-01-01T00:00:00-00:00\n", Toml.Write(document));
-    }    
+    }
 }

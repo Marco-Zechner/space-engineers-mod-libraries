@@ -68,7 +68,7 @@ public sealed class TomlNumericParsingTests
     [InlineData("value = +01\n")]
     [InlineData("value = 0_0\n")]
     [InlineData("value = +0_1\n")]
-    public void Decimal_Integer_Leading_Zeroes_Are_Rejected(string text) 
+    public void Decimal_Integer_Leading_Zeroes_Are_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Theory]
@@ -78,7 +78,7 @@ public sealed class TomlNumericParsingTests
     [InlineData("value = -0o755\n")]
     [InlineData("value = +0b1\n")]
     [InlineData("value = -0b1\n")]
-    public void Base_Integers_Cannot_Have_A_Sign(string text) 
+    public void Base_Integers_Cannot_Have_A_Sign(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Theory]
@@ -90,14 +90,14 @@ public sealed class TomlNumericParsingTests
     [InlineData("value = 0x1__2\n")]
     [InlineData("value = 0o778\n")]
     [InlineData("value = 0b0012\n")]
-    public void Invalid_Base_Integer_Syntax_Is_Rejected(string text) 
+    public void Invalid_Base_Integer_Syntax_Is_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Theory]
     [InlineData("value = 9223372036854775808\n")]
     [InlineData("value = -9223372036854775809\n")]
     [InlineData("value = 0x8000000000000000\n")]
-    public void Integer_Overflow_Is_Rejected(string text) 
+    public void Integer_Overflow_Is_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class TomlNumericParsingTests
     [InlineData("value = 1e__2\n")]
     [InlineData("value = 03.14\n")]
     [InlineData("value = -03.14\n")]
-    public void Invalid_Float_Syntax_Is_Rejected(string text) 
+    public void Invalid_Float_Syntax_Is_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
@@ -175,7 +175,7 @@ public sealed class TomlNumericParsingTests
     [InlineData("value = na_n\n")]
     [InlineData("value = in\n")]
     [InlineData("value = na\n")]
-    public void Invalid_Special_Floats_Are_Rejected(string text) 
+    public void Invalid_Special_Floats_Are_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]

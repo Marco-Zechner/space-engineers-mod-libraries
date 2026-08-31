@@ -89,7 +89,7 @@ public sealed class TomlTableDiagnosticTests
     [InlineData(".key = 1\n")]
     [InlineData("a..b = 1\n")]
     [InlineData("a. = 1\n")]
-    public void Malformed_Dotted_Key_Is_Rejected(string text) 
+    public void Malformed_Dotted_Key_Is_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Theory]
@@ -98,7 +98,7 @@ public sealed class TomlTableDiagnosticTests
     [InlineData("[a.]\n")]
     [InlineData("[a..b]\n")]
     [InlineData("[]\n")]
-    public void Malformed_Table_Path_Is_Rejected(string text) 
+    public void Malformed_Table_Path_Is_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
@@ -107,6 +107,6 @@ public sealed class TomlTableDiagnosticTests
         var result = Toml.TryParse("[error] this should fail\n");
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(TomlDiagnosticCode.TrailingCharacters, Assert.Single(result.Diagnostics).Code); 
+        Assert.Equal(TomlDiagnosticCode.TrailingCharacters, Assert.Single(result.Diagnostics).Code);
     }
 }

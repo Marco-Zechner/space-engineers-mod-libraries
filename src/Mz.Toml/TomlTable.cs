@@ -8,9 +8,7 @@ namespace Mz.Toml
     /// <summary>
     /// Represents an ordered TOML table.
     /// </summary>
-    public sealed class TomlTable :
-        TomlNode,
-        IEnumerable<KeyValuePair<string, TomlNode>>
+    public sealed class TomlTable : TomlNode, IEnumerable<KeyValuePair<string, TomlNode>>
     {
         private readonly List<string> _keys;
         private readonly IReadOnlyList<string> _readOnlyKeys;
@@ -21,17 +19,11 @@ namespace Mz.Toml
         /// Initializes an empty programmatic TOML table.
         /// </summary>
         public TomlTable()
-            : this(
-                0,
-                0,
-                TomlTableDefinitionKind.Programmatic)
+            : this(0, 0, TomlTableDefinitionKind.Programmatic)
         {
         }
 
-        internal TomlTable(
-            int line,
-            int column,
-            TomlTableDefinitionKind definitionKind)
+        internal TomlTable(int line, int column, TomlTableDefinitionKind definitionKind)
             : base(TomlNodeKind.Table, line, column)
         {
             _keys = new List<string>();
@@ -49,26 +41,17 @@ namespace Mz.Toml
         /// <summary>
         /// Gets the number of entries in the table.
         /// </summary>
-        public int Count
-        {
-            get { return _keys.Count; }
-        }
+        public int Count => _keys.Count;
 
         /// <summary>
         /// Gets the keys in deterministic insertion order.
         /// </summary>
-        public IReadOnlyList<string> Keys
-        {
-            get { return _readOnlyKeys; }
-        }
+        public IReadOnlyList<string> Keys => _readOnlyKeys;
 
         /// <summary>
         /// Gets the node associated with a key.
         /// </summary>
-        public TomlNode this[string key]
-        {
-            get { return _values[key]; }
-        }
+        public TomlNode this[string key] => _values[key];
 
         /// <summary>
         /// Determines whether the table contains the specified key.
@@ -76,7 +59,7 @@ namespace Mz.Toml
         public bool ContainsKey(string key)
         {
             if (key == null)
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
 
             return _values.ContainsKey(key);
         }
@@ -87,7 +70,7 @@ namespace Mz.Toml
         public bool TryGetValue(string key, out TomlNode value)
         {
             if (key == null)
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
 
             return _values.TryGetValue(key, out value);
         }
@@ -99,10 +82,10 @@ namespace Mz.Toml
         public void Set(string key, TomlNode value)
         {
             if (key == null)
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
 
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             if (!_values.ContainsKey(key))
                 _keys.Add(key);
@@ -118,16 +101,10 @@ namespace Mz.Toml
             for (var i = 0; i < _keys.Count; i++)
             {
                 var key = _keys[i];
-
-                yield return new KeyValuePair<string, TomlNode>(
-                    key,
-                    _values[key]);
+                yield return new KeyValuePair<string, TomlNode>(key, _values[key]);
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

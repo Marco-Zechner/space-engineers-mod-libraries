@@ -4,7 +4,7 @@ using Xunit;
 namespace Mz.Toml.Tests;
 
 public sealed class TomlKeyAndTableTests
-{     
+{
     [Fact]
     public void Parses_Dotted_And_Mixed_Quoted_Keys()
     {

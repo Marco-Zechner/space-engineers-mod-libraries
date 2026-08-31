@@ -21,7 +21,7 @@ public sealed class TomlArrayOfTablesTests
 
         var first = people.AsTable(0);
         var second = people.AsTable(1);
-            
+
         Assert.Equal("one", first.AsValue("name").AsString());
         Assert.Equal("two", second.AsValue("name").AsString());
     }
@@ -38,7 +38,7 @@ public sealed class TomlArrayOfTablesTests
             value = 2
 
             """);
-            
+
         var arr = document.Root.AsArray("arr");
 
         Assert.Equal(2, arr.Count);
@@ -46,7 +46,7 @@ public sealed class TomlArrayOfTablesTests
         var first = arr.AsTable(0);
         var firstSub = first.AsTable("sub");
         Assert.Equal(1, firstSub.AsValue("value").AsInteger());
-            
+
         var second = arr.AsTable(1);
         var secondSub = second.AsTable("sub");
         Assert.Equal(2, secondSub.AsValue("value").AsInteger());
@@ -97,7 +97,7 @@ public sealed class TomlArrayOfTablesTests
     }
 
     [Fact]
-    public void Implicit_Parent_From_Nested_Aot_Cannot_Later_Become_Aot() 
+    public void Implicit_Parent_From_Nested_Aot_Cannot_Later_Become_Aot()
         => Assert.False(Toml.TryParse("""
             [[albums.songs]]
             name = "one"
@@ -107,7 +107,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Static_Array_Cannot_Become_Array_Of_Tables() 
+    public void Static_Array_Cannot_Become_Array_Of_Tables()
         => Assert.False(Toml.TryParse("""
             fruit = []
             [[fruit]]
@@ -115,7 +115,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Array_Of_Tables_Cannot_Become_Standard_Table() 
+    public void Array_Of_Tables_Cannot_Become_Standard_Table()
         => Assert.False(Toml.TryParse("""
             [[fruit]]
             [fruit]
@@ -123,7 +123,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Standard_Table_Cannot_Become_Array_Of_Tables() 
+    public void Standard_Table_Cannot_Become_Array_Of_Tables()
         => Assert.False(Toml.TryParse("""
             [fruit]
             [[fruit]]
@@ -131,7 +131,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Inline_Table_Cannot_Be_Extended_By_Array_Of_Tables() 
+    public void Inline_Table_Cannot_Be_Extended_By_Array_Of_Tables()
         => Assert.False(Toml.TryParse("""
             root = { child = {} }
             [[root.child]]
@@ -139,7 +139,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Dotted_Key_Table_Cannot_Be_Reopened_As_Array_Of_Tables() 
+    public void Dotted_Key_Table_Cannot_Be_Reopened_As_Array_Of_Tables()
         => Assert.False(Toml.TryParse("""
             [fruit]
             apple.color = "red"
@@ -148,7 +148,7 @@ public sealed class TomlArrayOfTablesTests
             """).IsSuccess);
 
     [Fact]
-    public void Array_Of_Tables_Cannot_Be_Extended_Through_Dotted_Key() 
+    public void Array_Of_Tables_Cannot_Be_Extended_Through_Dotted_Key()
         => Assert.False(Toml.TryParse("""
             [[a.b]]
             [a]
@@ -161,7 +161,7 @@ public sealed class TomlArrayOfTablesTests
     [InlineData("[[a] x\n")]
     [InlineData("[[a\n")]
     [InlineData("[[]]\n")]
-    public void Malformed_Array_Table_Headers_Are_Rejected(string text) 
+    public void Malformed_Array_Table_Headers_Are_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
@@ -234,7 +234,7 @@ public sealed class TomlArrayOfTablesTests
     {
         var document = new TomlDocument();
         var array = new TomlArray();
-            
+
         var first = new TomlTable();
         first.Set("x", TomlValue.FromInteger(1));
 

@@ -123,9 +123,10 @@ public sealed class TomlDiagnosticTests
         var document = Toml.Parse(
             "# comment\ttext\n" +
             "value = 1 # trailing\tcomment\n");
-            
+
         Assert.Equal(1L, document.Root.AsValue("value").AsInteger());
     }
+
     [Fact]
     public void Throwing_Parse_Exposes_Diagnostic()
     {

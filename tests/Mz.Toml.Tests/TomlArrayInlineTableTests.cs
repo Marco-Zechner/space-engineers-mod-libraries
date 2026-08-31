@@ -16,10 +16,10 @@ public sealed class TomlArrayInlineTableTests
         Assert.Equal(1.5, array.AsValue(1).AsFloat());
         Assert.Equal("two", array.AsValue(2).AsString());
         Assert.True(array.AsValue(3).AsBoolean());
-            
+
         var innerArray1 = array.AsArray(4);
         Assert.Equal(3L, innerArray1.AsValue(0).AsInteger());
-            
+
         var innerArray2 = array.AsTable(5);
         Assert.Equal(4L, innerArray2.AsValue("four").AsInteger());
     }
@@ -64,7 +64,7 @@ public sealed class TomlArrayInlineTableTests
     [InlineData("a = [true false]\n")]
     [InlineData("a = [1,\n")]
     [InlineData("a = [\n")]
-    public void Invalid_Array_Separators_And_Closures_Are_Rejected(string text) 
+    public void Invalid_Array_Separators_And_Closures_Are_Rejected(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
@@ -87,7 +87,7 @@ public sealed class TomlArrayInlineTableTests
 
         var a = value.AsTable("a");
         var b = a.AsTable("b");
-            
+
         Assert.Equal(1L, b.AsValue("c").AsInteger());
         Assert.Equal(2L, b.AsValue("d").AsInteger());
     }
@@ -147,19 +147,19 @@ public sealed class TomlArrayInlineTableTests
     [InlineData("a = {x = 1,\ny = 2}\n")]
     [InlineData("a = {x = 1\n}\n")]
     [InlineData("a = {\nx = 1}\n")]
-    public void Toml_10_Inline_Table_Layout_Rules_Are_Enforced(string text) 
+    public void Toml_10_Inline_Table_Layout_Rules_Are_Enforced(string text)
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Fact]
-    public void Duplicate_Inline_Table_Key_Is_Rejected() 
+    public void Duplicate_Inline_Table_Key_Is_Rejected()
         => Assert.False(Toml.TryParse("a = { b = 1, b = 2 }\n").IsSuccess);
 
     [Fact]
-    public void Inline_Table_Cannot_Extend_Nested_Inline_Table() 
+    public void Inline_Table_Cannot_Extend_Nested_Inline_Table()
         => Assert.False(Toml.TryParse("a = { b = { c = 1 }, b.d = 2 }\n").IsSuccess);
 
     [Fact]
-    public void Completed_Inline_Table_Cannot_Be_Extended_By_Dotted_Key() 
+    public void Completed_Inline_Table_Cannot_Be_Extended_By_Dotted_Key()
         => Assert.False(Toml.TryParse("""
             a = { b = 1 }
             a.c = 2

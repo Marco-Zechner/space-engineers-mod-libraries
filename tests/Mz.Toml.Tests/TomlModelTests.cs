@@ -15,7 +15,7 @@ public sealed class TomlModelTests
 
         Assert.Equal(["second", "first"], table.Keys);
         Assert.False(table.Keys is ICollection<string>);
-        
+
         table.Set("third", TomlValue.FromInteger(3));
         Assert.Equal(["second", "first", "third"], table.Keys);
     }
@@ -29,6 +29,7 @@ public sealed class TomlModelTests
 
         Assert.Equal("\"\" = 1\n", Toml.Write(document));
     }
+
     [Fact]
     public void Parse_Diagnostics_Do_Not_Expose_Mutable_Collection()
     {

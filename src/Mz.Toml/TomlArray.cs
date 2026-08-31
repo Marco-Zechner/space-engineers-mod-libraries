@@ -8,9 +8,7 @@ namespace Mz.Toml
     /// <summary>
     /// Represents an ordered heterogeneous TOML array.
     /// </summary>
-    public sealed class TomlArray :
-        TomlNode,
-        IEnumerable<TomlNode>
+    public sealed class TomlArray : TomlNode, IEnumerable<TomlNode>
     {
         private readonly List<TomlNode> _items;
         private readonly IReadOnlyList<TomlNode> _readOnlyItems;
@@ -20,78 +18,48 @@ namespace Mz.Toml
         /// Initializes an empty programmatic TOML array.
         /// </summary>
         public TomlArray()
-            : this(
-                0,
-                0,
-                TomlArrayDefinitionKind.Static)
+            : this(0, 0, TomlArrayDefinitionKind.Static)
         {
         }
 
-        internal TomlArray(
-            int line,
-            int column)
-            : this(
-                line,
-                column,
-                TomlArrayDefinitionKind.Static)
+        internal TomlArray(int line, int column)
+            : this(line, column, TomlArrayDefinitionKind.Static)
         {
         }
 
-        internal TomlArray(
-            int line,
-            int column,
-            TomlArrayDefinitionKind definitionKind)
-            : base(
-                TomlNodeKind.Array,
-                line,
-                column)
+        internal TomlArray(int line, int column, TomlArrayDefinitionKind definitionKind)
+            : base(TomlNodeKind.Array, line, column)
         {
             _items = new List<TomlNode>();
-            _readOnlyItems =
-                new TomlReadOnlyList<TomlNode>(
-                    _items);
-            _definitionKind =
-                definitionKind;
+            _readOnlyItems = new TomlReadOnlyList<TomlNode>(_items);
+            _definitionKind = definitionKind;
         }
 
-        internal TomlArrayDefinitionKind DefinitionKind
-        {
-            get { return _definitionKind; }
-        }
+        internal TomlArrayDefinitionKind DefinitionKind => _definitionKind;
 
         /// <summary>
         /// Gets the number of elements in the array.
         /// </summary>
-        public int Count
-        {
-            get { return _items.Count; }
-        }
+        public int Count => _items.Count;
 
         /// <summary>
         /// Gets the array elements as a read-only ordered list.
         /// </summary>
-        public IReadOnlyList<TomlNode> Items
-        {
-            get { return _readOnlyItems; }
-        }
+        public IReadOnlyList<TomlNode> Items => _readOnlyItems;
 
         /// <summary>
         /// Gets the element at the specified zero-based index.
         /// </summary>
-        public TomlNode this[int index]
-        {
-            get { return _items[index]; }
-        }
+        public TomlNode this[int index] => _items[index];
 
         /// <summary>
         /// Appends an element to the array.
         /// TOML 1.0 arrays may contain heterogeneous element kinds.
         /// </summary>
-        public void Add(
-            TomlNode value)
+        public void Add(TomlNode value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             _items.Add(value);
         }
@@ -99,14 +67,8 @@ namespace Mz.Toml
         /// <summary>
         /// Returns an enumerator over the array elements.
         /// </summary>
-        public IEnumerator<TomlNode> GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
+        public IEnumerator<TomlNode> GetEnumerator() => _items.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
