@@ -94,15 +94,10 @@ public sealed class TomlScalarParsingTests
             """);
 
         Assert.True(double.IsPositiveInfinity(document.Root.AsValue("positive").AsFloat()));
-
         Assert.True(double.IsPositiveInfinity(document.Root.AsValue("positiveSigned").AsFloat()));
-
         Assert.True(double.IsNegativeInfinity(document.Root.AsValue("negative").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("nan").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("nanPositive").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("nanNegative").AsFloat()));
     }
 
@@ -131,11 +126,8 @@ public sealed class TomlScalarParsingTests
             written);
 
         Assert.Equal("hello", second.Root.AsValue("name").AsString());
-
         Assert.Equal(-12L, second.Root.AsValue("count").AsInteger());
-
         Assert.Equal(1.5, second.Root.AsValue("ratio").AsFloat());
-
         Assert.False(second.Root.AsValue("enabled").AsBoolean());
     }
 
@@ -179,9 +171,7 @@ public sealed class TomlScalarParsingTests
         var restored = Toml.Parse(text);
 
         Assert.True(double.IsPositiveInfinity(restored.Root.AsValue("positive").AsFloat()));
-
         Assert.True(double.IsNegativeInfinity(restored.Root.AsValue("negative").AsFloat()));
-
         Assert.True(double.IsNaN(restored.Root.AsValue("notNumber").AsFloat()));
     }
 }

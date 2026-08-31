@@ -241,7 +241,6 @@ public sealed class TomlStringParsingTests
         var reparsed = Toml.Parse(written);
 
         Assert.Equal("a\\b", reparsed.Root.AsValue("literal").AsString());
-
         Assert.Equal("one\ntwo", reparsed.Root.AsValue("multi").AsString());
     }
 
