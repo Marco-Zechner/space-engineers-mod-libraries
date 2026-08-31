@@ -444,6 +444,17 @@ namespace Mz.TextTemplate.Tests
         }
 
         [Fact]
+        public void ParserOwnedModel_ConstructorsAreNotPublic()
+        {
+            Assert.Empty(typeof(TemplateTextNode).GetConstructors());
+            Assert.Empty(typeof(TemplateTagNode).GetConstructors());
+            Assert.Empty(typeof(TemplateBlockNode).GetConstructors());
+            Assert.Empty(typeof(TemplateArgumentValue).GetConstructors());
+            Assert.Empty(typeof(TemplatePositionalArgument).GetConstructors());
+            Assert.Empty(typeof(TemplateNamedArgument).GetConstructors());
+        }
+
+        [Fact]
         public void Result_CollectionsAreDefensiveCopies()
         {
             var result =
@@ -452,20 +463,10 @@ namespace Mz.TextTemplate.Tests
                 );
 
             var nodes = result.Document.Nodes;
-
-            nodes[0] =
-                new TemplateTextNode(
-                    "mutated",
-                    new SourceSpan(0, 0)
-                );
+            nodes[0] = TemplateParser.Parse("mutated").Document.Nodes[0];
 
             var syntax = result.SyntaxSpans;
-
-            syntax[0] =
-                new TemplateSyntaxSpan(
-                    TemplateSyntaxKind.LiteralText,
-                    new SourceSpan(0, 0)
-                );
+            syntax[0] = TemplateParser.Parse("mutated").SyntaxSpans[0];
 
             Assert.IsType<TemplateTagNode>(
                 Assert.Single(

@@ -31,7 +31,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template node with its kind and exact source span.
         /// </summary>
-        protected TemplateNode(
+        internal TemplateNode(
             TemplateNodeKind kind,
             SourceSpan span
         )
@@ -59,7 +59,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a literal text node.
         /// </summary>
-        public TemplateTextNode(
+        internal TemplateTextNode(
             string text,
             SourceSpan span
         )
@@ -87,7 +87,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template tag node without arguments.
         /// </summary>
-        public TemplateTagNode(
+        internal TemplateTagNode(
             string name,
             SourceSpan span,
             SourceSpan nameSpan
@@ -104,7 +104,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template tag node with parsed arguments.
         /// </summary>
-        public TemplateTagNode(
+        internal TemplateTagNode(
             string name,
             SourceSpan span,
             SourceSpan nameSpan,
@@ -174,7 +174,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a parsed template block.
         /// </summary>
-        public TemplateBlockNode(
+        internal TemplateBlockNode(
             string name,
             SourceSpan span,
             SourceSpan openTagSpan,

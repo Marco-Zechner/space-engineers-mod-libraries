@@ -539,27 +539,22 @@ namespace Mz.TextTemplate.Tests
                     Assert.Single(result.Document.Nodes)
                 );
 
-            var children =
-                block.Children;
+            var children = block.Children;
+            children[0] = TemplateParser.Parse("mutated").Document.Nodes[0];
 
-            children[0] =
-                new TemplateTextNode(
-                    "mutated",
-                    new SourceSpan(0, 0)
+            var arguments = block.Arguments;
+
+            var replacementResult =
+                TemplateParser.Parse("{{tag replacement}}");
+
+            var replacementTag =
+                Assert.IsType<TemplateTagNode>(
+                    Assert.Single(replacementResult.Document.Nodes)
                 );
 
-            var arguments =
-                block.Arguments;
-
             arguments[0] =
-                new TemplatePositionalArgument(
-                    new TemplateArgumentValue(
-                        TemplateArgumentValueKind.Bare,
-                        "x",
-                        "x",
-                        new SourceSpan(0, 1),
-                        new SourceSpan(0, 1)
-                    )
+                Assert.IsType<TemplatePositionalArgument>(
+                    Assert.Single(replacementTag.Arguments)
                 );
 
             Assert.Equal(

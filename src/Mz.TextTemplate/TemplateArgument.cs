@@ -57,7 +57,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template argument value.
         /// </summary>
-        public TemplateArgumentValue(
+        internal TemplateArgumentValue(
             TemplateArgumentValueKind kind,
             string rawText,
             string text,
@@ -114,7 +114,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a parsed template argument.
         /// </summary>
-        protected TemplateArgument(
+        internal TemplateArgument(
             TemplateArgumentKind kind,
             SourceSpan span,
             TemplateArgumentValue value
@@ -152,7 +152,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a positional template argument.
         /// </summary>
-        public TemplatePositionalArgument(TemplateArgumentValue value)
+        internal TemplatePositionalArgument(TemplateArgumentValue value)
             : base(
                 TemplateArgumentKind.Positional,
                 value == null ? new SourceSpan(0, 0) : value.Span,
@@ -170,7 +170,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a named template argument.
         /// </summary>
-        public TemplateNamedArgument(
+        internal TemplateNamedArgument(
             string name,
             SourceSpan nameSpan,
             SourceSpan equalsSpan,
