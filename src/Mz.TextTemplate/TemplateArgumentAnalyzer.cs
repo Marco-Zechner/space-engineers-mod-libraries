@@ -5,14 +5,15 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateArgumentAnalyzer
     {
-        internal static void Analyze(TemplateArgument[] arguments, SourceSpan constructNameSpan, TemplateArgumentContract contract, TemplateDiagnostic[] parserDiagnostics, IList<TemplateDiagnostic> diagnostics)
+        internal static void Analyze(TemplateArgument[] arguments, SourceSpan constructNameSpan, TemplateArgumentContract contract,
+            TemplateDiagnostic[] parserDiagnostics, IList<TemplateDiagnostic> diagnostics)
         {
             int positionalIndex = 0;
             var seenNamedArguments = new HashSet<string>(StringComparer.Ordinal);
 
-            for (int index = 0; index < arguments.Length; index++)
+            foreach (var argument in arguments)
             {
-                var positional = arguments[index] as TemplatePositionalArgument;
+                var positional = argument as TemplatePositionalArgument;
 
                 if (positional != null)
                 {
@@ -22,7 +23,7 @@ namespace Mz.TextTemplate
                     continue;
                 }
 
-                var named = arguments[index] as TemplateNamedArgument;
+                var named = argument as TemplateNamedArgument;
                 if (named == null)
                     continue;
 
@@ -33,11 +34,15 @@ namespace Mz.TextTemplate
             AddMissingRequiredNamed(constructNameSpan, contract, diagnostics, seenNamedArguments);
         }
 
-        private static void AnalyzePositional(TemplatePositionalArgument argument, int positionalIndex, TemplateArgumentContract contract, IList<TemplateDiagnostic> diagnostics)
+        private static void AnalyzePositional(TemplatePositionalArgument argument, int positionalIndex, TemplateArgumentContract contract,
+            IList<TemplateDiagnostic> diagnostics)
         {
             if (positionalIndex >= contract.PositionalArgumentCount)
             {
-                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.UnexpectedPositionalArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error, "Unexpected positional argument.", argument.Span));
+                diagnostics.Add(new TemplateDiagnostic(
+                    TemplateLanguageAnalyzer.UnexpectedPositionalArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Unexpected positional argument.", argument.Span)
+                );
 
                 return;
             }
@@ -47,26 +52,34 @@ namespace Mz.TextTemplate
             if (argument.Value.Kind == TemplateArgumentValueKind.Missing || definition.Allows(argument.Value.Kind))
                 return;
 
-            diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.InvalidArgumentValueKindDiagnosticCode, TemplateDiagnosticSeverity.Error, "Positional argument uses an unsupported value kind.", argument.Value.Span));
+            diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.InvalidArgumentValueKindDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Positional argument uses an unsupported value kind.", argument.Value.Span)
+            );
         }
 
-        private static void AnalyzeNamed(TemplateNamedArgument argument, TemplateArgumentContract contract, TemplateDiagnostic[] parserDiagnostics, IList<TemplateDiagnostic> diagnostics, ISet<string> seenNamedArguments)
+        private static void AnalyzeNamed(TemplateNamedArgument argument, TemplateArgumentContract contract, TemplateDiagnostic[] parserDiagnostics,
+            IList<TemplateDiagnostic> diagnostics, ISet<string> seenNamedArguments)
         {
-            if (argument.Name.Length == 0 || TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidArgumentNameDiagnosticCode, argument.NameSpan))
+            if (argument.Name.Length == 0 ||
+                TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidArgumentNameDiagnosticCode, argument.NameSpan))
                 return;
 
             TemplateNamedArgumentDefinition definition;
 
             if (!contract.TryGetNamedArgument(argument.Name, out definition))
             {
-                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.UnknownNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error, "Unknown named argument '" + argument.Name + "'.", argument.NameSpan));
+                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.UnknownNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Unknown named argument '" + argument.Name + "'.", argument.NameSpan)
+                );
 
                 return;
             }
 
             if (!seenNamedArguments.Add(argument.Name))
             {
-                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.DuplicateNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error, "Named argument '" + argument.Name + "' is supplied more than once.", argument.NameSpan));
+                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.DuplicateNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Named argument '" + argument.Name + "' is supplied more than once.", argument.NameSpan)
+                );
 
                 return;
             }
@@ -74,10 +87,13 @@ namespace Mz.TextTemplate
             if (argument.Value.Kind == TemplateArgumentValueKind.Missing || definition.Allows(argument.Value.Kind))
                 return;
 
-            diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.InvalidArgumentValueKindDiagnosticCode, TemplateDiagnosticSeverity.Error, "Named argument '" + argument.Name + "' uses an unsupported value kind.", argument.Value.Span));
+            diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.InvalidArgumentValueKindDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Named argument '" + argument.Name + "' uses an unsupported value kind.", argument.Value.Span)
+            );
         }
 
-        private static void AddMissingRequiredPositionals(int positionalCount, SourceSpan constructNameSpan, TemplateArgumentContract contract, IList<TemplateDiagnostic> diagnostics)
+        private static void AddMissingRequiredPositionals(int positionalCount, SourceSpan constructNameSpan, TemplateArgumentContract contract,
+            IList<TemplateDiagnostic> diagnostics)
         {
             for (int index = positionalCount; index < contract.PositionalArgumentCount; index++)
             {
@@ -86,11 +102,15 @@ namespace Mz.TextTemplate
                 if (!definition.Required)
                     continue;
 
-                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.MissingRequiredPositionalArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error, "Required positional argument " + (index + 1).ToString() + " is missing.", constructNameSpan));
+                diagnostics.Add(new TemplateDiagnostic(
+                    TemplateLanguageAnalyzer.MissingRequiredPositionalArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Required positional argument " + (index + 1).ToString() + " is missing.", constructNameSpan)
+                );
             }
         }
 
-        private static void AddMissingRequiredNamed(SourceSpan constructNameSpan, TemplateArgumentContract contract, IList<TemplateDiagnostic> diagnostics, ISet<string> seenNamedArguments)
+        private static void AddMissingRequiredNamed(SourceSpan constructNameSpan, TemplateArgumentContract contract,
+            IList<TemplateDiagnostic> diagnostics, ISet<string> seenNamedArguments)
         {
             for (int index = 0; index < contract.NamedArgumentCount; index++)
             {
@@ -99,7 +119,10 @@ namespace Mz.TextTemplate
                 if (!definition.Required || seenNamedArguments.Contains(definition.Name))
                     continue;
 
-                diagnostics.Add(new TemplateDiagnostic(TemplateLanguageAnalyzer.MissingRequiredNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error, "Required named argument '" + definition.Name + "' is missing.", constructNameSpan));
+                diagnostics.Add(new TemplateDiagnostic(
+                    TemplateLanguageAnalyzer.MissingRequiredNamedArgumentDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Required named argument '" + definition.Name + "' is missing.", constructNameSpan)
+                );
             }
         }
     }

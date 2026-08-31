@@ -4,7 +4,8 @@ namespace Mz.TextTemplate
 {
     internal static class TemplateArgumentParser
     {
-        internal static void Parse(string source, ref int position, int close, IList<TemplateArgument> arguments, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
+        internal static void Parse(string source, ref int position, int close, IList<TemplateArgument> arguments,
+            IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             int argumentStart = position;
 
@@ -44,7 +45,9 @@ namespace Mz.TextTemplate
 
             if (argumentName.Length == 0)
             {
-                diagnostics.Add(new TemplateDiagnostic(TemplateParser.MissingArgumentNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Named argument is missing its name.", new SourceSpan(afterCandidate, 1)));
+                diagnostics.Add(new TemplateDiagnostic(TemplateParser.MissingArgumentNameDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Named argument is missing its name.", new SourceSpan(afterCandidate, 1))
+                );
             }
             else
             {
@@ -54,7 +57,10 @@ namespace Mz.TextTemplate
 
                 if (invalidOffset >= 0)
                 {
-                    diagnostics.Add(new TemplateDiagnostic(TemplateParser.InvalidArgumentNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Argument names must begin with a letter or '_' and contain only letters, digits, '_', or '-'.", new SourceSpan(candidateStart + invalidOffset, 1)));
+                    diagnostics.Add(new TemplateDiagnostic(TemplateParser.InvalidArgumentNameDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                        "Argument names must begin with a letter or '_' and contain only letters, digits, '_', or '-'.",
+                        new SourceSpan(candidateStart + invalidOffset, 1))
+                    );
                 }
             }
 
@@ -71,7 +77,9 @@ namespace Mz.TextTemplate
 
             if (position >= close)
             {
-                diagnostics.Add(new TemplateDiagnostic(TemplateParser.MissingArgumentValueDiagnosticCode, TemplateDiagnosticSeverity.Error, "Named argument is missing its value.", equalsSpan));
+                diagnostics.Add(new TemplateDiagnostic(TemplateParser.MissingArgumentValueDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Named argument is missing its value.", equalsSpan)
+                );
 
                 var missingSpan = new SourceSpan(close, 0);
 
@@ -84,10 +92,13 @@ namespace Mz.TextTemplate
 
             int argumentEnd = value.Kind == TemplateArgumentValueKind.Missing ? position : value.Span.End;
 
-            arguments.Add(new TemplateNamedArgument(argumentName, argumentNameSpan, equalsSpan, value, new SourceSpan(argumentStart, argumentEnd - argumentStart)));
+            arguments.Add(new TemplateNamedArgument(argumentName, argumentNameSpan, equalsSpan, value,
+                new SourceSpan(argumentStart, argumentEnd - argumentStart))
+            );
         }
 
-        private static TemplateArgumentValue ParseValue(string source, ref int position, int close, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
+        private static TemplateArgumentValue ParseValue(string source, ref int position, int close,
+            IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             if (source[position] == '"')
                 return ParseQuotedValue(source, ref position, close, diagnostics, syntaxSpans);
@@ -108,7 +119,8 @@ namespace Mz.TextTemplate
             return new TemplateArgumentValue(kind, raw, raw, valueSpan, valueSpan);
         }
 
-        private static TemplateArgumentValue ParseQuotedValue(string source, ref int position, int close, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
+        private static TemplateArgumentValue ParseQuotedValue(string source, ref int position, int close,
+            IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             int quoteStart = position;
             position++;
@@ -144,7 +156,8 @@ namespace Mz.TextTemplate
 
                     syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.StringValue, span));
 
-                    return new TemplateArgumentValue(TemplateArgumentValueKind.String, source.Substring(quoteStart, span.Length), source.Substring(contentStart, contentSpan.Length), span, contentSpan);
+                    return new TemplateArgumentValue(TemplateArgumentValueKind.String, source.Substring(quoteStart, span.Length),
+                        source.Substring(contentStart, contentSpan.Length), span, contentSpan);
                 }
 
                 position++;
@@ -152,10 +165,13 @@ namespace Mz.TextTemplate
 
             var unterminatedSpan = new SourceSpan(quoteStart, close - quoteStart);
 
-            diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnterminatedStringDiagnosticCode, TemplateDiagnosticSeverity.Error, "Quoted argument value is missing its closing quote.", unterminatedSpan));
+            diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnterminatedStringDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Quoted argument value is missing its closing quote.", unterminatedSpan)
+            );
             syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.StringValue, unterminatedSpan));
 
-            return new TemplateArgumentValue(TemplateArgumentValueKind.String, source.Substring(quoteStart, unterminatedSpan.Length), source.Substring(contentStart, close - contentStart), unterminatedSpan, new SourceSpan(contentStart, close - contentStart));
+            return new TemplateArgumentValue(TemplateArgumentValueKind.String, source.Substring(quoteStart, unterminatedSpan.Length),
+                source.Substring(contentStart, close - contentStart), unterminatedSpan, new SourceSpan(contentStart, close - contentStart));
         }
 
         private static TemplateArgumentValueKind ClassifyValue(string value)

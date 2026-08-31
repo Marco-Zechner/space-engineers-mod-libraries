@@ -110,7 +110,8 @@ namespace Mz.TextTemplate
 
                     if (close < 0)
                     {
-                        diagnostics.Add(new TemplateDiagnostic(UnterminatedTagDiagnosticCode, TemplateDiagnosticSeverity.Error, "Tag is missing its closing '}}' delimiter.", new SourceSpan(tagStart, source.Length - tagStart)));
+                        diagnostics.Add(new TemplateDiagnostic(UnterminatedTagDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                            "Tag is missing its closing '}}' delimiter.", new SourceSpan(tagStart, source.Length - tagStart)));
 
                         blockParser.CurrentNodes.Add(new TemplateTextNode(source.Substring(tagStart), new SourceSpan(tagStart, source.Length - tagStart)));
 
@@ -148,7 +149,8 @@ namespace Mz.TextTemplate
 
                 if (Matches(source, index, "}}"))
                 {
-                    diagnostics.Add(new TemplateDiagnostic(UnexpectedClosingDelimiterDiagnosticCode, TemplateDiagnosticSeverity.Error, "Closing '}}' delimiter has no matching opening '{{' delimiter.", new SourceSpan(index, 2)));
+                    diagnostics.Add(new TemplateDiagnostic(UnexpectedClosingDelimiterDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                        "Closing '}}' delimiter has no matching opening '{{' delimiter.", new SourceSpan(index, 2)));
 
                     index += 2;
                     continue;
@@ -166,7 +168,8 @@ namespace Mz.TextTemplate
             return new TemplateParseResult(source, new TemplateDocument(rootNodes), diagnostics, syntaxSpans);
         }
 
-        private static void ParseTag(string source, int tagStart, int close, IList<TemplateNode> nodes, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
+        private static void ParseTag(string source, int tagStart, int close, IList<TemplateNode> nodes,
+            IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             int position = tagStart + 2;
 
@@ -197,7 +200,9 @@ namespace Mz.TextTemplate
 
                 if (invalidOffset >= 0)
                 {
-                    diagnostics.Add(new TemplateDiagnostic(InvalidTagNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Tag names must use dot-separated identifiers containing letters, digits, '_', or '-'.", new SourceSpan(nameStart + invalidOffset, 1)));
+                    diagnostics.Add(new TemplateDiagnostic(InvalidTagNameDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                        "Tag names must use dot-separated identifiers containing letters, digits, '_', or '-'.",
+                        new SourceSpan(nameStart + invalidOffset, 1)));
                 }
             }
 
@@ -228,13 +233,12 @@ namespace Mz.TextTemplate
                 {
                     int quoteEnd = FindQuoteEnd(source, index + 1);
 
-                    if (quoteEnd >= 0)
-                    {
-                        index = quoteEnd + 1;
-                        continue;
-                    }
+                    if (quoteEnd < 0)
+                        return source.IndexOf("}}", index + 1, StringComparison.Ordinal);
 
-                    return source.IndexOf("}}", index + 1, StringComparison.Ordinal);
+                    index = quoteEnd + 1;
+                    continue;
+
                 }
 
                 if (Matches(source, index, "}}"))

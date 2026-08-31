@@ -84,11 +84,9 @@ namespace Mz.TextTemplate
         {
             get
             {
-                for (int index = 0; index < _diagnostics.Length; index++)
-                {
-                    if (_diagnostics[index].Severity == TemplateDiagnosticSeverity.Error)
+                foreach (var diagnostic in _diagnostics)
+                    if (diagnostic.Severity == TemplateDiagnosticSeverity.Error)
                         return true;
-                }
 
                 return false;
             }

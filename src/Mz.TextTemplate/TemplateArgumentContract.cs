@@ -102,8 +102,6 @@ namespace Mz.TextTemplate
     /// </summary>
     public sealed class TemplateArgumentContract
     {
-        private static readonly TemplateArgumentContract _noArguments = new TemplateArgumentContract(new TemplatePositionalArgumentDefinition[0], new TemplateNamedArgumentDefinition[0]);
-
         private readonly TemplatePositionalArgumentDefinition[] _positionalArguments;
         private readonly TemplateNamedArgumentDefinition[] _namedArguments;
         private readonly Dictionary<string, TemplateNamedArgumentDefinition> _namedLookup;
@@ -111,7 +109,9 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Gets the shared contract for constructs that accept no arguments.
         /// </summary>
-        public static TemplateArgumentContract NoArguments => _noArguments;
+        public static TemplateArgumentContract NoArguments { get; } = new TemplateArgumentContract(
+            Array.Empty<TemplatePositionalArgumentDefinition>(), Array.Empty<TemplateNamedArgumentDefinition>()
+            );
 
         /// <summary>
         /// Creates an argument contract. A contract containing no definitions
@@ -218,7 +218,8 @@ namespace Mz.TextTemplate
             {
                 TemplateArgumentValueKind kind = kinds[index];
 
-                if (kind != TemplateArgumentValueKind.Bare && kind != TemplateArgumentValueKind.String && kind != TemplateArgumentValueKind.Number && kind != TemplateArgumentValueKind.Boolean)
+                if (kind != TemplateArgumentValueKind.Bare && kind != TemplateArgumentValueKind.String &&
+                    kind != TemplateArgumentValueKind.Number && kind != TemplateArgumentValueKind.Boolean)
                     throw new ArgumentException("Unsupported argument value kind.", parameterName);
 
                 for (int previous = 0; previous < index; previous++)
@@ -235,11 +236,9 @@ namespace Mz.TextTemplate
 
         internal static bool Contains(TemplateArgumentValueKind[] kinds, TemplateArgumentValueKind kind)
         {
-            for (int index = 0; index < kinds.Length; index++)
-            {
-                if (kinds[index] == kind)
+            foreach (var kindItem in kinds)
+                if (kindItem == kind)
                     return true;
-            }
 
             return false;
         }

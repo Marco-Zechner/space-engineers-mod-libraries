@@ -56,8 +56,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a literal text node.
         /// </summary>
-        internal TemplateTextNode(string text, SourceSpan span)
-            : base(TemplateNodeKind.Text, span)
+        internal TemplateTextNode(string text, SourceSpan span) : base(TemplateNodeKind.Text, span)
         {
             if (text == null)
                 throw new ArgumentNullException(nameof(text));
@@ -82,15 +81,12 @@ namespace Mz.TextTemplate
         /// Creates a template tag node without arguments.
         /// </summary>
         internal TemplateTagNode(string name, SourceSpan span, SourceSpan nameSpan)
-            : this(name, span, nameSpan, new TemplateArgument[0])
-        {
-        }
+            : this(name, span, nameSpan, Array.Empty<TemplateArgument>()) { }
 
         /// <summary>
         /// Creates a template tag node with parsed arguments.
         /// </summary>
-        internal TemplateTagNode(string name, SourceSpan span, SourceSpan nameSpan, TemplateArgument[] arguments)
-            : base(TemplateNodeKind.Tag, span)
+        internal TemplateTagNode(string name, SourceSpan span, SourceSpan nameSpan, TemplateArgument[] arguments) : base(TemplateNodeKind.Tag, span)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));

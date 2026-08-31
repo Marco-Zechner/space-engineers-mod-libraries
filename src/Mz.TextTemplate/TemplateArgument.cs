@@ -143,9 +143,7 @@ namespace Mz.TextTemplate
         /// Creates a positional template argument.
         /// </summary>
         internal TemplatePositionalArgument(TemplateArgumentValue value)
-            : base(TemplateArgumentKind.Positional, value == null ? new SourceSpan(0, 0) : value.Span, value)
-        {
-        }
+            : base(TemplateArgumentKind.Positional, value?.Span ?? new SourceSpan(0, 0), value) { }
     }
 
     /// <summary>

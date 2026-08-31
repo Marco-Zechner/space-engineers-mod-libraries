@@ -6,10 +6,8 @@ namespace Mz.TextTemplate
     {
         internal static bool HasCodeWithinSpan(TemplateDiagnostic[] diagnostics, string code, SourceSpan span)
         {
-            for (int index = 0; index < diagnostics.Length; index++)
+            foreach (var diagnostic in diagnostics)
             {
-                TemplateDiagnostic diagnostic = diagnostics[index];
-
                 if (diagnostic.Code == code && diagnostic.Span.Start >= span.Start && diagnostic.Span.Start < span.End)
                     return true;
             }

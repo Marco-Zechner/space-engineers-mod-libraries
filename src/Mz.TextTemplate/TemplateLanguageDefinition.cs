@@ -27,10 +27,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a host tag definition.
         /// </summary>
-        public TemplateTagDefinition(string name, TemplateTagRole role)
-            : this(name, role, TemplateArgumentContract.NoArguments)
-        {
-        }
+        public TemplateTagDefinition(string name, TemplateTagRole role) : this(name, role, TemplateArgumentContract.NoArguments) { }
 
         /// <summary>
         /// Creates a host tag definition with its argument contract.
@@ -81,10 +78,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a host block definition.
         /// </summary>
-        public TemplateBlockDefinition(string name)
-            : this(name, TemplateArgumentContract.NoArguments)
-        {
-        }
+        public TemplateBlockDefinition(string name) : this(name, TemplateArgumentContract.NoArguments) { }
 
         /// <summary>
         /// Creates a host block definition with its argument contract.

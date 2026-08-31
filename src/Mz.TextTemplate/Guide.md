@@ -15,56 +15,15 @@ responsible for evaluating tags and rendering output.
 ```csharp
 using Mz.TextTemplate;
 
-TemplateArgumentContract tabArguments =
-    new TemplateArgumentContract(
-        new[]
-        {
-            new TemplatePositionalArgumentDefinition(
-                true,
-                new[]
-                {
-                    TemplateArgumentValueKind.Number
-                }
-            )
-        },
-        new[]
-        {
-            new TemplateNamedArgumentDefinition(
-                "wrap",
-                false,
-                new[]
-                {
-                    TemplateArgumentValueKind.Number
-                }
-            )
-        }
-    );
+var tabArguments = new TemplateArgumentContract(new[] { new TemplatePositionalArgumentDefinition(true, new[] { TemplateArgumentValueKind.Number }) },
+    new[] { new TemplateNamedArgumentDefinition("wrap", false, new[] { TemplateArgumentValueKind.Number }) });
 
-TemplateLanguageDefinition language =
-    new TemplateLanguageDefinition(
-        new[]
-        {
-            new TemplateTagDefinition(
-                "name",
-                TemplateTagRole.Value
-            ),
-            new TemplateTagDefinition(
-                "message",
-                TemplateTagRole.Value
-            ),
-            new TemplateTagDefinition(
-                "tab",
-                TemplateTagRole.Command,
-                tabArguments
-            )
-        },
-        new[]
-        {
-            new TemplateBlockDefinition(
-                "first"
-            )
-        }
-    );
+var language = new TemplateLanguageDefinition(new[]
+{
+    new TemplateTagDefinition("name", TemplateTagRole.Value),
+    new TemplateTagDefinition("message", TemplateTagRole.Value),
+    new TemplateTagDefinition("tab", TemplateTagRole.Command, tabArguments)
+}, new[] { new TemplateBlockDefinition("first") });
 ```
 
 The short tag and block constructors accept no arguments. Supplying arguments
@@ -76,19 +35,10 @@ A construct that accepts arguments must receive an explicit
 ## Parse and analyze
 
 ```csharp
-string source =
-    "{{#first}}{{name}}: {{/first}}"
-    + "{{tab 4 wrap=1}}"
-    + "{{message}}";
+const string source = "{{#first}}{{name}}: {{/first}}{{tab 4 wrap=1}}{{message}}";
 
-TemplateParseResult parseResult =
-    TemplateParser.Parse(source);
-
-TemplateLanguageAnalysisResult analysis =
-    TemplateLanguageAnalyzer.Analyze(
-        parseResult,
-        language
-    );
+var parseResult = TemplateParser.Parse(source);
+var analysis = TemplateLanguageAnalyzer.Analyze(parseResult, language);
 ```
 
 `analysis.ParseResult` retains the original syntactic result.
@@ -97,14 +47,8 @@ TemplateLanguageAnalysisResult analysis =
 source order.
 
 ```csharp
-TemplateDiagnostic[] diagnostics =
-    analysis.Diagnostics;
-
-for (int index = 0; index < diagnostics.Length; index++)
+foreach (var diagnostic in analysis.Diagnostics)
 {
-    TemplateDiagnostic diagnostic =
-        diagnostics[index];
-
     // Use diagnostic.Code, diagnostic.Severity,
     // diagnostic.Message, and diagnostic.Span.
 }
@@ -118,27 +62,11 @@ produced an error.
 Positional definitions are matched in order:
 
 ```csharp
-TemplateArgumentContract coordinates =
-    new TemplateArgumentContract(
-        new[]
-        {
-            new TemplatePositionalArgumentDefinition(
-                true,
-                new[]
-                {
-                    TemplateArgumentValueKind.Number
-                }
-            ),
-            new TemplatePositionalArgumentDefinition(
-                false,
-                new[]
-                {
-                    TemplateArgumentValueKind.Number
-                }
-            )
-        },
-        new TemplateNamedArgumentDefinition[0]
-    );
+var coordinates = new TemplateArgumentContract(new[]
+{
+    new TemplatePositionalArgumentDefinition(true, new[] { TemplateArgumentValueKind.Number }),
+    new TemplatePositionalArgumentDefinition(false, new[] { TemplateArgumentValueKind.Number })
+}, new TemplateNamedArgumentDefinition[0]);
 ```
 
 Required positional arguments must come before optional positional arguments in
@@ -149,29 +77,11 @@ the contract.
 Named arguments are matched by exact ordinal name:
 
 ```csharp
-TemplateArgumentContract displayArguments =
-    new TemplateArgumentContract(
-        new TemplatePositionalArgumentDefinition[0],
-        new[]
-        {
-            new TemplateNamedArgumentDefinition(
-                "limit",
-                false,
-                new[]
-                {
-                    TemplateArgumentValueKind.Number
-                }
-            ),
-            new TemplateNamedArgumentDefinition(
-                "ellipsis",
-                false,
-                new[]
-                {
-                    TemplateArgumentValueKind.Boolean
-                }
-            )
-        }
-    );
+var displayArguments = new TemplateArgumentContract(new TemplatePositionalArgumentDefinition[0], new[]
+{
+    new TemplateNamedArgumentDefinition("limit", false, new[] { TemplateArgumentValueKind.Number }),
+    new TemplateNamedArgumentDefinition("ellipsis", false, new[] { TemplateArgumentValueKind.Boolean })
+});
 ```
 
 The parser only determines lexical value kinds. For example, `12` is

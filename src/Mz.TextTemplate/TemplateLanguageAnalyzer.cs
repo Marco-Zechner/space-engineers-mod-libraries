@@ -71,8 +71,8 @@ namespace Mz.TextTemplate
             var parserDiagnostics = parseResult.Diagnostics;
             var diagnostics = new List<TemplateDiagnostic>(parserDiagnostics.Length);
 
-            for (int index = 0; index < parserDiagnostics.Length; index++)
-                diagnostics.Add(parserDiagnostics[index]);
+            foreach (var diagnostic in parserDiagnostics)
+                diagnostics.Add(diagnostic);
 
             var classifications = new List<NameClassification>();
 
@@ -83,10 +83,8 @@ namespace Mz.TextTemplate
             var parserSyntax = parseResult.SyntaxSpans;
             var syntaxSpans = new List<TemplateSyntaxSpan>(parserSyntax.Length);
 
-            for (int index = 0; index < parserSyntax.Length; index++)
+            foreach (var syntax in parserSyntax)
             {
-                var syntax = parserSyntax[index];
-
                 if (syntax.Kind == TemplateSyntaxKind.TagName)
                 {
                     TemplateSyntaxKind semanticKind;
@@ -94,7 +92,6 @@ namespace Mz.TextTemplate
                     if (TryGetClassification(classifications, syntax.Span, out semanticKind))
                     {
                         syntaxSpans.Add(new TemplateSyntaxSpan(semanticKind, syntax.Span));
-
                         continue;
                     }
                 }
@@ -113,24 +110,24 @@ namespace Mz.TextTemplate
                 Kind = kind;
             }
 
-            public SourceSpan Span;
-            public TemplateSyntaxKind Kind;
+            public readonly SourceSpan Span;
+            public readonly TemplateSyntaxKind Kind;
         }
 
-        private static void AnalyzeNodes(TemplateNode[] nodes, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language, IList<TemplateDiagnostic> diagnostics, IList<NameClassification> classifications)
+        private static void AnalyzeNodes(TemplateNode[] nodes, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language,
+            IList<TemplateDiagnostic> diagnostics, IList<NameClassification> classifications)
         {
-            for (int index = 0; index < nodes.Length; index++)
+            foreach (var node in nodes)
             {
-                var tag = nodes[index] as TemplateTagNode;
+                var tag = node as TemplateTagNode;
 
                 if (tag != null)
                 {
                     AnalyzeTag(tag, parserDiagnostics, language, diagnostics, classifications);
-
                     continue;
                 }
 
-                var block = nodes[index] as TemplateBlockNode;
+                var block = node as TemplateBlockNode;
 
                 if (block == null)
                     continue;
@@ -140,28 +137,38 @@ namespace Mz.TextTemplate
             }
         }
 
-        private static void AnalyzeTag(TemplateTagNode tag, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language, IList<TemplateDiagnostic> diagnostics, IList<NameClassification> classifications)
+        private static void AnalyzeTag(TemplateTagNode tag, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language,
+            IList<TemplateDiagnostic> diagnostics, IList<NameClassification> classifications)
         {
-            if (tag.Name.Length == 0 || TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidTagNameDiagnosticCode, tag.NameSpan))
+            if (tag.Name.Length == 0 ||
+                TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidTagNameDiagnosticCode, tag.NameSpan))
                 return;
 
             TemplateTagDefinition definition;
 
             if (language.TryGetTag(tag.Name, out definition))
             {
-                classifications.Add(new NameClassification(tag.NameSpan, definition.Role == TemplateTagRole.Value ? TemplateSyntaxKind.ValueName : TemplateSyntaxKind.CommandName));
+                classifications.Add(new NameClassification(tag.NameSpan,
+                    definition.Role == TemplateTagRole.Value
+                        ? TemplateSyntaxKind.ValueName
+                        : TemplateSyntaxKind.CommandName)
+                );
 
                 TemplateArgumentAnalyzer.Analyze(tag.Arguments, tag.NameSpan, definition.ArgumentContract, parserDiagnostics, diagnostics);
 
                 return;
             }
 
-            diagnostics.Add(new TemplateDiagnostic(UnknownTagDiagnosticCode, TemplateDiagnosticSeverity.Error, "Unknown template tag '" + tag.Name + "'.", tag.NameSpan));
+            diagnostics.Add(new TemplateDiagnostic(UnknownTagDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Unknown template tag '" + tag.Name + "'.", tag.NameSpan)
+            );
         }
 
-        private static void AnalyzeBlock(TemplateBlockNode block, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language, IList<TemplateDiagnostic> diagnostics)
+        private static void AnalyzeBlock(TemplateBlockNode block, TemplateDiagnostic[] parserDiagnostics, TemplateLanguageDefinition language,
+            IList<TemplateDiagnostic> diagnostics)
         {
-            if (block.Name.Length == 0 || TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidBlockNameDiagnosticCode, block.OpenNameSpan))
+            if (block.Name.Length == 0 ||
+                TemplateDiagnosticUtilities.HasCodeWithinSpan(parserDiagnostics, TemplateParser.InvalidBlockNameDiagnosticCode, block.OpenNameSpan))
                 return;
 
             TemplateBlockDefinition definition;
@@ -169,24 +176,22 @@ namespace Mz.TextTemplate
             if (language.TryGetBlock(block.Name, out definition))
             {
                 TemplateArgumentAnalyzer.Analyze(block.Arguments, block.OpenNameSpan, definition.ArgumentContract, parserDiagnostics, diagnostics);
-
                 return;
             }
 
-            diagnostics.Add(new TemplateDiagnostic(UnknownBlockDiagnosticCode, TemplateDiagnosticSeverity.Error, "Unknown template block '" + block.Name + "'.", block.OpenNameSpan));
+            diagnostics.Add(new TemplateDiagnostic(UnknownBlockDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Unknown template block '" + block.Name + "'.", block.OpenNameSpan)
+            );
         }
 
         private static bool TryGetClassification(IList<NameClassification> classifications, SourceSpan span, out TemplateSyntaxKind kind)
         {
-            for (int index = 0; index < classifications.Count; index++)
+            foreach (var classification in classifications)
             {
-                var classification = classifications[index];
+                if (classification.Span != span) continue;
 
-                if (classification.Span == span)
-                {
-                    kind = classification.Kind;
-                    return true;
-                }
+                kind = classification.Kind;
+                return true;
             }
 
             kind = TemplateSyntaxKind.TagName;

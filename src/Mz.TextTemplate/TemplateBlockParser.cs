@@ -127,7 +127,9 @@ namespace Mz.TextTemplate
 
             if (_stack.Count == 0)
             {
-                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnexpectedClosingBlockDiagnosticCode, TemplateDiagnosticSeverity.Error, "Closing block '" + name + "' has no open block.", closeTagSpan));
+                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnexpectedClosingBlockDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Closing block '" + name + "' has no open block.", closeTagSpan)
+                );
 
                 return;
             }
@@ -138,7 +140,9 @@ namespace Mz.TextTemplate
             {
                 BlockFrame currentFrame = _stack[_stack.Count - 1];
 
-                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.MismatchedClosingBlockDiagnosticCode, TemplateDiagnosticSeverity.Error, "Closing block '" + name + "' does not match open block '" + currentFrame.Name + "'.", nameSpan));
+                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.MismatchedClosingBlockDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Closing block '" + name + "' does not match open block '" + currentFrame.Name + "'.", nameSpan)
+                );
 
                 return;
             }
@@ -167,7 +171,9 @@ namespace Mz.TextTemplate
             {
                 BlockFrame frame = _stack[index];
 
-                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnclosedBlockDiagnosticCode, TemplateDiagnosticSeverity.Error, "Block '" + frame.Name + "' is missing its closing tag.", frame.OpenTagSpan));
+                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnclosedBlockDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Block '" + frame.Name + "' is missing its closing tag.", frame.OpenTagSpan)
+                );
             }
 
             while (_stack.Count > 0)
@@ -212,7 +218,9 @@ namespace Mz.TextTemplate
                 BlockFrame frame = _stack[unclosedIndex];
                 _stack.RemoveAt(unclosedIndex);
 
-                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnclosedBlockDiagnosticCode, TemplateDiagnosticSeverity.Error, "Block '" + frame.Name + "' is missing its closing tag.", frame.OpenTagSpan));
+                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.UnclosedBlockDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Block '" + frame.Name + "' is missing its closing tag.", frame.OpenTagSpan)
+                );
 
                 var recoverySpan = new SourceSpan(recoveryPosition, 0);
 
@@ -234,7 +242,9 @@ namespace Mz.TextTemplate
         {
             if (name.Length == 0)
             {
-                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.EmptyBlockNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Block name cannot be empty.", tagSpan));
+                _diagnostics.Add(new TemplateDiagnostic(TemplateParser.EmptyBlockNameDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                    "Block name cannot be empty.", tagSpan)
+                );
 
                 return;
             }
@@ -246,7 +256,10 @@ namespace Mz.TextTemplate
             if (invalidOffset < 0)
                 return;
 
-            _diagnostics.Add(new TemplateDiagnostic(TemplateParser.InvalidBlockNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Block names must use dot-separated identifiers containing letters, digits, '_', or '-'.", new SourceSpan(nameSpan.Start + invalidOffset, 1)));
+            _diagnostics.Add(new TemplateDiagnostic(TemplateParser.InvalidBlockNameDiagnosticCode, TemplateDiagnosticSeverity.Error,
+                "Block names must use dot-separated identifiers containing letters, digits, '_', or '-'.",
+                new SourceSpan(nameSpan.Start + invalidOffset, 1))
+            );
         }
 
         private static void SkipWhitespace(string source, ref int position, int end)

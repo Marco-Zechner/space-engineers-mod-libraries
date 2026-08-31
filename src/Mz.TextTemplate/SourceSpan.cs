@@ -70,7 +70,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Returns the span using half-open range notation.
         /// </summary>
-        public override string ToString() => "[" + Start + ".." + End + ")";
+        public override string ToString() => $"[{Start}..{End})";
 
         /// <summary>
         /// Returns whether two source spans are equal.

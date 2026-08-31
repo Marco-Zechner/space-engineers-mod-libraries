@@ -17,8 +17,57 @@ contains a nested call, or could technically be spread over several lines.
 Moderately long but straightforward lines are preferred over mechanically
 expanded code.
 
-There is no fixed column limit that requires otherwise readable expressions to
-be wrapped.
+As a practical line-length target, keep normal code at roughly 150 columns or
+fewer. Lines from 151 through 160 columns are acceptable when they remain
+clearer than the wrapped alternative. Treat 160 columns as the practical upper
+limit rather than allowing horizontal layout to grow without bound.
+
+## Line length and wrap level
+
+Compact does not mean forcing every expression onto one line.
+
+When a line needs to wrap, break at the highest available syntactic level. For
+a call or constructor, this normally means breaking between outer arguments
+before breaking inside one of those arguments.
+
+Prefer:
+
+```csharp
+Call(arg1, arg2,
+    new Args(arg3, arg4));
+```
+
+over breaking the nested constructor first:
+
+```csharp
+Call(arg1, arg2, new Args(arg3,
+    arg4));
+```
+
+Likewise, prefer keeping a nested call intact:
+
+```csharp
+return new TemplateArgumentValue(kind, source.Substring(start, length),
+    source.Substring(contentStart, contentLength), span, contentSpan);
+```
+
+rather than breaking inside `Substring(...)` while an outer argument boundary
+is available.
+
+When several equivalent break points exist, prefer a tapered layout where the
+upper line is longer than the continuation line. This is a readability
+preference rather than a reason to break semantic grouping.
+
+The intended progression is therefore:
+
+1. Keep the complete expression horizontal while it remains comfortably
+   readable.
+2. At roughly 150 columns, consider a high-level wrap.
+3. Between 151 and 160 columns, keep the line if wrapping would be worse.
+4. Above roughly 160 columns, wrap at the highest useful argument or expression
+   boundary.
+5. Only break inside a nested expression when its containing expression cannot
+   be wrapped cleanly at a higher level.
 
 ## Assignments stay with their expression
 
