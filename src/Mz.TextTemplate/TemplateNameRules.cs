@@ -45,18 +45,8 @@ namespace Mz.TextTemplate
             return -1;
         }
 
-        private static bool IsIdentifierStart(char value)
-        {
-            return value == '_'
-                || (value >= 'A' && value <= 'Z')
-                || (value >= 'a' && value <= 'z');
-        }
+        private static bool IsIdentifierStart(char value) => value == '_' || (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z');
 
-        private static bool IsIdentifierPart(char value)
-        {
-            return IsIdentifierStart(value)
-                || (value >= '0' && value <= '9')
-                || value == '-';
-        }
+        private static bool IsIdentifierPart(char value) => IsIdentifierStart(value) || (value >= '0' && value <= '9') || value == '-';
     }
 }

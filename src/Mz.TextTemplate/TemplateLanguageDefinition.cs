@@ -27,26 +27,15 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a host tag definition.
         /// </summary>
-        public TemplateTagDefinition(
-            string name,
-            TemplateTagRole role
-        )
-            : this(
-                name,
-                role,
-                TemplateArgumentContract.NoArguments
-            )
+        public TemplateTagDefinition(string name, TemplateTagRole role)
+            : this(name, role, TemplateArgumentContract.NoArguments)
         {
         }
 
         /// <summary>
         /// Creates a host tag definition with its argument contract.
         /// </summary>
-        public TemplateTagDefinition(
-            string name,
-            TemplateTagRole role,
-            TemplateArgumentContract argumentContract
-        )
+        public TemplateTagDefinition(string name, TemplateTagRole role, TemplateArgumentContract argumentContract)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -57,13 +46,8 @@ namespace Mz.TextTemplate
             if (TemplateNameRules.FindInvalidConstructNameOffset(name) >= 0)
                 throw new ArgumentException("Template tag definition name is not syntactically valid.", nameof(name));
 
-            if (
-                role != TemplateTagRole.Value
-                && role != TemplateTagRole.Command
-            )
-            {
+            if (role != TemplateTagRole.Value && role != TemplateTagRole.Command)
                 throw new ArgumentException("Unsupported template tag role.", nameof(role));
-            }
 
             if (argumentContract == null)
                 throw new ArgumentNullException(nameof(argumentContract));
@@ -97,23 +81,15 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a host block definition.
         /// </summary>
-        public TemplateBlockDefinition(
-            string name
-        )
-            : this(
-                name,
-                TemplateArgumentContract.NoArguments
-            )
+        public TemplateBlockDefinition(string name)
+            : this(name, TemplateArgumentContract.NoArguments)
         {
         }
 
         /// <summary>
         /// Creates a host block definition with its argument contract.
         /// </summary>
-        public TemplateBlockDefinition(
-            string name,
-            TemplateArgumentContract argumentContract
-        )
+        public TemplateBlockDefinition(string name, TemplateArgumentContract argumentContract)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -157,10 +133,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a host language definition from tag and block definitions.
         /// </summary>
-        public TemplateLanguageDefinition(
-            TemplateTagDefinition[] tags,
-            TemplateBlockDefinition[] blocks
-        )
+        public TemplateLanguageDefinition(TemplateTagDefinition[] tags, TemplateBlockDefinition[] blocks)
         {
             if (tags == null)
                 throw new ArgumentNullException(nameof(tags));
@@ -168,88 +141,40 @@ namespace Mz.TextTemplate
             if (blocks == null)
                 throw new ArgumentNullException(nameof(blocks));
 
-            _tags =
-                new TemplateTagDefinition[tags.Length];
+            _tags = new TemplateTagDefinition[tags.Length];
+            _tagLookup = new Dictionary<string, TemplateTagDefinition>(StringComparer.Ordinal);
 
-            _tagLookup =
-                new Dictionary<string, TemplateTagDefinition>(
-                    StringComparer.Ordinal
-                );
-
-            for (
-                int index = 0;
-                index < tags.Length;
-                index++
-            )
+            for (int index = 0; index < tags.Length; index++)
             {
-                TemplateTagDefinition definition =
-                    tags[index];
+                TemplateTagDefinition definition = tags[index];
 
                 if (definition == null)
-                {
                     throw new ArgumentException("Template tag definitions cannot contain null entries.", nameof(tags));
-                }
 
-                if (
-                    _tagLookup.ContainsKey(
-                        definition.Name
-                    )
-                )
-                {
-                    throw new ArgumentException(
-                        "Duplicate template tag definition '" + definition.Name + "'.",
-                        "tags"
-                    );
-                }
+                if (_tagLookup.ContainsKey(definition.Name))
+                    throw new ArgumentException("Duplicate template tag definition '" + definition.Name + "'.", nameof(tags));
 
                 _tags[index] = definition;
 
-                _tagLookup.Add(
-                    definition.Name,
-                    definition
-                );
+                _tagLookup.Add(definition.Name, definition);
             }
 
-            _blocks =
-                new TemplateBlockDefinition[blocks.Length];
+            _blocks = new TemplateBlockDefinition[blocks.Length];
+            _blockLookup = new Dictionary<string, TemplateBlockDefinition>(StringComparer.Ordinal);
 
-            _blockLookup =
-                new Dictionary<string, TemplateBlockDefinition>(
-                    StringComparer.Ordinal
-                );
-
-            for (
-                int index = 0;
-                index < blocks.Length;
-                index++
-            )
+            for (int index = 0; index < blocks.Length; index++)
             {
-                TemplateBlockDefinition definition =
-                    blocks[index];
+                TemplateBlockDefinition definition = blocks[index];
 
                 if (definition == null)
-                {
                     throw new ArgumentException("Template block definitions cannot contain null entries.", nameof(blocks));
-                }
 
-                if (
-                    _blockLookup.ContainsKey(
-                        definition.Name
-                    )
-                )
-                {
-                    throw new ArgumentException(
-                        "Duplicate template block definition '" + definition.Name + "'.",
-                        "blocks"
-                    );
-                }
+                if (_blockLookup.ContainsKey(definition.Name))
+                    throw new ArgumentException("Duplicate template block definition '" + definition.Name + "'.", nameof(blocks));
 
                 _blocks[index] = definition;
 
-                _blockLookup.Add(
-                    definition.Name,
-                    definition
-                );
+                _blockLookup.Add(definition.Name, definition);
             }
         }
 
@@ -260,14 +185,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateTagDefinition[_tags.Length];
-
-                Array.Copy(
-                    _tags,
-                    copy,
-                    _tags.Length
-                );
+                var copy = new TemplateTagDefinition[_tags.Length];
+                Array.Copy(_tags, copy, _tags.Length);
 
                 return copy;
             }
@@ -280,41 +199,15 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateBlockDefinition[_blocks.Length];
-
-                Array.Copy(
-                    _blocks,
-                    copy,
-                    _blocks.Length
-                );
+                var copy = new TemplateBlockDefinition[_blocks.Length];
+                Array.Copy(_blocks, copy, _blocks.Length);
 
                 return copy;
             }
         }
 
-        internal bool TryGetTag(
-            string name,
-            out TemplateTagDefinition definition
-        )
-        {
-            return
-                _tagLookup.TryGetValue(
-                    name,
-                    out definition
-                );
-        }
+        internal bool TryGetTag(string name, out TemplateTagDefinition definition) => _tagLookup.TryGetValue(name, out definition);
 
-        internal bool TryGetBlock(
-            string name,
-            out TemplateBlockDefinition definition
-        )
-        {
-            return
-                _blockLookup.TryGetValue(
-                    name,
-                    out definition
-                );
-        }
+        internal bool TryGetBlock(string name, out TemplateBlockDefinition definition) => _blockLookup.TryGetValue(name, out definition);
     }
 }
