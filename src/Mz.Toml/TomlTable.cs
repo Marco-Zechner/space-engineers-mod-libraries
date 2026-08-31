@@ -11,32 +11,22 @@ namespace Mz.Toml
     public sealed class TomlTable : TomlNode, IEnumerable<KeyValuePair<string, TomlNode>>
     {
         private readonly List<string> _keys;
-        private readonly IReadOnlyList<string> _readOnlyKeys;
         private readonly Dictionary<string, TomlNode> _values;
-        private TomlTableDefinitionKind _definitionKind;
 
         /// <summary>
         /// Initializes an empty programmatic TOML table.
         /// </summary>
-        public TomlTable()
-            : this(0, 0, TomlTableDefinitionKind.Programmatic)
-        {
-        }
+        public TomlTable() : this(0, 0, TomlTableDefinitionKind.Programmatic) { }
 
-        internal TomlTable(int line, int column, TomlTableDefinitionKind definitionKind)
-            : base(TomlNodeKind.Table, line, column)
+        internal TomlTable(int line, int column, TomlTableDefinitionKind definitionKind) : base(TomlNodeKind.Table, line, column)
         {
             _keys = new List<string>();
-            _readOnlyKeys = new TomlReadOnlyList<string>(_keys);
+            Keys = new TomlReadOnlyList<string>(_keys);
             _values = new Dictionary<string, TomlNode>(StringComparer.Ordinal);
-            _definitionKind = definitionKind;
+            DefinitionKind = definitionKind;
         }
 
-        internal TomlTableDefinitionKind DefinitionKind
-        {
-            get { return _definitionKind; }
-            set { _definitionKind = value; }
-        }
+        internal TomlTableDefinitionKind DefinitionKind { get; set; }
 
         /// <summary>
         /// Gets the number of entries in the table.
@@ -46,7 +36,7 @@ namespace Mz.Toml
         /// <summary>
         /// Gets the keys in deterministic insertion order.
         /// </summary>
-        public IReadOnlyList<string> Keys => _readOnlyKeys;
+        public IReadOnlyList<string> Keys { get; }
 
         /// <summary>
         /// Gets the node associated with a key.
@@ -98,9 +88,8 @@ namespace Mz.Toml
         /// </summary>
         public IEnumerator<KeyValuePair<string, TomlNode>> GetEnumerator()
         {
-            for (var i = 0; i < _keys.Count; i++)
+            foreach (var key in _keys)
             {
-                var key = _keys[i];
                 yield return new KeyValuePair<string, TomlNode>(key, _values[key]);
             }
         }

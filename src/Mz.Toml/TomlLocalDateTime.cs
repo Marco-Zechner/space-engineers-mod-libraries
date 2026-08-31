@@ -27,9 +27,7 @@ namespace Mz.Toml
         /// Fractional seconds are supplied as decimal digits without a dot.
         /// </summary>
         public TomlLocalDateTime(int year, int month, int day, int hour, int minute, int second, string fractionalSeconds)
-            : this(new TomlLocalDate(year, month, day), new TomlLocalTime(hour, minute, second, fractionalSeconds))
-        {
-        }
+            : this(new TomlLocalDate(year, month, day), new TomlLocalTime(hour, minute, second, fractionalSeconds)) { }
 
         /// <summary>
         /// Gets the local date component.

@@ -168,7 +168,7 @@ namespace Mz.Toml
         private void RequireKind(TomlValueKind expected)
         {
             if (ValueKind != expected)
-                throw new InvalidOperationException("TOML value is " + ValueKind + ", not " + expected + ".");
+                throw new InvalidOperationException($"TOML value is {ValueKind}, not {expected}.");
         }
     }
 }

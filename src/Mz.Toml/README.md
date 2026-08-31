@@ -79,11 +79,9 @@ TomlDocument document = Toml.Parse(
     "enabled = true\n"
 );
 
-string title =
-    ((TomlValue)document.Root["title"]).AsString();
+string title = ((TomlValue)document.Root["title"]).AsString();
 
-bool enabled =
-    ((TomlValue)document.Root["enabled"]).AsBoolean();
+bool enabled = ((TomlValue)document.Root["enabled"]).AsBoolean();
 ```
 
 Use `Toml.TryParse` when diagnostics should be handled without an exception:
@@ -95,14 +93,7 @@ if (!result.IsSuccess)
 {
     TomlDiagnostic diagnostic = result.Diagnostics[0];
 
-    Log(
-        diagnostic.Line
-        + ":"
-        + diagnostic.Column
-        + " "
-        + diagnostic.Message
-    );
-
+    Log($"{diagnostic.Line}:{diagnostic.Column} {diagnostic.Message}");
     return;
 }
 
@@ -143,15 +134,9 @@ Create nodes directly when TOML is being generated rather than parsed:
 ```csharp
 var document = new TomlDocument();
 
-document.Root.Set(
-    "title",
-    TomlValue.FromString("Example")
-);
+document.Root.Set("title", TomlValue.FromString("Example"));
 
-document.Root.Set(
-    "enabled",
-    TomlValue.FromBoolean(true)
-);
+document.Root.Set("enabled", TomlValue.FromBoolean(true));
 
 var ports = new TomlArray();
 

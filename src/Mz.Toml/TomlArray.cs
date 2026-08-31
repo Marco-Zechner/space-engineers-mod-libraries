@@ -11,31 +11,22 @@ namespace Mz.Toml
     public sealed class TomlArray : TomlNode, IEnumerable<TomlNode>
     {
         private readonly List<TomlNode> _items;
-        private readonly IReadOnlyList<TomlNode> _readOnlyItems;
-        private readonly TomlArrayDefinitionKind _definitionKind;
 
         /// <summary>
         /// Initializes an empty programmatic TOML array.
         /// </summary>
-        public TomlArray()
-            : this(0, 0, TomlArrayDefinitionKind.Static)
-        {
-        }
+        public TomlArray() : this(0, 0, TomlArrayDefinitionKind.Static) { }
 
-        internal TomlArray(int line, int column)
-            : this(line, column, TomlArrayDefinitionKind.Static)
-        {
-        }
+        internal TomlArray(int line, int column) : this(line, column, TomlArrayDefinitionKind.Static) { }
 
-        internal TomlArray(int line, int column, TomlArrayDefinitionKind definitionKind)
-            : base(TomlNodeKind.Array, line, column)
+        internal TomlArray(int line, int column, TomlArrayDefinitionKind definitionKind) : base(TomlNodeKind.Array, line, column)
         {
             _items = new List<TomlNode>();
-            _readOnlyItems = new TomlReadOnlyList<TomlNode>(_items);
-            _definitionKind = definitionKind;
+            Items = new TomlReadOnlyList<TomlNode>(_items);
+            DefinitionKind = definitionKind;
         }
 
-        internal TomlArrayDefinitionKind DefinitionKind => _definitionKind;
+        internal TomlArrayDefinitionKind DefinitionKind { get; }
 
         /// <summary>
         /// Gets the number of elements in the array.
@@ -45,7 +36,7 @@ namespace Mz.Toml
         /// <summary>
         /// Gets the array elements as a read-only ordered list.
         /// </summary>
-        public IReadOnlyList<TomlNode> Items => _readOnlyItems;
+        public IReadOnlyList<TomlNode> Items { get; }
 
         /// <summary>
         /// Gets the element at the specified zero-based index.

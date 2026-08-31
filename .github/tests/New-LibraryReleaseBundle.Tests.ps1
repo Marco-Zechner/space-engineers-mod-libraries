@@ -810,6 +810,13 @@ try {
     Assert-True `
         -Condition (
             $tomlEntries -contains
+            "Libraries/Mz.Toml/Guide.md"
+        ) `
+        -Message "Mz.Toml copy-paste guide is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
             "Libraries/Mz.Toml/LibraryVersionFile.cs"
         ) `
         -Message "Mz.Toml release metadata is missing from its archive."

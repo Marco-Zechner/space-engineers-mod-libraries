@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -18,6 +19,23 @@ public sealed class TomlModelTests
 
         table.Set("third", TomlValue.FromInteger(3));
         Assert.Equal(["second", "first", "third"], table.Keys);
+    }
+
+    [Fact]
+    public void Table_Enumeration_Rejects_Structural_Mutation()
+    {
+        var table = new TomlTable();
+
+        table.Set("first", TomlValue.FromInteger(1));
+        table.Set("second", TomlValue.FromInteger(2));
+
+        var enumerator = table.GetEnumerator();
+
+        Assert.True(enumerator.MoveNext());
+
+        table.Set("third", TomlValue.FromInteger(3));
+
+        Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
     }
 
     [Fact]

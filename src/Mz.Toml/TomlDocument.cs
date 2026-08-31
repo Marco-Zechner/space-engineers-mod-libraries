@@ -10,9 +10,7 @@ namespace Mz.Toml
         /// <summary>
         /// Initializes an empty TOML document.
         /// </summary>
-        public TomlDocument() : this(new TomlTable())
-        {
-        }
+        public TomlDocument() : this(new TomlTable()) { }
 
         /// <summary>
         /// Initializes a TOML document with the specified root table.
