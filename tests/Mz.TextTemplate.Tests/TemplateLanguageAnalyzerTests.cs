@@ -26,7 +26,7 @@ namespace Mz.TextTemplate.Tests
 
             var parse =
                 TemplateParser.Parse(
-                    "{{name}} {{tab 4}}"
+                    "{{name}} {{tab}}"
                 );
 
             var result =

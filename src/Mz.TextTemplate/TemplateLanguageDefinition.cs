@@ -31,6 +31,22 @@ namespace Mz.TextTemplate
             string name,
             TemplateTagRole role
         )
+            : this(
+                name,
+                role,
+                TemplateArgumentContract.NoArguments
+            )
+        {
+        }
+
+        /// <summary>
+        /// Creates a host tag definition with its argument contract.
+        /// </summary>
+        public TemplateTagDefinition(
+            string name,
+            TemplateTagRole role,
+            TemplateArgumentContract argumentContract
+        )
         {
             if (name == null)
                 throw new ArgumentNullException("name");
@@ -52,8 +68,12 @@ namespace Mz.TextTemplate
                 );
             }
 
+            if (argumentContract == null)
+                throw new ArgumentNullException("argumentContract");
+
             Name = name;
             Role = role;
+            ArgumentContract = argumentContract;
         }
 
         /// <summary>
@@ -65,6 +85,11 @@ namespace Mz.TextTemplate
         /// Gets whether the tag represents a value or command.
         /// </summary>
         public TemplateTagRole Role { get; private set; }
+
+        /// <summary>
+        /// Gets the argument contract.
+        /// </summary>
+        public TemplateArgumentContract ArgumentContract { get; private set; }
     }
 
     /// <summary>
@@ -78,6 +103,20 @@ namespace Mz.TextTemplate
         public TemplateBlockDefinition(
             string name
         )
+            : this(
+                name,
+                TemplateArgumentContract.NoArguments
+            )
+        {
+        }
+
+        /// <summary>
+        /// Creates a host block definition with its argument contract.
+        /// </summary>
+        public TemplateBlockDefinition(
+            string name,
+            TemplateArgumentContract argumentContract
+        )
         {
             if (name == null)
                 throw new ArgumentNullException("name");
@@ -88,13 +127,22 @@ namespace Mz.TextTemplate
                     "name"
                 );
 
+            if (argumentContract == null)
+                throw new ArgumentNullException("argumentContract");
+
             Name = name;
+            ArgumentContract = argumentContract;
         }
 
         /// <summary>
         /// Gets the exact ordinal block name understood by the host.
         /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Gets the argument contract.
+        /// </summary>
+        public TemplateArgumentContract ArgumentContract { get; private set; }
     }
 
     /// <summary>
@@ -266,13 +314,15 @@ namespace Mz.TextTemplate
                 );
         }
 
-        internal bool ContainsBlock(
-            string name
+        internal bool TryGetBlock(
+            string name,
+            out TemplateBlockDefinition definition
         )
         {
             return
-                _blockLookup.ContainsKey(
-                    name
+                _blockLookup.TryGetValue(
+                    name,
+                    out definition
                 );
         }
     }

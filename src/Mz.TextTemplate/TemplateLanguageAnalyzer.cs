@@ -22,6 +22,44 @@ namespace Mz.TextTemplate
         public const string UnknownBlockDiagnosticCode = "MZTT2002";
 
         /// <summary>
+        /// Diagnostic code reported for a positional argument beyond the
+        /// construct's declared positional argument count.
+        /// </summary>
+        public const string UnexpectedPositionalArgumentDiagnosticCode =
+            "MZTT2003";
+
+        /// <summary>
+        /// Diagnostic code reported for an undeclared named argument.
+        /// </summary>
+        public const string UnknownNamedArgumentDiagnosticCode = "MZTT2004";
+
+        /// <summary>
+        /// Diagnostic code reported when a named argument is supplied more
+        /// than once.
+        /// </summary>
+        public const string DuplicateNamedArgumentDiagnosticCode = "MZTT2005";
+
+        /// <summary>
+        /// Diagnostic code reported when a required positional argument is
+        /// omitted.
+        /// </summary>
+        public const string MissingRequiredPositionalArgumentDiagnosticCode =
+            "MZTT2006";
+
+        /// <summary>
+        /// Diagnostic code reported when a required named argument is omitted.
+        /// </summary>
+        public const string MissingRequiredNamedArgumentDiagnosticCode =
+            "MZTT2007";
+
+        /// <summary>
+        /// Diagnostic code reported when an argument's lexical value kind is
+        /// not accepted by its definition.
+        /// </summary>
+        public const string InvalidArgumentValueKindDiagnosticCode =
+            "MZTT2008";
+
+        /// <summary>
         /// Applies a host language definition to an existing parse result.
         /// Parser diagnostics are preserved and combined with language
         /// diagnostics in stable source order.
@@ -232,6 +270,14 @@ namespace Mz.TextTemplate
                     )
                 );
 
+                AnalyzeArguments(
+                    tag.Arguments,
+                    tag.NameSpan,
+                    definition.ArgumentContract,
+                    parserDiagnostics,
+                    diagnostics
+                );
+
                 return;
             }
 
@@ -264,12 +310,23 @@ namespace Mz.TextTemplate
                 return;
             }
 
+            TemplateBlockDefinition definition;
+
             if (
-                language.ContainsBlock(
-                    block.Name
+                language.TryGetBlock(
+                    block.Name,
+                    out definition
                 )
             )
             {
+                AnalyzeArguments(
+                    block.Arguments,
+                    block.OpenNameSpan,
+                    definition.ArgumentContract,
+                    parserDiagnostics,
+                    diagnostics
+                );
+
                 return;
             }
 
@@ -281,6 +338,217 @@ namespace Mz.TextTemplate
                     block.OpenNameSpan
                 )
             );
+        }
+
+        private static void AnalyzeArguments(
+            TemplateArgument[] arguments,
+            SourceSpan constructNameSpan,
+            TemplateArgumentContract contract,
+            TemplateDiagnostic[] parserDiagnostics,
+            IList<TemplateDiagnostic> diagnostics
+        )
+        {
+            int positionalIndex = 0;
+
+            var seenNamedArguments =
+                new Dictionary<string, bool>(
+                    StringComparer.Ordinal
+                );
+
+            for (
+                int index = 0;
+                index < arguments.Length;
+                index++
+            )
+            {
+                TemplatePositionalArgument positional =
+                    arguments[index]
+                    as TemplatePositionalArgument;
+
+                if (positional != null)
+                {
+                    if (
+                        positionalIndex
+                        >= contract.PositionalArgumentCount
+                    )
+                    {
+                        diagnostics.Add(
+                            new TemplateDiagnostic(
+                                UnexpectedPositionalArgumentDiagnosticCode,
+                                TemplateDiagnosticSeverity.Error,
+                                "Unexpected positional argument.",
+                                positional.Span
+                            )
+                        );
+                    }
+                    else
+                    {
+                        TemplatePositionalArgumentDefinition definition =
+                            contract.GetPositionalArgument(
+                                positionalIndex
+                            );
+
+                        if (
+                            positional.Value.Kind
+                            != TemplateArgumentValueKind.Missing
+                            && !definition.Allows(
+                                positional.Value.Kind
+                            )
+                        )
+                        {
+                            diagnostics.Add(
+                                new TemplateDiagnostic(
+                                    InvalidArgumentValueKindDiagnosticCode,
+                                    TemplateDiagnosticSeverity.Error,
+                                    "Positional argument uses an unsupported value kind.",
+                                    positional.Value.Span
+                                )
+                            );
+                        }
+                    }
+
+                    positionalIndex++;
+                    continue;
+                }
+
+                TemplateNamedArgument named =
+                    arguments[index]
+                    as TemplateNamedArgument;
+
+                if (named == null)
+                    continue;
+
+                if (
+                    named.Name.Length == 0
+                    || HasParserNameDiagnostic(
+                        parserDiagnostics,
+                        TemplateParser.InvalidArgumentNameDiagnosticCode,
+                        named.NameSpan
+                    )
+                )
+                {
+                    continue;
+                }
+
+                TemplateNamedArgumentDefinition namedDefinition;
+
+                if (
+                    !contract.TryGetNamedArgument(
+                        named.Name,
+                        out namedDefinition
+                    )
+                )
+                {
+                    diagnostics.Add(
+                        new TemplateDiagnostic(
+                            UnknownNamedArgumentDiagnosticCode,
+                            TemplateDiagnosticSeverity.Error,
+                            "Unknown named argument '" + named.Name + "'.",
+                            named.NameSpan
+                        )
+                    );
+
+                    continue;
+                }
+
+                if (
+                    seenNamedArguments.ContainsKey(
+                        named.Name
+                    )
+                )
+                {
+                    diagnostics.Add(
+                        new TemplateDiagnostic(
+                            DuplicateNamedArgumentDiagnosticCode,
+                            TemplateDiagnosticSeverity.Error,
+                            "Named argument '" + named.Name + "' is supplied more than once.",
+                            named.NameSpan
+                        )
+                    );
+
+                    continue;
+                }
+
+                seenNamedArguments.Add(
+                    named.Name,
+                    true
+                );
+
+                if (
+                    named.Value.Kind
+                    != TemplateArgumentValueKind.Missing
+                    && !namedDefinition.Allows(
+                        named.Value.Kind
+                    )
+                )
+                {
+                    diagnostics.Add(
+                        new TemplateDiagnostic(
+                            InvalidArgumentValueKindDiagnosticCode,
+                            TemplateDiagnosticSeverity.Error,
+                            "Named argument '" + named.Name + "' uses an unsupported value kind.",
+                            named.Value.Span
+                        )
+                    );
+                }
+            }
+
+            for (
+                int index = positionalIndex;
+                index < contract.PositionalArgumentCount;
+                index++
+            )
+            {
+                TemplatePositionalArgumentDefinition definition =
+                    contract.GetPositionalArgument(
+                        index
+                    );
+
+                if (!definition.Required)
+                    continue;
+
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        MissingRequiredPositionalArgumentDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Required positional argument "
+                        + (index + 1).ToString()
+                        + " is missing.",
+                        constructNameSpan
+                    )
+                );
+            }
+
+            for (
+                int index = 0;
+                index < contract.NamedArgumentCount;
+                index++
+            )
+            {
+                TemplateNamedArgumentDefinition definition =
+                    contract.GetNamedArgument(
+                        index
+                    );
+
+                if (
+                    !definition.Required
+                    || seenNamedArguments.ContainsKey(
+                        definition.Name
+                    )
+                )
+                {
+                    continue;
+                }
+
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        MissingRequiredNamedArgumentDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Required named argument '" + definition.Name + "' is missing.",
+                        constructNameSpan
+                    )
+                );
+            }
         }
 
         private static bool HasParserNameDiagnostic(
