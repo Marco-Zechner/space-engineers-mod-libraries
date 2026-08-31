@@ -15,7 +15,12 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Template tag delimited by "{{" and "}}".
         /// </summary>
-        Tag = 1
+        Tag = 1,
+
+        /// <summary>
+        /// Nested template block with opening and closing structural tags.
+        /// </summary>
+        Block = 2
     }
 
     /// <summary>
@@ -150,6 +155,139 @@ namespace Mz.TextTemplate
                     _arguments,
                     copy,
                     _arguments.Length
+                );
+
+                return copy;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a nested block such as "{{#first}}...{{/first}}".
+    /// Block names have no host-specific meaning to the parser.
+    /// </summary>
+    public sealed class TemplateBlockNode : TemplateNode
+    {
+        private readonly TemplateArgument[] _arguments;
+        private readonly TemplateNode[] _children;
+
+        /// <summary>
+        /// Creates a parsed template block.
+        /// </summary>
+        public TemplateBlockNode(
+            string name,
+            SourceSpan span,
+            SourceSpan openTagSpan,
+            SourceSpan openNameSpan,
+            SourceSpan closeTagSpan,
+            SourceSpan closeNameSpan,
+            bool hasClosingTag,
+            TemplateArgument[] arguments,
+            TemplateNode[] children
+        )
+            : base(TemplateNodeKind.Block, span)
+        {
+            if (name == null)
+                throw new ArgumentNullException("name");
+
+            if (arguments == null)
+                throw new ArgumentNullException("arguments");
+
+            if (children == null)
+                throw new ArgumentNullException("children");
+
+            Name = name;
+            OpenTagSpan = openTagSpan;
+            OpenNameSpan = openNameSpan;
+            CloseTagSpan = closeTagSpan;
+            CloseNameSpan = closeNameSpan;
+            HasClosingTag = hasClosingTag;
+
+            _arguments =
+                new TemplateArgument[arguments.Length];
+
+            Array.Copy(
+                arguments,
+                _arguments,
+                arguments.Length
+            );
+
+            _children =
+                new TemplateNode[children.Length];
+
+            Array.Copy(
+                children,
+                _children,
+                children.Length
+            );
+        }
+
+        /// <summary>
+        /// Gets the block name.
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// Gets the complete opening structural tag span.
+        /// </summary>
+        public SourceSpan OpenTagSpan { get; private set; }
+
+        /// <summary>
+        /// Gets the block-name span in the opening structural tag.
+        /// </summary>
+        public SourceSpan OpenNameSpan { get; private set; }
+
+        /// <summary>
+        /// Gets the complete closing structural tag span, or an empty span
+        /// at the recovery point when the closing tag is missing.
+        /// </summary>
+        public SourceSpan CloseTagSpan { get; private set; }
+
+        /// <summary>
+        /// Gets the block-name span in the closing structural tag, or an
+        /// empty span when the closing tag is missing.
+        /// </summary>
+        public SourceSpan CloseNameSpan { get; private set; }
+
+        /// <summary>
+        /// Gets whether a matching closing structural tag was parsed.
+        /// </summary>
+        public bool HasClosingTag { get; private set; }
+
+        /// <summary>
+        /// Gets a defensive copy of opening-block arguments.
+        /// </summary>
+        public TemplateArgument[] Arguments
+        {
+            get
+            {
+                var copy =
+                    new TemplateArgument[_arguments.Length];
+
+                Array.Copy(
+                    _arguments,
+                    copy,
+                    _arguments.Length
+                );
+
+                return copy;
+            }
+        }
+
+        /// <summary>
+        /// Gets a defensive copy of nested child nodes in source order.
+        /// </summary>
+        public TemplateNode[] Children
+        {
+            get
+            {
+                var copy =
+                    new TemplateNode[_children.Length];
+
+                Array.Copy(
+                    _children,
+                    copy,
+                    _children.Length
                 );
 
                 return copy;

@@ -49,7 +49,17 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Double-quoted string argument value.
         /// </summary>
-        StringValue = 8
+        StringValue = 8,
+
+        /// <summary>
+        /// Structural block marker "#" or "/".
+        /// </summary>
+        BlockMarker = 9,
+
+        /// <summary>
+        /// Name identifying an opening or closing block.
+        /// </summary>
+        BlockName = 10
     }
 
     /// <summary>

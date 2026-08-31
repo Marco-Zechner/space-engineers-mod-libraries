@@ -54,6 +54,33 @@ namespace Mz.TextTemplate
         public const string InvalidArgumentNameDiagnosticCode = "MZTT1008";
 
         /// <summary>
+        /// Diagnostic code reported for a structural block tag with no name.
+        /// </summary>
+        public const string EmptyBlockNameDiagnosticCode = "MZTT1009";
+
+        /// <summary>
+        /// Diagnostic code reported for an invalid block name.
+        /// </summary>
+        public const string InvalidBlockNameDiagnosticCode = "MZTT1010";
+
+        /// <summary>
+        /// Diagnostic code reported for a closing block without an open block.
+        /// </summary>
+        public const string UnexpectedClosingBlockDiagnosticCode = "MZTT1011";
+
+        /// <summary>
+        /// Diagnostic code reported when a closing block does not match the
+        /// currently open block.
+        /// </summary>
+        public const string MismatchedClosingBlockDiagnosticCode = "MZTT1012";
+
+        /// <summary>
+        /// Diagnostic code reported when an opening block reaches end of
+        /// source without a matching closing block.
+        /// </summary>
+        public const string UnclosedBlockDiagnosticCode = "MZTT1013";
+
+        /// <summary>
         /// Parses the supplied source while preserving exact source positions.
         /// Malformed input produces diagnostics instead of aborting parsing.
         /// </summary>
@@ -62,9 +89,17 @@ namespace Mz.TextTemplate
             if (source == null)
                 throw new ArgumentNullException("source");
 
-            var nodes = new List<TemplateNode>();
-            var diagnostics = new List<TemplateDiagnostic>();
-            var syntaxSpans = new List<TemplateSyntaxSpan>();
+            var rootNodes =
+                new List<TemplateNode>();
+
+            var blockStack =
+                new List<BlockFrame>();
+
+            var diagnostics =
+                new List<TemplateDiagnostic>();
+
+            var syntaxSpans =
+                new List<TemplateSyntaxSpan>();
 
             int index = 0;
             int literalStart = 0;
@@ -77,7 +112,10 @@ namespace Mz.TextTemplate
                         source,
                         literalStart,
                         index - literalStart,
-                        nodes,
+                        GetCurrentNodes(
+                            rootNodes,
+                            blockStack
+                        ),
                         syntaxSpans
                     );
 
@@ -110,7 +148,10 @@ namespace Mz.TextTemplate
                             )
                         );
 
-                        nodes.Add(
+                        GetCurrentNodes(
+                            rootNodes,
+                            blockStack
+                        ).Add(
                             new TemplateTextNode(
                                 source.Substring(tagStart),
                                 new SourceSpan(
@@ -138,14 +179,60 @@ namespace Mz.TextTemplate
                         break;
                     }
 
-                    ParseTag(
+                    int markerPosition =
+                        tagStart + 2;
+
+                    SkipWhitespace(
                         source,
-                        tagStart,
-                        close,
-                        nodes,
-                        diagnostics,
-                        syntaxSpans
+                        ref markerPosition,
+                        close
                     );
+
+                    if (
+                        markerPosition < close
+                        && source[markerPosition] == '#'
+                    )
+                    {
+                        ParseBlockOpen(
+                            source,
+                            tagStart,
+                            close,
+                            markerPosition,
+                            blockStack,
+                            diagnostics,
+                            syntaxSpans
+                        );
+                    }
+                    else if (
+                        markerPosition < close
+                        && source[markerPosition] == '/'
+                    )
+                    {
+                        ParseBlockClose(
+                            source,
+                            tagStart,
+                            close,
+                            markerPosition,
+                            rootNodes,
+                            blockStack,
+                            diagnostics,
+                            syntaxSpans
+                        );
+                    }
+                    else
+                    {
+                        ParseTag(
+                            source,
+                            tagStart,
+                            close,
+                            GetCurrentNodes(
+                                rootNodes,
+                                blockStack
+                            ),
+                            diagnostics,
+                            syntaxSpans
+                        );
+                    }
 
                     index = close + 2;
                     literalStart = index;
@@ -174,19 +261,560 @@ namespace Mz.TextTemplate
                 source,
                 literalStart,
                 source.Length - literalStart,
-                nodes,
+                GetCurrentNodes(
+                    rootNodes,
+                    blockStack
+                ),
                 syntaxSpans
+            );
+
+            FinalizeUnclosedBlocks(
+                source,
+                rootNodes,
+                blockStack,
+                diagnostics
+            );
+
+            SortDiagnosticsBySource(
+                diagnostics
             );
 
             return
                 new TemplateParseResult(
                     source,
-                    new TemplateDocument(nodes),
+                    new TemplateDocument(rootNodes),
                     diagnostics,
                     syntaxSpans
                 );
         }
 
+        private sealed class BlockFrame
+        {
+            public BlockFrame(
+                string name,
+                SourceSpan openTagSpan,
+                SourceSpan openNameSpan,
+                TemplateArgument[] arguments
+            )
+            {
+                Name = name;
+                OpenTagSpan = openTagSpan;
+                OpenNameSpan = openNameSpan;
+                Arguments = arguments;
+                Children = new List<TemplateNode>();
+            }
+
+            public string Name;
+            public SourceSpan OpenTagSpan;
+            public SourceSpan OpenNameSpan;
+            public TemplateArgument[] Arguments;
+            public List<TemplateNode> Children;
+        }
+
+        private static IList<TemplateNode> GetCurrentNodes(
+            IList<TemplateNode> rootNodes,
+            IList<BlockFrame> blockStack
+        )
+        {
+            if (blockStack.Count == 0)
+                return rootNodes;
+
+            return
+                blockStack[
+                    blockStack.Count - 1
+                ].Children;
+        }
+
+        private static void ParseBlockOpen(
+            string source,
+            int tagStart,
+            int close,
+            int markerPosition,
+            IList<BlockFrame> blockStack,
+            IList<TemplateDiagnostic> diagnostics,
+            IList<TemplateSyntaxSpan> syntaxSpans
+        )
+        {
+            var markerSpan =
+                new SourceSpan(
+                    markerPosition,
+                    1
+                );
+
+            syntaxSpans.Add(
+                new TemplateSyntaxSpan(
+                    TemplateSyntaxKind.BlockMarker,
+                    markerSpan
+                )
+            );
+
+            int position =
+                markerPosition + 1;
+
+            SkipWhitespace(
+                source,
+                ref position,
+                close
+            );
+
+            int nameStart = position;
+
+            while (
+                position < close
+                && !char.IsWhiteSpace(source[position])
+            )
+            {
+                position++;
+            }
+
+            int nameLength =
+                position - nameStart;
+
+            string name =
+                nameLength == 0
+                    ? string.Empty
+                    : source.Substring(
+                        nameStart,
+                        nameLength
+                    );
+
+            var openTagSpan =
+                new SourceSpan(
+                    tagStart,
+                    close + 2 - tagStart
+                );
+
+            var nameSpan =
+                new SourceSpan(
+                    nameStart,
+                    nameLength
+                );
+
+            ValidateBlockName(
+                name,
+                nameSpan,
+                openTagSpan,
+                diagnostics,
+                syntaxSpans
+            );
+
+            var arguments =
+                new List<TemplateArgument>();
+
+            while (position < close)
+            {
+                SkipWhitespace(
+                    source,
+                    ref position,
+                    close
+                );
+
+                if (position >= close)
+                    break;
+
+                ParseArgument(
+                    source,
+                    ref position,
+                    close,
+                    arguments,
+                    diagnostics,
+                    syntaxSpans
+                );
+            }
+
+            syntaxSpans.Add(
+                new TemplateSyntaxSpan(
+                    TemplateSyntaxKind.Delimiter,
+                    new SourceSpan(close, 2)
+                )
+            );
+
+            if (nameLength == 0)
+                return;
+
+            blockStack.Add(
+                new BlockFrame(
+                    name,
+                    openTagSpan,
+                    nameSpan,
+                    arguments.ToArray()
+                )
+            );
+        }
+
+        private static void ParseBlockClose(
+            string source,
+            int tagStart,
+            int close,
+            int markerPosition,
+            IList<TemplateNode> rootNodes,
+            IList<BlockFrame> blockStack,
+            IList<TemplateDiagnostic> diagnostics,
+            IList<TemplateSyntaxSpan> syntaxSpans
+        )
+        {
+            var markerSpan =
+                new SourceSpan(
+                    markerPosition,
+                    1
+                );
+
+            syntaxSpans.Add(
+                new TemplateSyntaxSpan(
+                    TemplateSyntaxKind.BlockMarker,
+                    markerSpan
+                )
+            );
+
+            int nameStart =
+                markerPosition + 1;
+
+            while (
+                nameStart < close
+                && char.IsWhiteSpace(source[nameStart])
+            )
+            {
+                nameStart++;
+            }
+
+            int nameEnd = close;
+
+            while (
+                nameEnd > nameStart
+                && char.IsWhiteSpace(source[nameEnd - 1])
+            )
+            {
+                nameEnd--;
+            }
+
+            int nameLength =
+                nameEnd - nameStart;
+
+            string name =
+                nameLength == 0
+                    ? string.Empty
+                    : source.Substring(
+                        nameStart,
+                        nameLength
+                    );
+
+            var closeTagSpan =
+                new SourceSpan(
+                    tagStart,
+                    close + 2 - tagStart
+                );
+
+            var nameSpan =
+                new SourceSpan(
+                    nameStart,
+                    nameLength
+                );
+
+            ValidateBlockName(
+                name,
+                nameSpan,
+                closeTagSpan,
+                diagnostics,
+                syntaxSpans
+            );
+
+            syntaxSpans.Add(
+                new TemplateSyntaxSpan(
+                    TemplateSyntaxKind.Delimiter,
+                    new SourceSpan(close, 2)
+                )
+            );
+
+            if (nameLength == 0)
+                return;
+
+            if (blockStack.Count == 0)
+            {
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        UnexpectedClosingBlockDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Closing block '" + name + "' has no open block.",
+                        closeTagSpan
+                    )
+                );
+
+                return;
+            }
+
+            int matchingIndex =
+                blockStack.Count - 1;
+
+            while (
+                matchingIndex >= 0
+                && !string.Equals(
+                    blockStack[matchingIndex].Name,
+                    name,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                matchingIndex--;
+            }
+
+            if (matchingIndex < 0)
+            {
+                BlockFrame currentFrame =
+                    blockStack[
+                        blockStack.Count - 1
+                    ];
+
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        MismatchedClosingBlockDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Closing block '" + name + "' does not match open block '" + currentFrame.Name + "'.",
+                        nameSpan
+                    )
+                );
+
+                return;
+            }
+
+            while (
+                blockStack.Count - 1
+                > matchingIndex
+            )
+            {
+                int unclosedIndex =
+                    blockStack.Count - 1;
+
+                BlockFrame unclosedFrame =
+                    blockStack[
+                        unclosedIndex
+                    ];
+
+                blockStack.RemoveAt(
+                    unclosedIndex
+                );
+
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        UnclosedBlockDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Block '" + unclosedFrame.Name + "' is missing its closing tag.",
+                        unclosedFrame.OpenTagSpan
+                    )
+                );
+
+                var recoverySpan =
+                    new SourceSpan(
+                        tagStart,
+                        0
+                    );
+
+                var recoveredBlock =
+                    new TemplateBlockNode(
+                        unclosedFrame.Name,
+                        new SourceSpan(
+                            unclosedFrame.OpenTagSpan.Start,
+                            tagStart
+                            - unclosedFrame.OpenTagSpan.Start
+                        ),
+                        unclosedFrame.OpenTagSpan,
+                        unclosedFrame.OpenNameSpan,
+                        recoverySpan,
+                        recoverySpan,
+                        false,
+                        unclosedFrame.Arguments,
+                        unclosedFrame.Children.ToArray()
+                    );
+
+                GetCurrentNodes(
+                    rootNodes,
+                    blockStack
+                ).Add(
+                    recoveredBlock
+                );
+            }
+
+            BlockFrame frame =
+                blockStack[
+                    blockStack.Count - 1
+                ];
+
+            blockStack.RemoveAt(
+                blockStack.Count - 1
+            );
+
+            var block =
+                new TemplateBlockNode(
+                    frame.Name,
+                    new SourceSpan(
+                        frame.OpenTagSpan.Start,
+                        closeTagSpan.End
+                        - frame.OpenTagSpan.Start
+                    ),
+                    frame.OpenTagSpan,
+                    frame.OpenNameSpan,
+                    closeTagSpan,
+                    nameSpan,
+                    true,
+                    frame.Arguments,
+                    frame.Children.ToArray()
+                );
+
+            GetCurrentNodes(
+                rootNodes,
+                blockStack
+            ).Add(block);
+        }
+
+        private static bool ValidateBlockName(
+            string name,
+            SourceSpan nameSpan,
+            SourceSpan tagSpan,
+            IList<TemplateDiagnostic> diagnostics,
+            IList<TemplateSyntaxSpan> syntaxSpans
+        )
+        {
+            if (name.Length == 0)
+            {
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        EmptyBlockNameDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Block name cannot be empty.",
+                        tagSpan
+                    )
+                );
+
+                return false;
+            }
+
+            syntaxSpans.Add(
+                new TemplateSyntaxSpan(
+                    TemplateSyntaxKind.BlockName,
+                    nameSpan
+                )
+            );
+
+            int invalidOffset =
+                FindInvalidNameOffset(name);
+
+            if (invalidOffset < 0)
+                return true;
+
+            diagnostics.Add(
+                new TemplateDiagnostic(
+                    InvalidBlockNameDiagnosticCode,
+                    TemplateDiagnosticSeverity.Error,
+                    "Block names must use dot-separated identifiers containing letters, digits, '_', or '-'.",
+                    new SourceSpan(
+                        nameSpan.Start + invalidOffset,
+                        1
+                    )
+                )
+            );
+
+            return false;
+        }
+
+        private static void FinalizeUnclosedBlocks(
+            string source,
+            IList<TemplateNode> rootNodes,
+            IList<BlockFrame> blockStack,
+            IList<TemplateDiagnostic> diagnostics
+        )
+        {
+            for (
+                int index = 0;
+                index < blockStack.Count;
+                index++
+            )
+            {
+                BlockFrame frame =
+                    blockStack[index];
+
+                diagnostics.Add(
+                    new TemplateDiagnostic(
+                        UnclosedBlockDiagnosticCode,
+                        TemplateDiagnosticSeverity.Error,
+                        "Block '" + frame.Name + "' is missing its closing tag.",
+                        frame.OpenTagSpan
+                    )
+                );
+            }
+
+            while (blockStack.Count > 0)
+            {
+                int frameIndex =
+                    blockStack.Count - 1;
+
+                BlockFrame frame =
+                    blockStack[frameIndex];
+
+                blockStack.RemoveAt(
+                    frameIndex
+                );
+
+                var recoverySpan =
+                    new SourceSpan(
+                        source.Length,
+                        0
+                    );
+
+                var block =
+                    new TemplateBlockNode(
+                        frame.Name,
+                        new SourceSpan(
+                            frame.OpenTagSpan.Start,
+                            source.Length
+                            - frame.OpenTagSpan.Start
+                        ),
+                        frame.OpenTagSpan,
+                        frame.OpenNameSpan,
+                        recoverySpan,
+                        recoverySpan,
+                        false,
+                        frame.Arguments,
+                        frame.Children.ToArray()
+                    );
+
+                GetCurrentNodes(
+                    rootNodes,
+                    blockStack
+                ).Add(block);
+            }
+        }
+
+        private static void SortDiagnosticsBySource(
+            IList<TemplateDiagnostic> diagnostics
+        )
+        {
+            for (
+                int index = 1;
+                index < diagnostics.Count;
+                index++
+            )
+            {
+                TemplateDiagnostic current =
+                    diagnostics[index];
+
+                int destination =
+                    index - 1;
+
+                while (
+                    destination >= 0
+                    && diagnostics[destination].Span.Start
+                    > current.Span.Start
+                )
+                {
+                    diagnostics[destination + 1] =
+                        diagnostics[destination];
+
+                    destination--;
+                }
+
+                diagnostics[destination + 1] =
+                    current;
+            }
+        }
         private static void ParseTag(
             string source,
             int tagStart,
