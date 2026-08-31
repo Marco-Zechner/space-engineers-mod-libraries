@@ -127,10 +127,7 @@ public sealed class TomlEncodingTests
     [Fact]
     public void Parse_Bytes_Throws_TomlParseException_For_Invalid_Utf8()
     {
-        byte[] bytes =
-        [
-            0xC3
-        ];
+        byte[] bytes = [0xC3];
 
         var exception = Assert.Throws<TomlParseException>(() => Toml.Parse(bytes));
 

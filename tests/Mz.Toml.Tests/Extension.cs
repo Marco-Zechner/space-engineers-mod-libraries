@@ -12,3 +12,4 @@ public static class Extension
     public static TomlValue AsValue(this TomlTable table, string key) => Assert.IsType<TomlValue>(table[key]);
 
 }
+ 

@@ -17,11 +17,8 @@ public sealed class TomlNumericParsingTests
             """);
 
         Assert.Equal(long.MaxValue, document.Root.AsValue("max").AsInteger());
-
         Assert.Equal(long.MinValue, document.Root.AsValue("min").AsInteger());
-
         Assert.Equal(42L, document.Root.AsValue("plus").AsInteger());
-
         Assert.Equal(-42L, document.Root.AsValue("minus").AsInteger());
     }
 
@@ -37,11 +34,8 @@ public sealed class TomlNumericParsingTests
             """);
 
         Assert.Equal(3735928559L, document.Root.AsValue("hex").AsInteger());
-
         Assert.Equal(501L, document.Root.AsValue("oct").AsInteger());
-
         Assert.Equal(5L, document.Root.AsValue("bin").AsInteger());
-
         Assert.Equal(9007199254740991L, document.Root.AsValue("decimal").AsInteger());
     }
 
@@ -56,9 +50,7 @@ public sealed class TomlNumericParsingTests
             """);
 
         Assert.Equal(2439L, document.Root.AsValue("hex").AsInteger());
-
         Assert.Equal(493L, document.Root.AsValue("oct").AsInteger());
-
         Assert.Equal(5L, document.Root.AsValue("bin").AsInteger());
     }
 
@@ -114,15 +106,10 @@ public sealed class TomlNumericParsingTests
             """);
 
         Assert.Equal(3.1415, document.Root.AsValue("fraction").AsFloat());
-
         Assert.Equal(0.03, document.Root.AsValue("lower").AsFloat());
-
         Assert.Equal(300.0, document.Root.AsValue("upper").AsFloat());
-
         Assert.Equal(-310.0, document.Root.AsValue("mixed").AsFloat());
-
         Assert.Equal(3141.5927, document.Root.AsValue("underscores").AsFloat());
-
         Assert.Equal(3.0e14, document.Root.AsValue("expUnderscore").AsFloat());
     }
 
@@ -156,15 +143,10 @@ public sealed class TomlNumericParsingTests
             """);
 
         Assert.True(double.IsPositiveInfinity(document.Root.AsValue("inf").AsFloat()));
-
         Assert.True(double.IsPositiveInfinity(document.Root.AsValue("plusInf").AsFloat()));
-
         Assert.True(double.IsNegativeInfinity(document.Root.AsValue("minusInf").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("nan").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("plusNan").AsFloat()));
-
         Assert.True(double.IsNaN(document.Root.AsValue("minusNan").AsFloat()));
     }
 
@@ -188,7 +170,6 @@ public sealed class TomlNumericParsingTests
             """);
 
         AssertNegativeZero(document.Root.AsValue("fraction").AsFloat());
-
         AssertNegativeZero(document.Root.AsValue("exponent").AsFloat());
     }
 

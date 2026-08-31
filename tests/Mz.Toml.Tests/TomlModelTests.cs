@@ -29,12 +29,10 @@ public sealed class TomlModelTests
         table.Set("first", TomlValue.FromInteger(1));
         table.Set("second", TomlValue.FromInteger(2));
 
-        var enumerator = table.GetEnumerator();
+        using var enumerator = table.GetEnumerator();
 
         Assert.True(enumerator.MoveNext());
-
         table.Set("third", TomlValue.FromInteger(3));
-
         Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
     }
 
