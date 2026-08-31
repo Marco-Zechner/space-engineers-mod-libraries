@@ -59,7 +59,17 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Name identifying an opening or closing block.
         /// </summary>
-        BlockName = 10
+        BlockName = 10,
+
+        /// <summary>
+        /// Name of a tag defined by the host as a value.
+        /// </summary>
+        ValueName = 11,
+
+        /// <summary>
+        /// Name of a tag defined by the host as a command.
+        /// </summary>
+        CommandName = 12
     }
 
     /// <summary>
