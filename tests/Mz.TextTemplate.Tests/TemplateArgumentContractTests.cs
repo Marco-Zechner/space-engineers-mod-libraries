@@ -505,6 +505,27 @@ namespace Mz.TextTemplate.Tests
             );
         }
 
+        [Theory]
+        [InlineData("1limit")]
+        [InlineData("bad/name")]
+        [InlineData("bad.name")]
+        [InlineData("bad name")]
+        public void NamedArgumentDefinition_InvalidName_IsRejected(string name)
+        {
+            var exception = Assert.Throws<ArgumentException>(
+                () => new TemplateNamedArgumentDefinition(
+                    name,
+                    false,
+                    new[]
+                    {
+                        TemplateArgumentValueKind.Number
+                    }
+                )
+            );
+
+            Assert.Equal("name", exception.ParamName);
+        }
+
         [Fact]
         public void TagDefinition_NullArgumentContract_IsRejected()
         {

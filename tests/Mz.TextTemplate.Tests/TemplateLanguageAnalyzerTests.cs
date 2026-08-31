@@ -304,6 +304,36 @@ namespace Mz.TextTemplate.Tests
             );
         }
 
+        [Theory]
+        [InlineData("1name")]
+        [InlineData("rank..server")]
+        [InlineData("rank.")]
+        [InlineData("rank/server")]
+        [InlineData("bad name")]
+        public void TagDefinition_InvalidName_IsRejected(string name)
+        {
+            var exception = Assert.Throws<ArgumentException>(
+                () => new TemplateTagDefinition(name, TemplateTagRole.Value)
+            );
+
+            Assert.Equal("name", exception.ParamName);
+        }
+
+        [Theory]
+        [InlineData("1block")]
+        [InlineData("group..nested")]
+        [InlineData("group.")]
+        [InlineData("group/nested")]
+        [InlineData("bad name")]
+        public void BlockDefinition_InvalidName_IsRejected(string name)
+        {
+            var exception = Assert.Throws<ArgumentException>(
+                () => new TemplateBlockDefinition(name)
+            );
+
+            Assert.Equal("name", exception.ParamName);
+        }
+
         [Fact]
         public void TagDefinition_UnsupportedRole_IsRejected()
         {

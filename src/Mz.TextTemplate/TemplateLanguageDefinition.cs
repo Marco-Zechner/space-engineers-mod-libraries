@@ -57,6 +57,12 @@ namespace Mz.TextTemplate
                     "name"
                 );
 
+            if (TemplateNameRules.FindInvalidConstructNameOffset(name) >= 0)
+                throw new ArgumentException(
+                    "Template tag definition name is not syntactically valid.",
+                    "name"
+                );
+
             if (
                 role != TemplateTagRole.Value
                 && role != TemplateTagRole.Command
@@ -124,6 +130,12 @@ namespace Mz.TextTemplate
             if (name.Length == 0)
                 throw new ArgumentException(
                     "Template block definition name cannot be empty.",
+                    "name"
+                );
+
+            if (TemplateNameRules.FindInvalidConstructNameOffset(name) >= 0)
+                throw new ArgumentException(
+                    "Template block definition name is not syntactically valid.",
                     "name"
                 );
 

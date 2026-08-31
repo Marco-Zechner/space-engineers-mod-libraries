@@ -93,6 +93,14 @@ namespace Mz.TextTemplate
                 );
             }
 
+            if (TemplateNameRules.FindInvalidArgumentNameOffset(name) >= 0)
+            {
+                throw new ArgumentException(
+                    "Template named argument definition name is not syntactically valid.",
+                    "name"
+                );
+            }
+
             _allowedValueKinds =
                 TemplateArgumentValueKindRules.CopyAndValidate(
                     allowedValueKinds,
