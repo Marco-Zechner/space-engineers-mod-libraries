@@ -15,6 +15,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | `Mz.Networking` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.1.1) | [Guide](src/Mz.SemanticVersioning/README.md) |
 | `Mz.TextTemplate` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.TextTemplate/0.1.0) | [Guide](src/Mz.TextTemplate/README.md) |
+| `Mz.Toml` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.1.0) | [Guide](src/Mz.Toml/README.md) |
 
 ## Latest changes
 
@@ -53,6 +54,15 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 - Added recoverable template parsing with exact source spans, arguments, and nested blocks.
 - Added host-defined language analysis, semantic syntax classifications, and strict argument contracts.
 - Added package documentation and Space Engineers source-copy validation.
+
+### Mz.Toml
+
+- Latest stable release: [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.1.0)
+- Published the initial strict TOML 1.0 source library.
+- Added parsing, diagnostics, a mutable document model, and deterministic canonical writing.
+- Added strict UTF-8 byte parsing and complete pinned TOML 1.0 valid/invalid corpus validation.
+- Added permanent Space Engineers C# 6 source-copy validation.
+- Adopted the shared Mz.SemanticVersioning package metadata model.
 
 ## Release format
 
