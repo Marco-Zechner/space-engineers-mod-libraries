@@ -57,13 +57,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template argument value.
         /// </summary>
-        internal TemplateArgumentValue(
-            TemplateArgumentValueKind kind,
-            string rawText,
-            string text,
-            SourceSpan span,
-            SourceSpan contentSpan
-        )
+        internal TemplateArgumentValue(TemplateArgumentValueKind kind, string rawText, string text, SourceSpan span, SourceSpan contentSpan)
         {
             if (rawText == null)
                 throw new ArgumentNullException(nameof(rawText));
@@ -114,11 +108,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a parsed template argument.
         /// </summary>
-        internal TemplateArgument(
-            TemplateArgumentKind kind,
-            SourceSpan span,
-            TemplateArgumentValue value
-        )
+        internal TemplateArgument(TemplateArgumentKind kind, SourceSpan span, TemplateArgumentValue value)
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -153,11 +143,7 @@ namespace Mz.TextTemplate
         /// Creates a positional template argument.
         /// </summary>
         internal TemplatePositionalArgument(TemplateArgumentValue value)
-            : base(
-                TemplateArgumentKind.Positional,
-                value == null ? new SourceSpan(0, 0) : value.Span,
-                value
-            )
+            : base(TemplateArgumentKind.Positional, value == null ? new SourceSpan(0, 0) : value.Span, value)
         {
         }
     }
@@ -170,18 +156,8 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a named template argument.
         /// </summary>
-        internal TemplateNamedArgument(
-            string name,
-            SourceSpan nameSpan,
-            SourceSpan equalsSpan,
-            TemplateArgumentValue value,
-            SourceSpan span
-        )
-            : base(
-                TemplateArgumentKind.Named,
-                span,
-                value
-            )
+        internal TemplateNamedArgument(string name, SourceSpan nameSpan, SourceSpan equalsSpan, TemplateArgumentValue value, SourceSpan span)
+            : base(TemplateArgumentKind.Named, span, value)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));

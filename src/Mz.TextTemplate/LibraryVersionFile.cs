@@ -25,14 +25,12 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Gets the version string.
         /// </summary>
-        public static string VersionString =>
-            Major + "." + Minor + "." + Patch;
+        public static string VersionString => Major + "." + Minor + "." + Patch;
 
         /// <summary>
         /// Gets the complete changelog ordered from newest to oldest.
         /// </summary>
-        public static Changelog Changelog { get; } =
-            new Changelog(
+        public static Changelog Changelog { get; } = new Changelog(
                 VersionString,
                 new[]
                 {

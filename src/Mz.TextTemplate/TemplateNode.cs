@@ -31,10 +31,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template node with its kind and exact source span.
         /// </summary>
-        internal TemplateNode(
-            TemplateNodeKind kind,
-            SourceSpan span
-        )
+        internal TemplateNode(TemplateNodeKind kind, SourceSpan span)
         {
             Kind = kind;
             Span = span;
@@ -59,10 +56,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a literal text node.
         /// </summary>
-        internal TemplateTextNode(
-            string text,
-            SourceSpan span
-        )
+        internal TemplateTextNode(string text, SourceSpan span)
             : base(TemplateNodeKind.Text, span)
         {
             if (text == null)
@@ -87,29 +81,15 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a template tag node without arguments.
         /// </summary>
-        internal TemplateTagNode(
-            string name,
-            SourceSpan span,
-            SourceSpan nameSpan
-        )
-            : this(
-                name,
-                span,
-                nameSpan,
-                new TemplateArgument[0]
-            )
+        internal TemplateTagNode(string name, SourceSpan span, SourceSpan nameSpan)
+            : this(name, span, nameSpan, new TemplateArgument[0])
         {
         }
 
         /// <summary>
         /// Creates a template tag node with parsed arguments.
         /// </summary>
-        internal TemplateTagNode(
-            string name,
-            SourceSpan span,
-            SourceSpan nameSpan,
-            TemplateArgument[] arguments
-        )
+        internal TemplateTagNode(string name, SourceSpan span, SourceSpan nameSpan, TemplateArgument[] arguments)
             : base(TemplateNodeKind.Tag, span)
         {
             if (name == null)
@@ -121,14 +101,8 @@ namespace Mz.TextTemplate
             Name = name;
             NameSpan = nameSpan;
 
-            _arguments =
-                new TemplateArgument[arguments.Length];
-
-            Array.Copy(
-                arguments,
-                _arguments,
-                arguments.Length
-            );
+            _arguments = new TemplateArgument[arguments.Length];
+            Array.Copy(arguments, _arguments, arguments.Length);
         }
 
         /// <summary>
@@ -148,14 +122,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateArgument[_arguments.Length];
-
-                Array.Copy(
-                    _arguments,
-                    copy,
-                    _arguments.Length
-                );
+                var copy = new TemplateArgument[_arguments.Length];
+                Array.Copy(_arguments, copy, _arguments.Length);
 
                 return copy;
             }
@@ -184,8 +152,7 @@ namespace Mz.TextTemplate
             bool hasClosingTag,
             TemplateArgument[] arguments,
             TemplateNode[] children
-        )
-            : base(TemplateNodeKind.Block, span)
+        ) : base(TemplateNodeKind.Block, span)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -203,23 +170,11 @@ namespace Mz.TextTemplate
             CloseNameSpan = closeNameSpan;
             HasClosingTag = hasClosingTag;
 
-            _arguments =
-                new TemplateArgument[arguments.Length];
+            _arguments = new TemplateArgument[arguments.Length];
+            Array.Copy(arguments, _arguments, arguments.Length);
 
-            Array.Copy(
-                arguments,
-                _arguments,
-                arguments.Length
-            );
-
-            _children =
-                new TemplateNode[children.Length];
-
-            Array.Copy(
-                children,
-                _children,
-                children.Length
-            );
+            _children = new TemplateNode[children.Length];
+            Array.Copy(children, _children, children.Length);
         }
 
         /// <summary>
@@ -261,14 +216,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateArgument[_arguments.Length];
-
-                Array.Copy(
-                    _arguments,
-                    copy,
-                    _arguments.Length
-                );
+                var copy = new TemplateArgument[_arguments.Length];
+                Array.Copy(_arguments, copy, _arguments.Length);
 
                 return copy;
             }
@@ -281,14 +230,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateNode[_children.Length];
-
-                Array.Copy(
-                    _children,
-                    copy,
-                    _children.Length
-                );
+                var copy = new TemplateNode[_children.Length];
+                Array.Copy(_children, copy, _children.Length);
 
                 return copy;
             }

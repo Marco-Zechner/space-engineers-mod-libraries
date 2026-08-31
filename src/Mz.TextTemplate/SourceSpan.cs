@@ -39,34 +39,22 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Gets the exclusive zero-based source offset at which the span ends.
         /// </summary>
-        public int End
-        {
-            get { return Start + Length; }
-        }
+        public int End => Start + Length;
 
         /// <summary>
         /// Returns whether the supplied source offset lies inside this span.
         /// </summary>
-        public bool Contains(int offset)
-        {
-            return offset >= Start && offset < End;
-        }
+        public bool Contains(int offset) => offset >= Start && offset < End;
 
         /// <summary>
         /// Returns whether another source span has the same start and length.
         /// </summary>
-        public bool Equals(SourceSpan other)
-        {
-            return Start == other.Start && Length == other.Length;
-        }
+        public bool Equals(SourceSpan other) => Start == other.Start && Length == other.Length;
 
         /// <summary>
         /// Returns whether another object is an equal source span.
         /// </summary>
-        public override bool Equals(object obj)
-        {
-            return obj is SourceSpan && Equals((SourceSpan)obj);
-        }
+        public override bool Equals(object obj) => obj is SourceSpan && Equals((SourceSpan)obj);
 
         /// <summary>
         /// Returns a hash code derived from the span start and length.
@@ -82,25 +70,16 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Returns the span using half-open range notation.
         /// </summary>
-        public override string ToString()
-        {
-            return "[" + Start + ".." + End + ")";
-        }
+        public override string ToString() => "[" + Start + ".." + End + ")";
 
         /// <summary>
         /// Returns whether two source spans are equal.
         /// </summary>
-        public static bool operator ==(SourceSpan left, SourceSpan right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(SourceSpan left, SourceSpan right) => left.Equals(right);
 
         /// <summary>
         /// Returns whether two source spans are different.
         /// </summary>
-        public static bool operator !=(SourceSpan left, SourceSpan right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(SourceSpan left, SourceSpan right) => !left.Equals(right);
     }
 }

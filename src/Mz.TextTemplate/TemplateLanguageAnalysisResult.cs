@@ -12,11 +12,7 @@ namespace Mz.TextTemplate
         private readonly TemplateDiagnostic[] _diagnostics;
         private readonly TemplateSyntaxSpan[] _syntaxSpans;
 
-        internal TemplateLanguageAnalysisResult(
-            TemplateParseResult parseResult,
-            IList<TemplateDiagnostic> diagnostics,
-            IList<TemplateSyntaxSpan> syntaxSpans
-        )
+        internal TemplateLanguageAnalysisResult(TemplateParseResult parseResult, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             if (parseResult == null)
                 throw new ArgumentNullException(nameof(parseResult));
@@ -29,31 +25,15 @@ namespace Mz.TextTemplate
 
             ParseResult = parseResult;
 
-            _diagnostics =
-                new TemplateDiagnostic[diagnostics.Count];
+            _diagnostics = new TemplateDiagnostic[diagnostics.Count];
 
-            for (
-                int index = 0;
-                index < diagnostics.Count;
-                index++
-            )
-            {
-                _diagnostics[index] =
-                    diagnostics[index];
-            }
+            for (int index = 0; index < diagnostics.Count; index++)
+                _diagnostics[index] = diagnostics[index];
 
-            _syntaxSpans =
-                new TemplateSyntaxSpan[syntaxSpans.Count];
+            _syntaxSpans = new TemplateSyntaxSpan[syntaxSpans.Count];
 
-            for (
-                int index = 0;
-                index < syntaxSpans.Count;
-                index++
-            )
-            {
-                _syntaxSpans[index] =
-                    syntaxSpans[index];
-            }
+            for (int index = 0; index < syntaxSpans.Count; index++)
+                _syntaxSpans[index] = syntaxSpans[index];
         }
 
         /// <summary>
@@ -64,18 +44,12 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Gets the exact template source supplied to the parser.
         /// </summary>
-        public string Source
-        {
-            get { return ParseResult.Source; }
-        }
+        public string Source => ParseResult.Source;
 
         /// <summary>
         /// Gets the parsed template document.
         /// </summary>
-        public TemplateDocument Document
-        {
-            get { return ParseResult.Document; }
-        }
+        public TemplateDocument Document => ParseResult.Document;
 
         /// <summary>
         /// Gets parser and host-language diagnostics in stable source order.
@@ -84,14 +58,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateDiagnostic[_diagnostics.Length];
-
-                Array.Copy(
-                    _diagnostics,
-                    copy,
-                    _diagnostics.Length
-                );
+                var copy = new TemplateDiagnostic[_diagnostics.Length];
+                Array.Copy(_diagnostics, copy, _diagnostics.Length);
 
                 return copy;
             }
@@ -105,14 +73,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateSyntaxSpan[_syntaxSpans.Length];
-
-                Array.Copy(
-                    _syntaxSpans,
-                    copy,
-                    _syntaxSpans.Length
-                );
+                var copy = new TemplateSyntaxSpan[_syntaxSpans.Length];
+                Array.Copy(_syntaxSpans, copy, _syntaxSpans.Length);
 
                 return copy;
             }
@@ -125,19 +87,10 @@ namespace Mz.TextTemplate
         {
             get
             {
-                for (
-                    int index = 0;
-                    index < _diagnostics.Length;
-                    index++
-                )
+                for (int index = 0; index < _diagnostics.Length; index++)
                 {
-                    if (
-                        _diagnostics[index].Severity
-                        == TemplateDiagnosticSeverity.Error
-                    )
-                    {
+                    if (_diagnostics[index].Severity == TemplateDiagnosticSeverity.Error)
                         return true;
-                    }
                 }
 
                 return false;

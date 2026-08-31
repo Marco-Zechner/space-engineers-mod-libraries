@@ -12,12 +12,7 @@ namespace Mz.TextTemplate
         private readonly TemplateDiagnostic[] _diagnostics;
         private readonly TemplateSyntaxSpan[] _syntaxSpans;
 
-        internal TemplateParseResult(
-            string source,
-            TemplateDocument document,
-            IList<TemplateDiagnostic> diagnostics,
-            IList<TemplateSyntaxSpan> syntaxSpans
-        )
+        internal TemplateParseResult(string source, TemplateDocument document, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -75,14 +70,8 @@ namespace Mz.TextTemplate
         {
             get
             {
-                var copy =
-                    new TemplateSyntaxSpan[_syntaxSpans.Length];
-
-                Array.Copy(
-                    _syntaxSpans,
-                    copy,
-                    _syntaxSpans.Length
-                );
+                var copy = new TemplateSyntaxSpan[_syntaxSpans.Length];
+                Array.Copy(_syntaxSpans, copy, _syntaxSpans.Length);
 
                 return copy;
             }
@@ -97,13 +86,8 @@ namespace Mz.TextTemplate
             {
                 for (int index = 0; index < _diagnostics.Length; index++)
                 {
-                    if (
-                        _diagnostics[index].Severity
-                        == TemplateDiagnosticSeverity.Error
-                    )
-                    {
+                    if (_diagnostics[index].Severity == TemplateDiagnosticSeverity.Error)
                         return true;
-                    }
                 }
 
                 return false;
