@@ -29,8 +29,7 @@ namespace Mz.TextTemplate
         /// Diagnostic code reported for a closing delimiter without a
         /// matching opening delimiter.
         /// </summary>
-        public const string UnexpectedClosingDelimiterDiagnosticCode =
-            "MZTT1004";
+        public const string UnexpectedClosingDelimiterDiagnosticCode = "MZTT1004";
 
         /// <summary>
         /// Diagnostic code reported when a named argument has no name.
@@ -89,21 +88,10 @@ namespace Mz.TextTemplate
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            var rootNodes =
-                new List<TemplateNode>();
-
-            var diagnostics =
-                new List<TemplateDiagnostic>();
-
-            var syntaxSpans =
-                new List<TemplateSyntaxSpan>();
-
-            var blockParser =
-                new TemplateBlockParser(
-                    rootNodes,
-                    diagnostics,
-                    syntaxSpans
-                );
+            var rootNodes = new List<TemplateNode>();
+            var diagnostics = new List<TemplateDiagnostic>();
+            var syntaxSpans = new List<TemplateSyntaxSpan>();
+            var blockParser = new TemplateBlockParser(rootNodes, diagnostics, syntaxSpans);
 
             int index = 0;
             int literalStart = 0;
@@ -112,64 +100,23 @@ namespace Mz.TextTemplate
             {
                 if (Matches(source, index, "{{"))
                 {
-                    AddLiteral(
-                        source,
-                        literalStart,
-                        index - literalStart,
-                        blockParser.CurrentNodes,
-                        syntaxSpans
-                    );
+                    AddLiteral(source, literalStart, index - literalStart, blockParser.CurrentNodes, syntaxSpans);
 
                     int tagStart = index;
 
-                    syntaxSpans.Add(
-                        new TemplateSyntaxSpan(
-                            TemplateSyntaxKind.Delimiter,
-                            new SourceSpan(index, 2)
-                        )
-                    );
+                    syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.Delimiter, new SourceSpan(index, 2)));
 
-                    int close =
-                        FindTagClose(
-                            source,
-                            index + 2
-                        );
+                    int close = FindTagClose(source, index + 2);
 
                     if (close < 0)
                     {
-                        diagnostics.Add(
-                            new TemplateDiagnostic(
-                                UnterminatedTagDiagnosticCode,
-                                TemplateDiagnosticSeverity.Error,
-                                "Tag is missing its closing '}}' delimiter.",
-                                new SourceSpan(
-                                    tagStart,
-                                    source.Length - tagStart
-                                )
-                            )
-                        );
+                        diagnostics.Add(new TemplateDiagnostic(UnterminatedTagDiagnosticCode, TemplateDiagnosticSeverity.Error, "Tag is missing its closing '}}' delimiter.", new SourceSpan(tagStart, source.Length - tagStart)));
 
-                        blockParser.CurrentNodes.Add(
-                            new TemplateTextNode(
-                                source.Substring(tagStart),
-                                new SourceSpan(
-                                    tagStart,
-                                    source.Length - tagStart
-                                )
-                            )
-                        );
+                        blockParser.CurrentNodes.Add(new TemplateTextNode(source.Substring(tagStart), new SourceSpan(tagStart, source.Length - tagStart)));
 
                         if (source.Length > tagStart + 2)
                         {
-                            syntaxSpans.Add(
-                                new TemplateSyntaxSpan(
-                                    TemplateSyntaxKind.LiteralText,
-                                    new SourceSpan(
-                                        tagStart + 2,
-                                        source.Length - tagStart - 2
-                                    )
-                                )
-                            );
+                            syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.LiteralText, new SourceSpan(tagStart + 2, source.Length - tagStart - 2)));
                         }
 
                         literalStart = source.Length;
@@ -177,49 +124,21 @@ namespace Mz.TextTemplate
                         break;
                     }
 
-                    int markerPosition =
-                        tagStart + 2;
+                    int markerPosition = tagStart + 2;
 
-                    SkipWhitespace(
-                        source,
-                        ref markerPosition,
-                        close
-                    );
+                    SkipWhitespace(source, ref markerPosition, close);
 
-                    if (
-                        markerPosition < close
-                        && source[markerPosition] == '#'
-                    )
+                    if (markerPosition < close && source[markerPosition] == '#')
                     {
-                        blockParser.ParseOpen(
-                            source,
-                            tagStart,
-                            close,
-                            markerPosition
-                        );
+                        blockParser.ParseOpen(source, tagStart, close, markerPosition);
                     }
-                    else if (
-                        markerPosition < close
-                        && source[markerPosition] == '/'
-                    )
+                    else if (markerPosition < close && source[markerPosition] == '/')
                     {
-                        blockParser.ParseClose(
-                            source,
-                            tagStart,
-                            close,
-                            markerPosition
-                        );
+                        blockParser.ParseClose(source, tagStart, close, markerPosition);
                     }
                     else
                     {
-                        ParseTag(
-                            source,
-                            tagStart,
-                            close,
-                            blockParser.CurrentNodes,
-                            diagnostics,
-                            syntaxSpans
-                        );
+                        ParseTag(source, tagStart, close, blockParser.CurrentNodes, diagnostics, syntaxSpans);
                     }
 
                     index = close + 2;
@@ -229,14 +148,7 @@ namespace Mz.TextTemplate
 
                 if (Matches(source, index, "}}"))
                 {
-                    diagnostics.Add(
-                        new TemplateDiagnostic(
-                            UnexpectedClosingDelimiterDiagnosticCode,
-                            TemplateDiagnosticSeverity.Error,
-                            "Closing '}}' delimiter has no matching opening '{{' delimiter.",
-                            new SourceSpan(index, 2)
-                        )
-                    );
+                    diagnostics.Add(new TemplateDiagnostic(UnexpectedClosingDelimiterDiagnosticCode, TemplateDiagnosticSeverity.Error, "Closing '}}' delimiter has no matching opening '{{' delimiter.", new SourceSpan(index, 2)));
 
                     index += 2;
                     continue;
@@ -245,163 +157,68 @@ namespace Mz.TextTemplate
                 index++;
             }
 
-            AddLiteral(
-                source,
-                literalStart,
-                source.Length - literalStart,
-                blockParser.CurrentNodes,
-                syntaxSpans
-            );
+            AddLiteral(source, literalStart, source.Length - literalStart, blockParser.CurrentNodes, syntaxSpans);
 
             blockParser.Finalize(source);
 
             TemplateDiagnosticUtilities.SortBySource(diagnostics);
 
-            return
-                new TemplateParseResult(
-                    source,
-                    new TemplateDocument(rootNodes),
-                    diagnostics,
-                    syntaxSpans
-                );
+            return new TemplateParseResult(source, new TemplateDocument(rootNodes), diagnostics, syntaxSpans);
         }
 
-
-        private static void ParseTag(
-            string source,
-            int tagStart,
-            int close,
-            IList<TemplateNode> nodes,
-            IList<TemplateDiagnostic> diagnostics,
-            IList<TemplateSyntaxSpan> syntaxSpans
-        )
+        private static void ParseTag(string source, int tagStart, int close, IList<TemplateNode> nodes, IList<TemplateDiagnostic> diagnostics, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             int position = tagStart + 2;
 
-            SkipWhitespace(
-                source,
-                ref position,
-                close
-            );
+            SkipWhitespace(source, ref position, close);
 
             int nameStart = position;
 
-            while (
-                position < close
-                && !char.IsWhiteSpace(source[position])
-            )
+            while (position < close && !char.IsWhiteSpace(source[position]))
             {
                 position++;
             }
 
-            int nameLength =
-                position - nameStart;
+            int nameLength = position - nameStart;
+            string name = nameLength == 0 ? string.Empty : source.Substring(nameStart, nameLength);
 
-            string name =
-                nameLength == 0
-                    ? string.Empty
-                    : source.Substring(
-                        nameStart,
-                        nameLength
-                    );
-
-            var tagSpan =
-                new SourceSpan(
-                    tagStart,
-                    close + 2 - tagStart
-                );
-
-            var nameSpan =
-                new SourceSpan(
-                    nameStart,
-                    nameLength
-                );
+            var tagSpan = new SourceSpan(tagStart, close + 2 - tagStart);
+            var nameSpan = new SourceSpan(nameStart, nameLength);
 
             if (nameLength == 0)
             {
-                diagnostics.Add(
-                    new TemplateDiagnostic(
-                        EmptyTagDiagnosticCode,
-                        TemplateDiagnosticSeverity.Error,
-                        "Tag name cannot be empty.",
-                        tagSpan
-                    )
-                );
+                diagnostics.Add(new TemplateDiagnostic(EmptyTagDiagnosticCode, TemplateDiagnosticSeverity.Error, "Tag name cannot be empty.", tagSpan));
             }
             else
             {
-                syntaxSpans.Add(
-                    new TemplateSyntaxSpan(
-                        TemplateSyntaxKind.TagName,
-                        nameSpan
-                    )
-                );
+                syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.TagName, nameSpan));
 
-                int invalidOffset =
-                    TemplateNameRules.FindInvalidConstructNameOffset(name);
+                int invalidOffset = TemplateNameRules.FindInvalidConstructNameOffset(name);
 
                 if (invalidOffset >= 0)
                 {
-                    diagnostics.Add(
-                        new TemplateDiagnostic(
-                            InvalidTagNameDiagnosticCode,
-                            TemplateDiagnosticSeverity.Error,
-                            "Tag names must use dot-separated identifiers containing letters, digits, '_', or '-'.",
-                            new SourceSpan(
-                                nameStart + invalidOffset,
-                                1
-                            )
-                        )
-                    );
+                    diagnostics.Add(new TemplateDiagnostic(InvalidTagNameDiagnosticCode, TemplateDiagnosticSeverity.Error, "Tag names must use dot-separated identifiers containing letters, digits, '_', or '-'.", new SourceSpan(nameStart + invalidOffset, 1)));
                 }
             }
 
-            var arguments =
-                new List<TemplateArgument>();
+            var arguments = new List<TemplateArgument>();
 
             while (position < close)
             {
-                SkipWhitespace(
-                    source,
-                    ref position,
-                    close
-                );
+                SkipWhitespace(source, ref position, close);
 
                 if (position >= close)
                     break;
 
-                TemplateArgumentParser.Parse(
-                    source,
-                    ref position,
-                    close,
-                    arguments,
-                    diagnostics,
-                    syntaxSpans
-                );
+                TemplateArgumentParser.Parse(source, ref position, close, arguments, diagnostics, syntaxSpans);
             }
 
-            syntaxSpans.Add(
-                new TemplateSyntaxSpan(
-                    TemplateSyntaxKind.Delimiter,
-                    new SourceSpan(close, 2)
-                )
-            );
+            syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.Delimiter, new SourceSpan(close, 2)));
 
-            nodes.Add(
-                new TemplateTagNode(
-                    name,
-                    tagSpan,
-                    nameSpan,
-                    arguments.ToArray()
-                )
-            );
+            nodes.Add(new TemplateTagNode(name, tagSpan, nameSpan, arguments.ToArray()));
         }
 
-
-        private static int FindTagClose(
-            string source,
-            int start
-        )
+        private static int FindTagClose(string source, int start)
         {
             int index = start;
 
@@ -409,11 +226,7 @@ namespace Mz.TextTemplate
             {
                 if (source[index] == '"')
                 {
-                    int quoteEnd =
-                        FindQuoteEnd(
-                            source,
-                            index + 1
-                        );
+                    int quoteEnd = FindQuoteEnd(source, index + 1);
 
                     if (quoteEnd >= 0)
                     {
@@ -421,11 +234,7 @@ namespace Mz.TextTemplate
                         continue;
                     }
 
-                    return source.IndexOf(
-                        "}}",
-                        index + 1,
-                        StringComparison.Ordinal
-                    );
+                    return source.IndexOf("}}", index + 1, StringComparison.Ordinal);
                 }
 
                 if (Matches(source, index, "}}"))
@@ -437,21 +246,13 @@ namespace Mz.TextTemplate
             return -1;
         }
 
-        private static int FindQuoteEnd(
-            string source,
-            int start
-        )
+        private static int FindQuoteEnd(string source, int start)
         {
             bool escaped = false;
 
-            for (
-                int index = start;
-                index < source.Length;
-                index++
-            )
+            for (int index = start; index < source.Length; index++)
             {
-                char current =
-                    source[index];
+                char current = source[index];
 
                 if (escaped)
                 {
@@ -472,83 +273,34 @@ namespace Mz.TextTemplate
             return -1;
         }
 
-        private static void SkipWhitespace(
-            string source,
-            ref int position,
-            int end
-        )
+        private static void SkipWhitespace(string source, ref int position, int end)
         {
-            while (
-                position < end
-                && char.IsWhiteSpace(source[position])
-            )
+            while (position < end && char.IsWhiteSpace(source[position]))
             {
                 position++;
             }
         }
 
-        private static void AddLiteral(
-            string source,
-            int start,
-            int length,
-            IList<TemplateNode> nodes,
-            IList<TemplateSyntaxSpan> syntaxSpans
-        )
+        private static void AddLiteral(string source, int start, int length, IList<TemplateNode> nodes, IList<TemplateSyntaxSpan> syntaxSpans)
         {
             if (length <= 0)
                 return;
 
-            var span =
-                new SourceSpan(
-                    start,
-                    length
-                );
+            var span = new SourceSpan(start, length);
 
-            nodes.Add(
-                new TemplateTextNode(
-                    source.Substring(
-                        start,
-                        length
-                    ),
-                    span
-                )
-            );
-
-            syntaxSpans.Add(
-                new TemplateSyntaxSpan(
-                    TemplateSyntaxKind.LiteralText,
-                    span
-                )
-            );
+            nodes.Add(new TemplateTextNode(source.Substring(start, length), span));
+            syntaxSpans.Add(new TemplateSyntaxSpan(TemplateSyntaxKind.LiteralText, span));
         }
 
-        private static bool Matches(
-            string source,
-            int index,
-            string value
-        )
+        private static bool Matches(string source, int index, string value)
         {
-            if (
-                index < 0
-                || index + value.Length > source.Length
-            )
-            {
+            if (index < 0 || index + value.Length > source.Length)
                 return false;
-            }
 
-            for (
-                int valueIndex = 0;
-                valueIndex < value.Length;
-                valueIndex++
-            )
+            for (int valueIndex = 0; valueIndex < value.Length; valueIndex++)
             {
-                if (
-                    source[index + valueIndex]
-                    != value[valueIndex]
-                )
-                {
+                if (source[index + valueIndex] != value[valueIndex])
                     return false;
-                }
             }
 
             return true;
