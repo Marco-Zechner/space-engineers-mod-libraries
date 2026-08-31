@@ -78,7 +78,7 @@ public sealed class TomlWriterValidationTests
             [right]
             x = 1
 
-            """,
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 
@@ -100,7 +100,7 @@ public sealed class TomlWriterValidationTests
             left = [1, 2]
             right = [1, 2]
 
-            """,
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 
@@ -133,7 +133,7 @@ public sealed class TomlWriterValidationTests
             [right.leaf]
             value = 1
 
-            """,
+            """.ReplaceLineEndings("\n"),
             written);
 
         Assert.True(Toml.TryParse(written).IsSuccess);

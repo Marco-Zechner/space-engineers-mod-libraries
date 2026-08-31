@@ -11,29 +11,17 @@ namespace Mz.Toml.Internal
         public TomlReadOnlyList(IList<T> items)
         {
             if (items == null)
-                throw new ArgumentNullException("items");
+                throw new ArgumentNullException(nameof(items));
 
             _items = items;
         }
 
-        public int Count
-        {
-            get { return _items.Count; }
-        }
+        public int Count => _items.Count;
 
-        public T this[int index]
-        {
-            get { return _items[index]; }
-        }
+        public T this[int index] => _items[index];
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
+        public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

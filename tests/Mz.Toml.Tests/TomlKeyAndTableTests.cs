@@ -193,7 +193,7 @@ public sealed class TomlKeyAndTableTests
 
              [""]
 
-             """,
+             """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 
@@ -213,7 +213,7 @@ public sealed class TomlKeyAndTableTests
             first = "Arthur"
             last = "Dent"
 
-            """,
+            """.ReplaceLineEndings("\n"),
             text);
 
         var second = Toml.Parse(text);

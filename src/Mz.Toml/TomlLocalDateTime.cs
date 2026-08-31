@@ -7,76 +7,43 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlLocalDateTime
     {
-        private readonly TomlLocalDate _date;
-        private readonly TomlLocalTime _time;
-
         /// <summary>
         /// Initializes a TOML local date-time.
         /// </summary>
-        public TomlLocalDateTime(
-            TomlLocalDate date,
-            TomlLocalTime time)
+        public TomlLocalDateTime(TomlLocalDate date, TomlLocalTime time)
         {
             if (date == null)
-                throw new ArgumentNullException("date");
+                throw new ArgumentNullException(nameof(date));
 
             if (time == null)
-                throw new ArgumentNullException("time");
+                throw new ArgumentNullException(nameof(time));
 
-            _date = date;
-            _time = time;
+            Date = date;
+            Time = time;
         }
 
         /// <summary>
         /// Initializes a TOML local date-time from components.
         /// Fractional seconds are supplied as decimal digits without a dot.
         /// </summary>
-        public TomlLocalDateTime(
-            int year,
-            int month,
-            int day,
-            int hour,
-            int minute,
-            int second,
-            string fractionalSeconds)
-            : this(
-                new TomlLocalDate(
-                    year,
-                    month,
-                    day),
-                new TomlLocalTime(
-                    hour,
-                    minute,
-                    second,
-                    fractionalSeconds))
+        public TomlLocalDateTime(int year, int month, int day, int hour, int minute, int second, string fractionalSeconds)
+            : this(new TomlLocalDate(year, month, day), new TomlLocalTime(hour, minute, second, fractionalSeconds))
         {
         }
 
         /// <summary>
         /// Gets the local date component.
         /// </summary>
-        public TomlLocalDate Date
-        {
-            get { return _date; }
-        }
+        public TomlLocalDate Date { get; }
 
         /// <summary>
         /// Gets the local time component.
         /// </summary>
-        public TomlLocalTime Time
-        {
-            get { return _time; }
-        }
+        public TomlLocalTime Time { get; }
 
         /// <summary>
         /// Returns the canonical TOML local-date-time spelling.
         /// </summary>
-        public override string ToString()
-        {
-            return
-                _date.ToString() +
-                "T" +
-                _time.ToString();
-        }
+        public override string ToString() => $"{Date}T{Time}";
     }
 }

@@ -217,7 +217,7 @@ public sealed class TomlNumericParsingTests
             hex = 3735928559
             decimal = 1000
 
-            """, 
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 
@@ -236,7 +236,7 @@ public sealed class TomlNumericParsingTests
             b = -inf
             c = nan
 
-            """,
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 

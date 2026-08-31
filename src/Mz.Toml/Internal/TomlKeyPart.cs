@@ -2,33 +2,17 @@ namespace Mz.Toml.Internal
 {
     internal sealed class TomlKeyPart
     {
-        private readonly string _value;
-        private readonly int _line;
-        private readonly int _column;
-
-        public TomlKeyPart(
-            string value,
-            int line,
-            int column)
+        public TomlKeyPart(string value, int line, int column)
         {
-            _value = value;
-            _line = line;
-            _column = column;
+            Value = value;
+            Line = line;
+            Column = column;
         }
 
-        public string Value
-        {
-            get { return _value; }
-        }
+        public string Value { get; }
 
-        public int Line
-        {
-            get { return _line; }
-        }
+        public int Line { get; }
 
-        public int Column
-        {
-            get { return _column; }
-        }
+        public int Column { get; }
     }
 }

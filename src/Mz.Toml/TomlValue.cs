@@ -7,27 +7,18 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlValue : TomlNode
     {
-        private readonly TomlValueKind _valueKind;
         private readonly object _value;
 
-        internal TomlValue(
-            TomlValueKind valueKind,
-            object value,
-            int line,
-            int column)
-            : base(TomlNodeKind.Value, line, column)
+        internal TomlValue(TomlValueKind valueKind, object value, int line, int column) : base(TomlNodeKind.Value, line, column)
         {
-            _valueKind = valueKind;
+            ValueKind = valueKind;
             _value = value;
         }
 
         /// <summary>
         /// Gets the scalar value kind.
         /// </summary>
-        public TomlValueKind ValueKind
-        {
-            get { return _valueKind; }
-        }
+        public TomlValueKind ValueKind { get; }
 
         /// <summary>
         /// Creates a TOML string value.
@@ -35,7 +26,7 @@ namespace Mz.Toml
         public static TomlValue FromString(string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             return new TomlValue(TomlValueKind.String, value, 0, 0);
         }
@@ -44,88 +35,62 @@ namespace Mz.Toml
         /// Creates a TOML integer value.
         /// </summary>
         public static TomlValue FromInteger(long value)
-        {
-            return new TomlValue(TomlValueKind.Integer, value, 0, 0);
-        }
+            => new TomlValue(TomlValueKind.Integer, value, 0, 0);
 
         /// <summary>
         /// Creates a TOML floating-point value.
         /// </summary>
         public static TomlValue FromFloat(double value)
-        {
-            return new TomlValue(TomlValueKind.Float, value, 0, 0);
-        }
+            => new TomlValue(TomlValueKind.Float, value, 0, 0);
 
         /// <summary>
         /// Creates a TOML Boolean value.
         /// </summary>
         public static TomlValue FromBoolean(bool value)
-        {
-            return new TomlValue(TomlValueKind.Boolean, value, 0, 0);
-        }
+            => new TomlValue(TomlValueKind.Boolean, value, 0, 0);
 
         /// <summary>
         /// Creates a TOML offset date-time value.
         /// </summary>
-        public static TomlValue FromOffsetDateTime(
-            TomlOffsetDateTime value)
+        public static TomlValue FromOffsetDateTime(TomlOffsetDateTime value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
-            return new TomlValue(
-                TomlValueKind.OffsetDateTime,
-                value,
-                0,
-                0);
+            return new TomlValue(TomlValueKind.OffsetDateTime, value, 0, 0);
         }
 
         /// <summary>
         /// Creates a TOML local date-time value.
         /// </summary>
-        public static TomlValue FromLocalDateTime(
-            TomlLocalDateTime value)
+        public static TomlValue FromLocalDateTime(TomlLocalDateTime value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
-            return new TomlValue(
-                TomlValueKind.LocalDateTime,
-                value,
-                0,
-                0);
+            return new TomlValue(TomlValueKind.LocalDateTime, value, 0, 0);
         }
 
         /// <summary>
         /// Creates a TOML local date value.
         /// </summary>
-        public static TomlValue FromLocalDate(
-            TomlLocalDate value)
+        public static TomlValue FromLocalDate(TomlLocalDate value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
-            return new TomlValue(
-                TomlValueKind.LocalDate,
-                value,
-                0,
-                0);
+            return new TomlValue(TomlValueKind.LocalDate, value, 0, 0);
         }
 
         /// <summary>
         /// Creates a TOML local time value.
         /// </summary>
-        public static TomlValue FromLocalTime(
-            TomlLocalTime value)
+        public static TomlValue FromLocalTime(TomlLocalTime value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
-            return new TomlValue(
-                TomlValueKind.LocalTime,
-                value,
-                0,
-                0);
+            return new TomlValue(TomlValueKind.LocalTime, value, 0, 0);
         }
 
         /// <summary>
@@ -202,11 +167,8 @@ namespace Mz.Toml
 
         private void RequireKind(TomlValueKind expected)
         {
-            if (_valueKind != expected)
-            {
-                throw new InvalidOperationException(
-                    "TOML value is " + _valueKind + ", not " + expected + ".");
-            }
+            if (ValueKind != expected)
+                throw new InvalidOperationException("TOML value is " + ValueKind + ", not " + expected + ".");
         }
     }
 }

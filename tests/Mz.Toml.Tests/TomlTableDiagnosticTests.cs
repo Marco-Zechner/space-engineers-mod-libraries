@@ -19,20 +19,8 @@ public sealed class TomlTableDiagnosticTests
     }
 
     [Theory]
-    [InlineData("""
-        [a.b.c]
-        z = 9
-        [a]
-        b.c.t = "invalid"
-
-        """)]
-    [InlineData("""
-        [a.b.c.d]
-        z = 9
-        [a]
-        b.c.d.k.t = "invalid"
-
-        """)]
+    [InlineData("[a.b.c]\nz = 9\n[a]\nb.c.t = \"invalid\"\n")]
+    [InlineData("[a.b.c.d]\nz = 9\n[a]\nb.c.d.k.t = \"invalid\"\n")]
     public void Dotted_Key_Cannot_Append_Through_Explicit_Table(string text)
     {
         var result = Toml.TryParse(text);
@@ -83,26 +71,10 @@ public sealed class TomlTableDiagnosticTests
     }
 
     [Theory]
-    [InlineData("""
-        name = "Tom"
-        name = "Pradyun"
-
-        """)]
-    [InlineData("""
-        spelling = "favorite"
-        "spelling" = "favourite"
-
-        """)]
-    [InlineData("""
-        spelling = "favorite"
-        'spelling' = "favourite"
-
-        """)]
-    [InlineData("""
-        "\u0061" = 1
-        a = 2
-
-        """)]
+    [InlineData("name = \"Tom\"\nname = \"Pradyun\"\n")]
+    [InlineData("spelling = \"favorite\"\n\"spelling\" = \"favourite\"\n")]
+    [InlineData("spelling = \"favorite\"\n'spelling' = \"favourite\"\n")]
+    [InlineData("\"\\u0061\" = 1\na = 2\n")]
     public void Equivalent_Key_Definitions_Are_Duplicates(string text)
     {
         var result = Toml.TryParse(text);
@@ -121,28 +93,11 @@ public sealed class TomlTableDiagnosticTests
         => Assert.False(Toml.TryParse(text).IsSuccess);
 
     [Theory]
-    [InlineData("""
-        [.]
-        k = 1
-
-        """)]
-    [InlineData("""
-        [..]
-        k = 1
-
-        """)]
-    [InlineData("""
-        [a.]
-
-        """)]
-    [InlineData("""
-        [a..b]
-
-        """)]
-    [InlineData("""
-        []
-
-        """)]
+    [InlineData("[.]\nk = 1\n")]
+    [InlineData("[..]\nk = 1\n")]
+    [InlineData("[a.]\n")]
+    [InlineData("[a..b]\n")]
+    [InlineData("[]\n")]
     public void Malformed_Table_Path_Is_Rejected(string text) 
         => Assert.False(Toml.TryParse(text).IsSuccess);
 

@@ -65,12 +65,11 @@ public sealed class TomlStringParsingTests
     [Fact]
     public void Multiline_Basic_Normalizes_Crlf_To_Lf()
     {
-        var document = Toml.Parse(""""
-            value = """
-            one
-            two"""
-
-            """");
+        // not a raw string literal because this test specifically exercises CRLF input
+        var document = Toml.Parse(
+            "value = \"\"\"\r\n" +
+            "one\r\n" +
+            "two\"\"\"\r\n");
 
         Assert.Equal("one\ntwo", document.Root.AsValue("value").AsString());
     }
@@ -78,11 +77,10 @@ public sealed class TomlStringParsingTests
     [Fact]
     public void Multiline_Basic_Crlf_Continuation_Is_Trimmed()
     {
-        var document = Toml.Parse(""""
-            value = """\
-            """
-
-            """");
+        // not a raw string literal because this test specifically exercises CRLF input
+        var document = Toml.Parse(
+            "value = \"\"\"\\\r\n" +
+            "\"\"\"\r\n");
 
         Assert.Equal("", document.Root.AsValue("value").AsString());
     }
@@ -90,13 +88,12 @@ public sealed class TomlStringParsingTests
     [Fact]
     public void Multiline_Literal_Preserves_Content_And_Normalizes_Newlines()
     {
-        var document = Toml.Parse("""
-            value = '''
-            first\n
-            second\u0041'''
+        // not a raw string literal because this test specifically exercises CRLF input
+        var document = Toml.Parse(
+            "value = '''\r\n" +
+            "first\\n\r\n" +
+            "second\\u0041'''\r\n");
 
-            """);
-        
         Assert.Equal("first\\n\nsecond\\u0041", document.Root.AsValue("value").AsString());
     }
 
@@ -238,7 +235,7 @@ public sealed class TomlStringParsingTests
             literal = "a\\b"
             multi = "one\ntwo"
 
-            """,
+            """.ReplaceLineEndings("\n"),
             written);
 
         var reparsed = Toml.Parse(written);

@@ -5,41 +5,28 @@ namespace Mz.Toml
     /// </summary>
     public abstract class TomlNode
     {
-        private readonly TomlNodeKind _kind;
-        private readonly int _line;
-        private readonly int _column;
-
         internal TomlNode(TomlNodeKind kind, int line, int column)
         {
-            _kind = kind;
-            _line = line;
-            _column = column;
+            Kind = kind;
+            Line = line;
+            Column = column;
         }
 
         /// <summary>
         /// Gets the structural node kind.
         /// </summary>
-        public TomlNodeKind Kind
-        {
-            get { return _kind; }
-        }
+        public TomlNodeKind Kind { get; }
 
         /// <summary>
         /// Gets the one-based source line where the node originated.
         /// A value of zero indicates a programmatically-created node.
         /// </summary>
-        public int Line
-        {
-            get { return _line; }
-        }
+        public int Line { get; }
 
         /// <summary>
         /// Gets the one-based source column where the node originated.
         /// A value of zero indicates a programmatically-created node.
         /// </summary>
-        public int Column
-        {
-            get { return _column; }
-        }
+        public int Column { get; }
     }
 }

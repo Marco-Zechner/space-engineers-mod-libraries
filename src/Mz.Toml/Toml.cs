@@ -8,10 +8,7 @@ namespace Mz.Toml
     /// </summary>
     public static class Toml
     {
-        private static readonly UTF8Encoding StrictUtf8 =
-            new UTF8Encoding(
-                false,
-                true);
+        private static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
 
         /// <summary>
         /// Parses TOML text and throws <see cref="TomlParseException"/> on failure.
@@ -31,7 +28,7 @@ namespace Mz.Toml
         public static TomlParseResult TryParse(string text)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
 
             return Internal.TomlParser.Parse(text);
         }
@@ -58,15 +55,12 @@ namespace Mz.Toml
         public static TomlParseResult TryParse(byte[] utf8)
         {
             if (utf8 == null)
-                throw new ArgumentNullException("utf8");
+                throw new ArgumentNullException(nameof(utf8));
 
             var offset = 0;
             var count = utf8.Length;
 
-            if (count >= 3 &&
-                utf8[0] == 0xEF &&
-                utf8[1] == 0xBB &&
-                utf8[2] == 0xBF)
+            if (count >= 3 && utf8[0] == 0xEF && utf8[1] == 0xBB && utf8[2] == 0xBF)
             {
                 offset = 3;
                 count -= 3;
@@ -76,11 +70,7 @@ namespace Mz.Toml
 
             try
             {
-                text =
-                    StrictUtf8.GetString(
-                        utf8,
-                        offset,
-                        count);
+                text = StrictUtf8.GetString(utf8, offset, count);
             }
             catch (DecoderFallbackException)
             {
@@ -91,8 +81,7 @@ namespace Mz.Toml
                         new TomlDiagnostic(
                             TomlDiagnosticCode.InvalidEncoding,
                             "The TOML input is not valid UTF-8.",
-                            1,
-                            1)
+                            1, 1)
                     });
             }
 
@@ -104,7 +93,7 @@ namespace Mz.Toml
         public static string Write(TomlDocument document)
         {
             if (document == null)
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(document));
 
             return Internal.TomlWriter.Write(document);
         }

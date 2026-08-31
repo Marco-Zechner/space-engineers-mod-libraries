@@ -200,7 +200,7 @@ public sealed class TomlArrayOfTablesTests
             [[products]]
             name = "Nail"
 
-            """, canonical);
+            """.ReplaceLineEndings("\n"), canonical);
 
         var reparsed = Toml.Parse(canonical);
 

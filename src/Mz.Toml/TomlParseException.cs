@@ -7,23 +7,17 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlParseException : FormatException
     {
-        private readonly TomlDiagnostic _diagnostic;
-
         /// <summary>
         /// Initializes an exception from a parser diagnostic.
         /// </summary>
-        internal TomlParseException(TomlDiagnostic diagnostic)
-            : base(diagnostic == null ? "TOML parsing failed." : diagnostic.ToString())
+        internal TomlParseException(TomlDiagnostic diagnostic) : base(diagnostic == null ? "TOML parsing failed." : diagnostic.ToString())
         {
-            _diagnostic = diagnostic;
+            Diagnostic = diagnostic;
         }
 
         /// <summary>
         /// Gets the parser diagnostic that caused the exception.
         /// </summary>
-        public TomlDiagnostic Diagnostic
-        {
-            get { return _diagnostic; }
-        }
+        public TomlDiagnostic Diagnostic { get; }
     }
 }

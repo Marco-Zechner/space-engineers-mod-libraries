@@ -7,13 +7,10 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlDocument
     {
-        private readonly TomlTable _root;
-
         /// <summary>
         /// Initializes an empty TOML document.
         /// </summary>
-        public TomlDocument()
-            : this(new TomlTable())
+        public TomlDocument() : this(new TomlTable())
         {
         }
 
@@ -23,17 +20,14 @@ namespace Mz.Toml
         public TomlDocument(TomlTable root)
         {
             if (root == null)
-                throw new ArgumentNullException("root");
+                throw new ArgumentNullException(nameof(root));
 
-            _root = root;
+            Root = root;
         }
 
         /// <summary>
         /// Gets the root table.
         /// </summary>
-        public TomlTable Root
-        {
-            get { return _root; }
-        }
+        public TomlTable Root { get; }
     }
 }

@@ -193,7 +193,7 @@ public sealed class TomlTemporalTests
             date = 2006-06-01
             time = 11:00:00.1250
 
-            """,
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 

@@ -127,7 +127,7 @@ public sealed class TomlScalarParsingTests
             ratio = 1.5
             enabled = false
 
-            """,
+            """.ReplaceLineEndings("\n"),
             written);
 
         Assert.Equal("hello", second.Root.AsValue("name").AsString());
@@ -154,7 +154,7 @@ public sealed class TomlScalarParsingTests
             ratio = 2.0
             enabled = true
 
-            """,
+            """.ReplaceLineEndings("\n"),
             Toml.Write(document));
     }
 
@@ -173,7 +173,7 @@ public sealed class TomlScalarParsingTests
             negative = -inf
             notNumber = nan
 
-            """,
+            """.ReplaceLineEndings("\n"),
             text);
 
         var restored = Toml.Parse(text);
