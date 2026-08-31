@@ -509,25 +509,18 @@ namespace Mz.TextTemplate.Tests
                     language
                 );
 
-            var diagnostics =
-                analysis.Diagnostics;
+            var diagnostics = analysis.Diagnostics;
 
-            diagnostics[0] =
-                new TemplateDiagnostic(
-                    "mutated",
-                    TemplateDiagnosticSeverity.Info,
-                    "mutated",
-                    new SourceSpan(0, 0)
+            var replacementAnalysis =
+                TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{other}}"),
+                    language
                 );
 
-            var syntax =
-                analysis.SyntaxSpans;
+            diagnostics[0] = replacementAnalysis.Diagnostics[0];
 
-            syntax[0] =
-                new TemplateSyntaxSpan(
-                    TemplateSyntaxKind.LiteralText,
-                    new SourceSpan(0, 0)
-                );
+            var syntax = analysis.SyntaxSpans;
+            syntax[0] = TemplateParser.Parse("literal").SyntaxSpans[0];
 
             Assert.Equal(
                 TemplateLanguageAnalyzer.UnknownTagDiagnosticCode,

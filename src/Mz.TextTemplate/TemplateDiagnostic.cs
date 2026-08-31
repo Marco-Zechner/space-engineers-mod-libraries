@@ -32,7 +32,7 @@ namespace Mz.TextTemplate
         /// Creates a diagnostic with a stable code, severity, message, and
         /// exact source span.
         /// </summary>
-        public TemplateDiagnostic(
+        internal TemplateDiagnostic(
             string code,
             TemplateDiagnosticSeverity severity,
             string message,

@@ -80,7 +80,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Creates a semantic syntax span.
         /// </summary>
-        public TemplateSyntaxSpan(
+        internal TemplateSyntaxSpan(
             TemplateSyntaxKind kind,
             SourceSpan span
         )

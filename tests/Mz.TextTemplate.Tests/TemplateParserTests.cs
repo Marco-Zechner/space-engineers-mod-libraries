@@ -452,6 +452,8 @@ namespace Mz.TextTemplate.Tests
             Assert.Empty(typeof(TemplateArgumentValue).GetConstructors());
             Assert.Empty(typeof(TemplatePositionalArgument).GetConstructors());
             Assert.Empty(typeof(TemplateNamedArgument).GetConstructors());
+            Assert.Empty(typeof(TemplateDiagnostic).GetConstructors());
+            Assert.Empty(typeof(TemplateSyntaxSpan).GetConstructors());
         }
 
         [Fact]
