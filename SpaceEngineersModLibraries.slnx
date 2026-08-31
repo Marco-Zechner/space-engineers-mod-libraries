@@ -8,6 +8,7 @@
     <Project Path="src/Mz.Networking.SpaceEngineers/Mz.Networking.SpaceEngineers.csproj" />
     <Project Path="src/Mz.SemanticVersioning/Mz.SemanticVersioning.csproj" />
     <Project Path="src/Mz.TextTemplate/Mz.TextTemplate.csproj" />
+    <Project Path="src/Mz.Toml/Mz.Toml.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Release.Tests/Release.Tests.csproj" />
@@ -19,11 +20,13 @@
     <Project Path="tests/Mz.Networking.SpaceEngineers.Tests/Mz.Networking.SpaceEngineers.Tests.csproj" />
     <Project Path="tests/Mz.SemanticVersioning.Tests/Mz.SemanticVersioning.Tests.csproj" />
     <Project Path="tests/Mz.TextTemplate.Tests/Mz.TextTemplate.Tests.csproj" />
+    <Project Path="tests/Mz.Toml.Tests/Mz.Toml.Tests.csproj" />
   </Folder>
   <Folder Name="/validation/">
     <Project Path="validation/Mz.ApiProtocol.SourceCopyValidation/Mz.ApiProtocol.SourceCopyValidation.csproj" />
     <Project Path="validation/Mz.Logging.SourceCopyValidation/Mz.Logging.SourceCopyValidation.csproj" />
     <Project Path="validation/Mz.Networking.SourceCopyValidation/Mz.Networking.SourceCopyValidation.csproj" />
     <Project Path="validation/Mz.TextTemplate.SourceCopyValidation/Mz.TextTemplate.SourceCopyValidation.csproj" />
+    <Project Path="validation/Mz.Toml.SourceCopyValidation/Mz.Toml.SourceCopyValidation.csproj" />
   </Folder>
 </Solution>

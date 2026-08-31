@@ -197,6 +197,19 @@ try {
     $networkingChangelogVersions =
         @($networkingLibrary.Changelog.Version) -join ","
 
+    $tomlLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.Toml"
+
+    $tomlVersion =
+        [string]$tomlLibrary.Version
+
+    $tomlTag =
+        "release/Mz.Toml/$tomlVersion"
+
+    $tomlChangelogVersions =
+        @($tomlLibrary.Changelog.Version) -join ","
+
     $semanticOutput = Join-Path $testRoot "semantic"
 
     & $bundleScript `
@@ -658,6 +671,188 @@ try {
             )
         ) `
         -Message "Networking wire layout was not preserved."
+
+    $tomlOutput = Join-Path $testRoot "toml"
+
+    & $bundleScript `
+        -Tag $tomlTag `
+        -OutputDirectory $tomlOutput `
+        -SkipTests |
+        Out-Null
+
+    $tomlManifestPath = Join-Path `
+        $tomlOutput `
+        ("Mz.Toml-" + $tomlVersion + "-package.json")
+
+    $tomlComponentPath = Join-Path `
+        $tomlOutput `
+        ("Mz.Toml-" + $tomlVersion + "-component.zip")
+
+    Assert-True `
+        -Condition (
+            Test-Path `
+                -LiteralPath $tomlManifestPath `
+                -PathType Leaf
+        ) `
+        -Message "Mz.Toml package manifest is missing."
+
+    Assert-True `
+        -Condition (
+            Test-Path `
+                -LiteralPath $tomlComponentPath `
+                -PathType Leaf
+        ) `
+        -Message "Mz.Toml component archive is missing."
+
+    $tomlManifest = Get-Content `
+        -LiteralPath $tomlManifestPath `
+        -Raw |
+        ConvertFrom-Json
+
+    $tomlEntries = @(
+        Get-ZipEntries `
+            -Path $tomlComponentPath
+    )
+
+    Assert-Equal `
+        -Expected "Mz.Toml" `
+        -Actual ([string]$tomlManifest.id) `
+        -Message "Mz.Toml has the wrong package ID."
+
+    Assert-Equal `
+        -Expected $tomlVersion `
+        -Actual ([string]$tomlManifest.version) `
+        -Message "Mz.Toml has the wrong package version."
+
+    Assert-Equal `
+        -Expected $tomlChangelogVersions `
+        -Actual (
+            @($tomlManifest.changelog.version) -join ","
+        ) `
+        -Message "Mz.Toml changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected 1 `
+        -Actual @(
+            $tomlManifest.dependencies.PSObject.Properties
+        ).Count `
+        -Message "Mz.Toml declares the wrong dependency count."
+
+    Assert-Equal `
+        -Expected $semanticVersion `
+        -Actual (
+            [string]$tomlManifest.dependencies."Mz.SemanticVersioning"
+        ) `
+        -Message "Mz.Toml has the wrong SemanticVersioning dependency."
+
+    Assert-Equal `
+        -Expected "Mz.Toml" `
+        -Actual (
+            @($tomlManifest.folders | Sort-Object) -join ","
+        ) `
+        -Message "Mz.Toml declares the wrong owned folders."
+
+    $tomlHash = (
+        Get-FileHash `
+            -LiteralPath $tomlComponentPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    Assert-Equal `
+        -Expected $tomlHash `
+        -Actual ([string]$tomlManifest.component.sha256) `
+        -Message "Mz.Toml manifest checksum is incorrect."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries.Count -gt 0
+        ) `
+        -Message "Mz.Toml archive is empty."
+
+    Assert-True `
+        -Condition (
+            @(
+                $tomlEntries |
+                    Where-Object {
+                        -not $_.StartsWith(
+                            "Libraries/Mz.Toml/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Toml archive contains files outside its owned folder."
+
+    Assert-True `
+        -Condition (
+            @(
+                $tomlEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message (
+            "Mz.Toml component incorrectly embeds its SemanticVersioning " +
+            "dependency."
+        )
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/README.md"
+        ) `
+        -Message "Mz.Toml README is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/Guide.md"
+        ) `
+        -Message "Mz.Toml copy-paste guide is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/LibraryVersionFile.cs"
+        ) `
+        -Message "Mz.Toml release metadata is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/Toml.cs"
+        ) `
+        -Message "Mz.Toml public entry point is missing from its archive."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/Internal/TomlParser.cs"
+        ) `
+        -Message "Mz.Toml parser layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            $tomlEntries -contains
+            "Libraries/Mz.Toml/Internal/TomlWriter.cs"
+        ) `
+        -Message "Mz.Toml writer layout was not preserved."
+
+    Assert-True `
+        -Condition (
+            @(
+                $tomlEntries |
+                    Where-Object {
+                        $_ -match '\.csproj$' -or
+                        $_ -match '/(?:bin|obj)/'
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Toml archive contains project or build artifacts."
 
     Assert-Throws `
         -Action {
