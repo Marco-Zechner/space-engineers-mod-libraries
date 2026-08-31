@@ -12,20 +12,24 @@ namespace Mz.Toml.Internal
 
             foreach (var pair in table)
             {
-                if (pair.Value.Kind == TomlNodeKind.Table)
+                switch (pair.Value.Kind)
                 {
-                    var child = (TomlTable)pair.Value;
+                    case TomlNodeKind.Table:
+                    {
+                        var child = (TomlTable)pair.Value;
 
-                    if (child.DefinitionKind != TomlTableDefinitionKind.Inline)
-                        continue;
-                }
+                        if (child.DefinitionKind != TomlTableDefinitionKind.Inline)
+                            continue;
+                        break;
+                    }
+                    case TomlNodeKind.Array:
+                    {
+                        var array = (TomlArray)pair.Value;
 
-                if (pair.Value.Kind == TomlNodeKind.Array)
-                {
-                    var array = (TomlArray)pair.Value;
-
-                    if (array.DefinitionKind == TomlArrayDefinitionKind.ArrayOfTables)
-                        continue;
+                        if (array.DefinitionKind == TomlArrayDefinitionKind.ArrayOfTables)
+                            continue;
+                        break;
+                    }
                 }
 
                 AppendKey(sb, pair.Key);
@@ -77,15 +81,10 @@ namespace Mz.Toml.Internal
 
                 path.Add(pair.Key);
 
-                for (var i = 0; i < array.Count; i++)
+                foreach (var node in array)
                 {
-                    var node = array[i];
-
                     if (node.Kind != TomlNodeKind.Table)
-                    {
-                        throw new InvalidOperationException(
-                            "An array-of-tables node contains a non-table element.");
-                    }
+                        throw new InvalidOperationException("An array-of-tables node contains a non-table element.");
 
                     var element = (TomlTable)node;
 

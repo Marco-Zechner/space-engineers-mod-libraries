@@ -14,17 +14,10 @@ namespace Mz.Toml.Internal
 
             while (true)
             {
-                if (IsEnd ||
-                    IsNewlineStart(Current) ||
-                    Current == '#' ||
-                    Current == '.' ||
-                    Current == terminator)
+                if (IsEnd || IsNewlineStart(Current) || Current == '#' || Current == '.' || Current == terminator)
                 {
-                    diagnostic = Error(
-                        tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey,
-                        "Expected a TOML key segment.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Expected a TOML key segment.",
+                        _line, _column, tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey);
                     return false;
                 }
 
@@ -32,34 +25,32 @@ namespace Mz.Toml.Internal
                 var column = _column;
                 string key;
 
-                if (Current == '"')
+                switch (Current)
                 {
-                    if (!ParseBasicStringText(out key, out diagnostic))
-                        return false;
-                }
-                else if (Current == '\'')
-                {
-                    if (!ParseLiteralKey(out key, out diagnostic))
-                        return false;
-                }
-                else
-                {
-                    var start = _index;
+                    case '"':
+                        if (!ParseBasicStringText(out key, out diagnostic))
+                            return false;
+                        break
+                            ;
+                    case '\'':
+                        if (!ParseLiteralKey(out key, out diagnostic))
+                            return false;
+                        break;
+                    
+                    default:
+                        var start = _index;
 
-                    while (!IsEnd && IsBareKeyCharacter(Current))
-                        AdvanceCharacter();
+                        while (!IsEnd && IsBareKeyCharacter(Current))
+                            AdvanceCharacter();
 
-                    if (_index == start)
-                    {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.InvalidKey,
-                            "Expected a bare or quoted TOML key.",
-                            _line,
-                            _column);
-                        return false;
-                    }
+                        if (_index == start)
+                        {
+                            diagnostic = Error("Expected a bare or quoted TOML key.", _line, _column, TomlDiagnosticCode.InvalidKey);
+                            return false;
+                        }
 
-                    key = _text.Substring(start, _index - start);
+                        key = _text.Substring(start, _index - start);
+                        break;
                 }
 
                 parts.Add(new TomlKeyPart(key, line, column));
@@ -68,11 +59,8 @@ namespace Mz.Toml.Internal
 
                 if (IsEnd || IsNewlineStart(Current) || Current == '#')
                 {
-                    diagnostic = Error(
-                        tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.MissingEquals,
-                        tableHeader ? "Expected ']' after the table name." : "Expected '=' after the key.",
-                        _line,
-                        _column);
+                    diagnostic = Error(tableHeader ? "Expected ']' after the table name." : "Expected '=' after the key.",
+                        _line, _column, tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.MissingEquals);
                     return false;
                 }
 
@@ -81,30 +69,20 @@ namespace Mz.Toml.Internal
 
                 if (Current != '.')
                 {
-                    diagnostic = Error(
-                        tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey,
-                        $"Expected '.' or '{terminator}' after the key segment.",
-                        _line,
-                        _column);
+                    diagnostic = Error($"Expected '.' or '{terminator}' after the key segment.",
+                        _line, _column, tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey);
                     return false;
                 }
 
                 AdvanceCharacter();
                 SkipHorizontalWhitespace();
 
-                if (IsEnd ||
-                    IsNewlineStart(Current) ||
-                    Current == '#' ||
-                    Current == '.' ||
-                    Current == terminator)
-                {
-                    diagnostic = Error(
-                        tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey,
-                        "Expected a key segment after '.'.",
-                        _line,
-                        _column);
-                    return false;
-                }
+                if (!IsEnd && !IsNewlineStart(Current) && Current != '#' && Current != '.' &&
+                    Current != terminator) continue;
+                
+                diagnostic = Error("Expected a key segment after '.'.",
+                    _line, _column, tableHeader ? TomlDiagnosticCode.InvalidTable : TomlDiagnosticCode.InvalidKey);
+                return false;
             }
         }
 
@@ -133,22 +111,14 @@ namespace Mz.Toml.Internal
                 if (IsNewlineStart(c))
                 {
                     value = null;
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidKey,
-                        "Unterminated literal quoted key.",
-                        startLine,
-                        startColumn);
+                    diagnostic = Error("Unterminated literal quoted key.", startLine, startColumn, TomlDiagnosticCode.InvalidKey);
                     return false;
                 }
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
                     value = null;
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidKey,
-                        "Control character in literal quoted key.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Control character in literal quoted key.", _line, _column, TomlDiagnosticCode.InvalidKey);
                     return false;
                 }
 
@@ -160,11 +130,7 @@ namespace Mz.Toml.Internal
             }
 
             value = null;
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidKey,
-                "Unterminated literal quoted key.",
-                startLine,
-                startColumn);
+            diagnostic = Error("Unterminated literal quoted key.", startLine, startColumn, TomlDiagnosticCode.InvalidKey);
             return false;
         }
     }

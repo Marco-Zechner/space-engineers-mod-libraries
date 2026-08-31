@@ -18,69 +18,59 @@ namespace Mz.Toml.Internal
 
             var sb = new StringBuilder();
 
-            if (!IsEnd && IsNewlineStart(Current))
-            {
-                if (!ConsumeNewline(out diagnostic))
-                    return false;
-            }
+            if (!IsEnd && IsNewlineStart(Current) && !ConsumeNewline(out diagnostic)) 
+                return false;
 
             while (!IsEnd)
             {
                 var c = Current;
 
-                if (c == '"')
+                switch (c)
                 {
-                    var quoteCount = CountConsecutive('"');
+                    case '"':
+                        var quoteCount = CountConsecutive('"');
 
-                    if (quoteCount >= 3)
-                    {
+                        if (quoteCount < 3)
+                        {
+                            for (var i = 0; i < quoteCount; i++)
+                            {
+                                sb.Append('"');
+                                AdvanceCharacter();
+                            }
+
+                            continue;
+                        }
+
                         if (quoteCount <= 5)
                         {
                             for (var i = 0; i < quoteCount - 3; i++)
-                            {
                                 sb.Append('"');
-                            }
 
                             for (var i = 0; i < quoteCount; i++)
-                            {
                                 AdvanceCharacter();
-                            }
                         }
                         else
                         {
                             for (var i = 0; i < 3; i++)
-                            {
                                 AdvanceCharacter();
-                            }
                         }
 
                         value = sb.ToString();
                         return true;
-                    }
+                    
+                    case '\\':
+                        bool consumedContinuation;
 
-                    for (var i = 0; i < quoteCount; i++)
-                    {
-                        sb.Append('"');
-                        AdvanceCharacter();
-                    }
+                        if (!TryConsumeMultilineContinuation(out consumedContinuation, out diagnostic))
+                            return false;
 
-                    continue;
-                }
+                        if (consumedContinuation)
+                            continue;
 
-                if (c == '\\')
-                {
-                    bool consumedContinuation;
+                        if (!ParseEscape(sb, out diagnostic))
+                            return false;
 
-                    if (!TryConsumeMultilineContinuation(out consumedContinuation, out diagnostic))
-                        return false;
-
-                    if (consumedContinuation)
                         continue;
-
-                    if (!ParseEscape(sb, out diagnostic))
-                        return false;
-
-                    continue;
                 }
 
                 if (IsNewlineStart(c))
@@ -94,11 +84,7 @@ namespace Mz.Toml.Internal
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unescaped control character in TOML multiline basic string.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Unescaped control character in TOML multiline basic string.", _line, _column, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
@@ -106,11 +92,7 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidString,
-                "Unterminated TOML multiline basic string.",
-                sourceLine,
-                sourceColumn);
+            diagnostic = Error("Unterminated TOML multiline basic string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
             return false;
         }
 
@@ -142,39 +124,33 @@ namespace Mz.Toml.Internal
                 {
                     var quoteCount = CountConsecutive('\'');
 
-                    if (quoteCount >= 3)
+                    if (quoteCount < 3)
                     {
-                        if (quoteCount <= 5)
+                        for (var i = 0; i < quoteCount; i++)
                         {
-                            for (var i = 0; i < quoteCount - 3; i++)
-                            {
-                                sb.Append('\'');
-                            }
-
-                            for (var i = 0; i < quoteCount; i++)
-                            {
-                                AdvanceCharacter();
-                            }
-                        }
-                        else
-                        {
-                            for (var i = 0; i < 3; i++)
-                            {
-                                AdvanceCharacter();
-                            }
+                            sb.Append('\'');
+                            AdvanceCharacter();
                         }
 
-                        value = sb.ToString();
-                        return true;
+                        continue;
                     }
 
-                    for (var i = 0; i < quoteCount; i++)
+                    if (quoteCount <= 5)
                     {
-                        sb.Append('\'');
-                        AdvanceCharacter();
+                        for (var i = 0; i < quoteCount - 3; i++)
+                            sb.Append('\'');
+
+                        for (var i = 0; i < quoteCount; i++)
+                            AdvanceCharacter();
+                    }
+                    else
+                    {
+                        for (var i = 0; i < 3; i++)
+                            AdvanceCharacter();
                     }
 
-                    continue;
+                    value = sb.ToString();
+                    return true;
                 }
 
                 if (IsNewlineStart(c))
@@ -188,11 +164,7 @@ namespace Mz.Toml.Internal
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Control character in TOML multiline literal string.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Control character in TOML multiline literal string.", _line, _column, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
@@ -200,17 +172,11 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidString,
-                "Unterminated TOML multiline literal string.",
-                sourceLine,
-                sourceColumn);
+            diagnostic = Error("Unterminated TOML multiline literal string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
             return false;
         }
 
-        private bool TryConsumeMultilineContinuation(
-            out bool consumed,
-            out TomlDiagnostic diagnostic)
+        private bool TryConsumeMultilineContinuation(out bool consumed, out TomlDiagnostic diagnostic)
         {
             consumed = false;
             diagnostic = null;
@@ -218,9 +184,7 @@ namespace Mz.Toml.Internal
             var scan = _index + 1;
 
             while (scan < _text.Length && IsHorizontalWhitespace(_text[scan]))
-            {
                 scan++;
-            }
 
             if (scan >= _text.Length || !IsNewlineStart(_text[scan]))
                 return true;
@@ -228,9 +192,7 @@ namespace Mz.Toml.Internal
             AdvanceCharacter();
 
             while (!IsEnd && IsHorizontalWhitespace(Current))
-            {
                 AdvanceCharacter();
-            }
 
             if (!ConsumeNewline(out diagnostic))
                 return false;
@@ -258,10 +220,7 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool AppendRawStringCharacter(
-            StringBuilder sb,
-            TomlDiagnosticCode diagnosticCode,
-            out TomlDiagnostic diagnostic)
+        private bool AppendRawStringCharacter(StringBuilder sb, TomlDiagnosticCode diagnosticCode, out TomlDiagnostic diagnostic) 
         {
             diagnostic = null;
 
@@ -269,14 +228,9 @@ namespace Mz.Toml.Internal
 
             if (IsHighSurrogate(c))
             {
-                if (_index + 1 >= _text.Length ||
-                    !IsLowSurrogate(_text[_index + 1]))
+                if (_index + 1 >= _text.Length || !IsLowSurrogate(_text[_index + 1]))
                 {
-                    diagnostic = Error(
-                        diagnosticCode,
-                        "String contains an unpaired UTF-16 surrogate.",
-                        _line,
-                        _column);
+                    diagnostic = Error("String contains an unpaired UTF-16 surrogate.", _line, _column, diagnosticCode);
                     return false;
                 }
 
@@ -291,11 +245,7 @@ namespace Mz.Toml.Internal
 
             if (IsLowSurrogate(c))
             {
-                diagnostic = Error(
-                    diagnosticCode,
-                    "String contains an unpaired UTF-16 surrogate.",
-                    _line,
-                    _column);
+                diagnostic = Error("String contains an unpaired UTF-16 surrogate.", _line, _column, diagnosticCode);
                 return false;
             }
 
@@ -305,18 +255,17 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool IsTripleDelimiter(char delimiter) =>
-            _index + 2 < _text.Length &&
-            _text[_index] == delimiter &&
-            _text[_index + 1] == delimiter &&
-            _text[_index + 2] == delimiter;
+        private bool IsTripleDelimiter(char delimiter) 
+            => _index + 2 < _text.Length && 
+               _text[_index] == delimiter && 
+               _text[_index + 1] == delimiter && 
+               _text[_index + 2] == delimiter;
 
         private int CountConsecutive(char value)
         {
             var count = 0;
 
-            while (_index + count < _text.Length &&
-                   _text[_index + count] == value)
+            while (_index + count < _text.Length && _text[_index + count] == value)
             {
                 count++;
             }

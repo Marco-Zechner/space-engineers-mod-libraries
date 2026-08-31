@@ -21,11 +21,8 @@ namespace Mz.Toml.Internal
 
             if (IsEnd)
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidValue,
-                    "Unterminated TOML array.",
-                    line,
-                    column);
+                diagnostic = Error("Unterminated TOML array.",
+                    line, column, TomlDiagnosticCode.InvalidValue);
                 return false;
             }
 
@@ -50,11 +47,7 @@ namespace Mz.Toml.Internal
 
                 if (IsEnd)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Unterminated TOML array.",
-                        line,
-                        column);
+                    diagnostic = Error("Unterminated TOML array.", line, column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
@@ -67,11 +60,7 @@ namespace Mz.Toml.Internal
 
                 if (Current != ',')
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Expected ',' or ']' after a TOML array element.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Expected ',' or ']' after a TOML array element.", _line, _column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
@@ -82,11 +71,7 @@ namespace Mz.Toml.Internal
 
                 if (IsEnd)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Unterminated TOML array.",
-                        line,
-                        column);
+                    diagnostic = Error("Unterminated TOML array.", line, column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
@@ -114,11 +99,7 @@ namespace Mz.Toml.Internal
 
             if (IsEnd)
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidValue,
-                    "Unterminated TOML inline table.",
-                    line,
-                    column);
+                diagnostic = Error("Unterminated TOML inline table.", line, column, TomlDiagnosticCode.InvalidValue);
                 return false;
             }
 
@@ -131,11 +112,8 @@ namespace Mz.Toml.Internal
 
             if (IsNewlineStart(Current) || Current == '#')
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidValue,
-                    "TOML 1.0 inline tables cannot contain line breaks or comments between entries.",
-                    _line,
-                    _column);
+                diagnostic = Error("TOML 1.0 inline tables cannot contain line breaks or comments between entries.", 
+                    _line, _column, TomlDiagnosticCode.InvalidValue);
                 return false;
             }
 
@@ -149,17 +127,9 @@ namespace Mz.Toml.Internal
                 AdvanceCharacter();
                 SkipHorizontalWhitespace();
 
-                if (IsEnd ||
-                    Current == '}' ||
-                    Current == ',' ||
-                    Current == '#' ||
-                    IsNewlineStart(Current))
+                if (IsEnd || Current == '}' || Current == ',' || Current == '#' || IsNewlineStart(Current))
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.MissingValue,
-                        "Expected a value after '=' in the TOML inline table.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Expected a value after '=' in the TOML inline table.", _line, _column, TomlDiagnosticCode.MissingValue);
                     return false;
                 }
 
@@ -175,11 +145,7 @@ namespace Mz.Toml.Internal
 
                 if (IsEnd)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Unterminated TOML inline table.",
-                        line,
-                        column);
+                    diagnostic = Error("Unterminated TOML inline table.", line, column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
@@ -192,11 +158,7 @@ namespace Mz.Toml.Internal
 
                 if (Current != ',')
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Expected ',' or '}' after a TOML inline-table entry.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Expected ',' or '}' after a TOML inline-table entry.", _line, _column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
@@ -205,31 +167,20 @@ namespace Mz.Toml.Internal
 
                 if (IsEnd)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "Unterminated TOML inline table.",
-                        line,
-                        column);
+                    diagnostic = Error("Unterminated TOML inline table.", line, column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
                 if (Current == '}')
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "TOML 1.0 inline tables do not permit a trailing comma.",
-                        _line,
-                        _column);
+                    diagnostic = Error("TOML 1.0 inline tables do not permit a trailing comma.", _line, _column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
 
                 if (IsNewlineStart(Current) || Current == '#')
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidValue,
-                        "TOML 1.0 inline tables cannot contain line breaks or comments between entries.",
-                        _line,
-                        _column);
+                    diagnostic = Error("TOML 1.0 inline tables cannot contain line breaks or comments between entries.",
+                        _line, _column, TomlDiagnosticCode.InvalidValue);
                     return false;
                 }
             }

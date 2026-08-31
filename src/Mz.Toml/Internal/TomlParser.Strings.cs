@@ -29,11 +29,7 @@ namespace Mz.Toml.Internal
 
                 if (IsNewlineStart(c))
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unterminated TOML basic string.",
-                        sourceLine,
-                        sourceColumn);
+                    diagnostic = Error("Unterminated TOML basic string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
@@ -47,11 +43,7 @@ namespace Mz.Toml.Internal
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unescaped control character in TOML basic string.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Unescaped control character in TOML basic string.", _line, _column, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
@@ -59,11 +51,7 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidString,
-                "Unterminated TOML basic string.",
-                sourceLine,
-                sourceColumn);
+            diagnostic = Error("Unterminated TOML basic string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
             return false;
         }
 
@@ -92,21 +80,13 @@ namespace Mz.Toml.Internal
 
                 if (IsNewlineStart(c))
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Unterminated TOML literal string.",
-                        sourceLine,
-                        sourceColumn);
+                    diagnostic = Error("Unterminated TOML literal string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidString,
-                        "Control character in TOML literal string.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Control character in TOML literal string.", _line, _column, TomlDiagnosticCode.InvalidString);
                     return false;
                 }
 
@@ -114,11 +94,7 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidString,
-                "Unterminated TOML literal string.",
-                sourceLine,
-                sourceColumn);
+            diagnostic = Error("Unterminated TOML literal string.", sourceLine, sourceColumn, TomlDiagnosticCode.InvalidString);
             return false;
         }
     }

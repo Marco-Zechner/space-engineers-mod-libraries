@@ -10,7 +10,7 @@ namespace Mz.Toml
         /// <summary>
         /// Initializes a TOML diagnostic.
         /// </summary>
-        internal TomlDiagnostic(TomlDiagnosticCode code, string message, int line, int column)
+        internal TomlDiagnostic(string message, int line, int column, TomlDiagnosticCode code)
         {
             if (string.IsNullOrEmpty(message))
                 throw new ArgumentException("Diagnostic message cannot be null or empty.", nameof(message));

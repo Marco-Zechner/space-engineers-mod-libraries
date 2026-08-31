@@ -4,10 +4,7 @@ namespace Mz.Toml.Internal
 {
     internal sealed partial class TomlParser
     {
-        private bool ResolveTableHeader(
-            IList<TomlKeyPart> parts,
-            out TomlTable result,
-            out TomlDiagnostic diagnostic)
+        private bool ResolveTableHeader(IList<TomlKeyPart> parts, out TomlTable result, out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
             result = null;
@@ -23,10 +20,7 @@ namespace Mz.Toml.Internal
 
                 if (!table.TryGetValue(part.Value, out existing))
                 {
-                    var created = new TomlTable(
-                        part.Line,
-                        part.Column,
-                        isLeaf ? TomlTableDefinitionKind.Explicit : TomlTableDefinitionKind.Implicit);
+                    var created = new TomlTable(part.Line, part.Column, isLeaf ? TomlTableDefinitionKind.Explicit : TomlTableDefinitionKind.Implicit);
 
                     table.Set(part.Value, created);
                     table = created;
@@ -39,21 +33,15 @@ namespace Mz.Toml.Internal
 
                     if (array.DefinitionKind != TomlArrayDefinitionKind.ArrayOfTables)
                     {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.TableConflict,
-                            $"Key '{part.Value}' is already defined as a static array and cannot be used as a table.",
-                            part.Line,
-                            part.Column);
+                        diagnostic = Error($"Key '{part.Value}' is already defined as a static array and cannot be used as a table.",
+                            part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                         return false;
                     }
 
                     if (isLeaf)
                     {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.TableConflict,
-                            $"Array of tables '{part.Value}' cannot be redefined as a standard table.",
-                            part.Line,
-                            part.Column);
+                        diagnostic = Error($"Array of tables '{part.Value}' cannot be redefined as a standard table.",
+                            part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                         return false;
                     }
 
@@ -65,11 +53,8 @@ namespace Mz.Toml.Internal
 
                 if (existing.Kind != TomlNodeKind.Table)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Key '{part.Value}' is already defined as a value and cannot be used as a table.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Key '{part.Value}' is already defined as a value and cannot be used as a table.",
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
@@ -77,39 +62,27 @@ namespace Mz.Toml.Internal
 
                 if (existingTable.DefinitionKind == TomlTableDefinitionKind.Inline)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Inline table '{part.Value}' is immutable and cannot be extended or redefined by a table header.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Inline table '{part.Value}' is immutable and cannot be extended or redefined by a table header.",
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
                 if (isLeaf)
                 {
-                    if (existingTable.DefinitionKind == TomlTableDefinitionKind.Implicit)
+                    switch (existingTable.DefinitionKind)
                     {
-                        existingTable.DefinitionKind = TomlTableDefinitionKind.Explicit;
-                        table = existingTable;
-                        continue;
+                        case TomlTableDefinitionKind.Implicit:
+                            existingTable.DefinitionKind = TomlTableDefinitionKind.Explicit;
+                            break;
+                        case TomlTableDefinitionKind.DottedKey:
+                            diagnostic = Error($"Table '{part.Value}' was already defined by a dotted key and cannot be redefined by a table header.",
+                                part.Line, part.Column, TomlDiagnosticCode.TableConflict);
+                            return false;
+                        default:
+                            diagnostic = Error($"Table '{part.Value}' is already explicitly defined.",
+                                part.Line, part.Column, TomlDiagnosticCode.DuplicateTable);
+                            return false;
                     }
-
-                    if (existingTable.DefinitionKind == TomlTableDefinitionKind.DottedKey)
-                    {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.TableConflict,
-                            $"Table '{part.Value}' was already defined by a dotted key and cannot be redefined by a table header.",
-                            part.Line,
-                            part.Column);
-                        return false;
-                    }
-
-                    diagnostic = Error(
-                        TomlDiagnosticCode.DuplicateTable,
-                        $"Table '{part.Value}' is already explicitly defined.",
-                        part.Line,
-                        part.Column);
-                    return false;
                 }
 
                 table = existingTable;
@@ -119,10 +92,7 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool ResolveArrayTableHeader(
-            IList<TomlKeyPart> parts,
-            out TomlTable result,
-            out TomlDiagnostic diagnostic)
+        private bool ResolveArrayTableHeader(IList<TomlKeyPart> parts, out TomlTable result, out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
             result = null;
@@ -140,15 +110,9 @@ namespace Mz.Toml.Internal
                 {
                     if (isLeaf)
                     {
-                        var array = new TomlArray(
-                            part.Line,
-                            part.Column,
-                            TomlArrayDefinitionKind.ArrayOfTables);
+                        var array = new TomlArray(part.Line, part.Column, TomlArrayDefinitionKind.ArrayOfTables);
 
-                        var element = new TomlTable(
-                            part.Line,
-                            part.Column,
-                            TomlTableDefinitionKind.Explicit);
+                        var element = new TomlTable(part.Line, part.Column, TomlTableDefinitionKind.Explicit);
 
                         array.Add(element);
                         table.Set(part.Value, array);
@@ -157,10 +121,7 @@ namespace Mz.Toml.Internal
                         return true;
                     }
 
-                    var created = new TomlTable(
-                        part.Line,
-                        part.Column,
-                        TomlTableDefinitionKind.Implicit);
+                    var created = new TomlTable(part.Line, part.Column, TomlTableDefinitionKind.Implicit);
 
                     table.Set(part.Value, created);
                     table = created;
@@ -173,20 +134,14 @@ namespace Mz.Toml.Internal
 
                     if (array.DefinitionKind != TomlArrayDefinitionKind.ArrayOfTables)
                     {
-                        diagnostic = Error(
-                            TomlDiagnosticCode.TableConflict,
-                            $"Key '{part.Value}' is already defined as a static array and cannot become an array of tables.",
-                            part.Line,
-                            part.Column);
+                        diagnostic = Error($"Key '{part.Value}' is already defined as a static array and cannot become an array of tables.",
+                            part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                         return false;
                     }
 
                     if (isLeaf)
                     {
-                        var element = new TomlTable(
-                            part.Line,
-                            part.Column,
-                            TomlTableDefinitionKind.Explicit);
+                        var element = new TomlTable(part.Line, part.Column, TomlTableDefinitionKind.Explicit);
 
                         array.Add(element);
 
@@ -202,11 +157,8 @@ namespace Mz.Toml.Internal
 
                 if (existing.Kind != TomlNodeKind.Table)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Key '{part.Value}' is already defined as a value and cannot become an array of tables.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Key '{part.Value}' is already defined as a value and cannot become an array of tables.",
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
@@ -214,52 +166,35 @@ namespace Mz.Toml.Internal
 
                 if (existingTable.DefinitionKind == TomlTableDefinitionKind.Inline)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Inline table '{part.Value}' is immutable and cannot be extended by an array-of-tables header.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Inline table '{part.Value}' is immutable and cannot be extended by an array-of-tables header.",
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
                 if (isLeaf)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Table '{part.Value}' is already defined and cannot become an array of tables.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Table '{part.Value}' is already defined and cannot become an array of tables.",
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
                 table = existingTable;
             }
 
-            diagnostic = Error(
-                TomlDiagnosticCode.InvalidTable,
-                "Array-of-tables header did not resolve to a table.",
-                _line,
-                _column);
+            diagnostic = Error("Array-of-tables header did not resolve to a table.", _line, _column, TomlDiagnosticCode.InvalidTable);
 
             return false;
         }
 
-        private bool TryGetLatestArrayTable(
-            TomlArray array,
-            TomlKeyPart part,
-            out TomlTable table,
-            out TomlDiagnostic diagnostic)
+        private static bool TryGetLatestArrayTable(TomlArray array, TomlKeyPart part, out TomlTable table, out TomlDiagnostic diagnostic)
         {
             table = null;
             diagnostic = null;
 
             if (array.Count == 0)
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.TableConflict,
-                    $"Array of tables '{part.Value}' has no table element to extend.",
-                    part.Line,
-                    part.Column);
+                diagnostic = Error($"Array of tables '{part.Value}' has no table element to extend.",
+                    part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                 return false;
             }
 
@@ -267,11 +202,8 @@ namespace Mz.Toml.Internal
 
             if (latest.Kind != TomlNodeKind.Table)
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.TableConflict,
-                    $"Array of tables '{part.Value}' contains a non-table element.",
-                    part.Line,
-                    part.Column);
+                diagnostic = Error($"Array of tables '{part.Value}' contains a non-table element.",
+                    part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                 return false;
             }
 

@@ -15,11 +15,10 @@ namespace Mz.Toml
         /// <summary>
         /// Initializes an empty programmatic TOML array.
         /// </summary>
-        public TomlArray() : this(0, 0, TomlArrayDefinitionKind.Static) { }
+        public TomlArray() : this(0, 0) { }
 
-        internal TomlArray(int line, int column) : this(line, column, TomlArrayDefinitionKind.Static) { }
-
-        internal TomlArray(int line, int column, TomlArrayDefinitionKind definitionKind) : base(TomlNodeKind.Array, line, column)
+        internal TomlArray(int line, int column, TomlArrayDefinitionKind definitionKind = TomlArrayDefinitionKind.Static) 
+            : base(TomlNodeKind.Array, line, column)
         {
             _items = new List<TomlNode>();
             Items = new TomlReadOnlyList<TomlNode>(_items);

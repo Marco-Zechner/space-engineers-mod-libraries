@@ -12,11 +12,8 @@ namespace Mz.Toml.Internal
 
                 if ((c < 0x20 && c != '\t') || c == 0x7F)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidComment,
-                        "Control characters other than tab are not permitted in TOML comments.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Control characters other than tab are not permitted in TOML comments.",
+                        _line, _column, TomlDiagnosticCode.InvalidComment);
                     return false;
                 }
 
@@ -46,11 +43,8 @@ namespace Mz.Toml.Internal
 
             if (_index + 1 >= _text.Length || _text[_index + 1] != '\n')
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidNewline,
-                    "TOML newlines must use LF or CRLF; a lone CR is invalid.",
-                    _line,
-                    _column);
+                diagnostic = Error("TOML newlines must use LF or CRLF; a lone CR is invalid.",
+                    _line, _column, TomlDiagnosticCode.InvalidNewline);
                 return false;
             }
 
@@ -88,8 +82,7 @@ namespace Mz.Toml.Internal
             (c >= 'A' && c <= 'Z') ||
             (c >= 'a' && c <= 'z') ||
             (c >= '0' && c <= '9') ||
-            c == '_' ||
-            c == '-';
+            c == '_' || c == '-';
 
         private static bool IsDigit(char c) => c >= '0' && c <= '9';
 
@@ -102,8 +95,8 @@ namespace Mz.Toml.Internal
 
         private static bool IsNewlineStart(char c) => c == '\n' || c == '\r';
 
-        private static TomlDiagnostic Error(TomlDiagnosticCode code, string message, int line, int column) =>
-            new TomlDiagnostic(code, message, line, column);
+        private static TomlDiagnostic Error(string message, int line, int column, TomlDiagnosticCode code) =>
+            new TomlDiagnostic(message, line, column, code);
 
         private static TomlParseResult Failure(TomlDiagnostic diagnostic) =>
             new TomlParseResult(null, new[] { diagnostic });

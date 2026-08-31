@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Text;
 
@@ -6,12 +5,7 @@ namespace Mz.Toml.Internal
 {
     internal sealed partial class TomlParser
     {
-        private static bool TryParseTomlNumber(
-            string token,
-            out bool isFloat,
-            out long integerValue,
-            out double floatValue,
-            out bool rangeError)
+        private static bool TryParseTomlNumber(string token, out bool isFloat, out long integerValue, out double floatValue, out bool rangeError)
         {
             isFloat = false;
             integerValue = 0;
@@ -81,17 +75,13 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            if (index < token.Length &&
-                (token[index] == 'e' || token[index] == 'E'))
+            if (index < token.Length && (token[index] == 'e' || token[index] == 'E'))
             {
                 hasExponent = true;
                 index++;
 
-                if (index < token.Length &&
-                    (token[index] == '+' || token[index] == '-'))
-                {
+                if (index < token.Length && (token[index] == '+' || token[index] == '-'))
                     index++;
-                }
 
                 int exponentDigits;
 
@@ -104,43 +94,29 @@ namespace Mz.Toml.Internal
 
             var normalized = RemoveNumericUnderscores(token);
 
+            rangeError = true;
             if (hasFraction || hasExponent)
             {
                 isFloat = true;
 
-                if (!double.TryParse(
-                        normalized,
-                        NumberStyles.Float,
-                        CultureInfo.InvariantCulture,
-                        out floatValue) ||
-                    double.IsInfinity(floatValue) ||
-                    double.IsNaN(floatValue))
-                {
-                    rangeError = true;
+                if (!double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out floatValue))
                     return false;
-                }
+                
+                if (double.IsInfinity(floatValue) || double.IsNaN(floatValue))
+                    return false;
 
+                rangeError = false;
                 return true;
             }
 
-            if (!long.TryParse(
-                    normalized,
-                    NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out integerValue))
-            {
-                rangeError = true;
+            if (!long.TryParse(normalized, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out integerValue))
                 return false;
-            }
 
+            rangeError = false;
             return true;
         }
 
-        private static bool TryParseBaseInteger(
-            string token,
-            int numberBase,
-            out long value,
-            out bool rangeError)
+        private static bool TryParseBaseInteger(string token, int numberBase, out long value, out bool rangeError)
         {
             value = 0;
             rangeError = false;
@@ -165,36 +141,27 @@ namespace Mz.Toml.Internal
                 {
                     var unsignedDigit = (ulong)digit;
 
-                    if (accumulated >
-                        ((ulong)long.MaxValue - unsignedDigit) / (ulong)numberBase)
+                    if (accumulated > (((ulong)long.MaxValue) - unsignedDigit) / (ulong)numberBase)
                     {
                         rangeError = true;
                         return false;
                     }
 
-                    accumulated =
-                        accumulated * (ulong)numberBase +
-                        unsignedDigit;
+                    accumulated = accumulated * (ulong)numberBase + unsignedDigit;
 
                     index++;
                     continue;
                 }
 
-                if (token[index] == '_')
-                {
-                    if (index == 2 ||
-                        index + 1 >= token.Length ||
-                        DigitValue(token[index - 1], numberBase) < 0 ||
-                        DigitValue(token[index + 1], numberBase) < 0)
-                    {
-                        return false;
-                    }
+                if (token[index] != '_') return false;
+                
+                if (index == 2 || index + 1 >= token.Length)
+                    return false;
 
-                    index++;
-                    continue;
-                }
-
-                return false;
+                if (DigitValue(token[index - 1], numberBase) < 0 || DigitValue(token[index + 1], numberBase) < 0)
+                    return false;
+                
+                index++;
             }
 
             value = (long)accumulated;
@@ -206,21 +173,13 @@ namespace Mz.Toml.Internal
             int value;
 
             if (c >= '0' && c <= '9')
-            {
                 value = c - '0';
-            }
             else if (c >= 'a' && c <= 'f')
-            {
                 value = 10 + c - 'a';
-            }
             else if (c >= 'A' && c <= 'F')
-            {
                 value = 10 + c - 'A';
-            }
             else
-            {
                 return -1;
-            }
 
             return value < numberBase ? value : -1;
         }
@@ -246,11 +205,8 @@ namespace Mz.Toml.Internal
 
                 if (token[index] == '_')
                 {
-                    if (index + 1 >= token.Length ||
-                        !IsAsciiDigit(token[index + 1]))
-                    {
+                    if (index + 1 >= token.Length || !IsAsciiDigit(token[index + 1]))
                         return false;
-                    }
 
                     index += 2;
                     digitCount++;
@@ -270,11 +226,9 @@ namespace Mz.Toml.Internal
 
             var sb = new StringBuilder(token.Length);
 
-            for (var i = 0; i < token.Length; i++)
-            {
-                if (token[i] != '_')
-                    sb.Append(token[i]);
-            }
+            foreach (var t in token)
+                if (t != '_')
+                    sb.Append(t);
 
             return sb.ToString();
         }

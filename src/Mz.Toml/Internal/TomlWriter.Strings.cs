@@ -17,10 +17,7 @@ namespace Mz.Toml.Internal
                 if (c >= 0xD800 && c <= 0xDBFF)
                 {
                     if (i + 1 >= value.Length || value[i + 1] < 0xDC00 || value[i + 1] > 0xDFFF)
-                    {
-                        throw new InvalidOperationException(
-                            "Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
-                    }
+                        throw new InvalidOperationException("Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
 
                     sb.Append(c);
                     sb.Append(value[i + 1]);
@@ -29,10 +26,7 @@ namespace Mz.Toml.Internal
                 }
 
                 if (c >= 0xDC00 && c <= 0xDFFF)
-                {
-                    throw new InvalidOperationException(
-                        "Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
-                }
+                    throw new InvalidOperationException("Cannot write a TOML string containing an unpaired UTF-16 surrogate.");
 
                 switch (c)
                 {
@@ -71,9 +65,7 @@ namespace Mz.Toml.Internal
                             sb.Append(((int)c).ToString("X4", CultureInfo.InvariantCulture));
                         }
                         else
-                        {
                             sb.Append(c);
-                        }
 
                         break;
                 }
@@ -87,18 +79,13 @@ namespace Mz.Toml.Internal
             if (string.IsNullOrEmpty(key))
                 return false;
 
-            for (var i = 0; i < key.Length; i++)
+            foreach (var c in key)
             {
-                var c = key[i];
-
                 if ((c >= 'A' && c <= 'Z') ||
                     (c >= 'a' && c <= 'z') ||
                     (c >= '0' && c <= '9') ||
-                    c == '_' ||
-                    c == '-')
-                {
+                    c == '_' || c == '-')
                     continue;
-                }
 
                 return false;
             }

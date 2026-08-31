@@ -74,7 +74,10 @@ namespace Mz.Toml
             }
             catch (DecoderFallbackException)
             {
-                return new TomlParseResult(null, new[] { new TomlDiagnostic(TomlDiagnosticCode.InvalidEncoding, "The TOML input is not valid UTF-8.", 1, 1) });
+                return new TomlParseResult(null, new[]
+                {
+                    new TomlDiagnostic("The TOML input is not valid UTF-8.", 1, 1, TomlDiagnosticCode.InvalidEncoding)
+                });
             }
 
             return TryParse(text);

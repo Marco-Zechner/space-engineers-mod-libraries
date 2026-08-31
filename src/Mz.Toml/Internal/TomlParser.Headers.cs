@@ -29,11 +29,8 @@ namespace Mz.Toml.Internal
             {
                 if (IsEnd || Current != ']')
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidTable,
-                        "Array-of-tables headers must end with two closing brackets.",
-                        headerLine,
-                        headerColumn);
+                    diagnostic = Error("Array-of-tables headers must end with two closing brackets.",
+                        headerLine, headerColumn, TomlDiagnosticCode.InvalidTable);
                     return false;
                 }
 
@@ -52,11 +49,8 @@ namespace Mz.Toml.Internal
             {
                 if (!IsNewlineStart(Current))
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TrailingCharacters,
-                        "Unexpected characters after the table header.",
-                        _line,
-                        _column);
+                    diagnostic = Error("Unexpected characters after the table header.",
+                        _line, _column, TomlDiagnosticCode.TrailingCharacters);
                     return false;
                 }
 

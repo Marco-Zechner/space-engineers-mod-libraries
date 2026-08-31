@@ -7,25 +7,13 @@ namespace Mz.Toml.Internal
             if (string.IsNullOrEmpty(token))
                 return false;
 
-            if (token.Length >= 3 &&
-                IsDigit(token[0]) &&
-                IsDigit(token[1]) &&
-                token[2] == ':')
-            {
+            if (token.Length >= 3 && IsDigit(token[0]) && IsDigit(token[1]) && token[2] == ':')
                 return true;
-            }
 
-            if (token.Length >= 5 &&
-                IsDigit(token[0]) &&
-                IsDigit(token[1]) &&
-                IsDigit(token[2]) &&
-                IsDigit(token[3]) &&
-                token[4] == '-')
-            {
-                return true;
-            }
-
-            return false;
+            if (token.Length < 5 || token[4] != '-')
+                return false;
+            
+            return IsDigit(token[0]) && IsDigit(token[1]) && IsDigit(token[2]) && IsDigit(token[3]);
         }
 
         public static bool TryParse(string token, int line, int column, out TomlValue value)
@@ -40,11 +28,8 @@ namespace Mz.Toml.Internal
                 TomlLocalTime time;
                 var timePosition = 0;
 
-                if (!TryParseTime(token, ref timePosition, out time) ||
-                    timePosition != token.Length)
-                {
+                if (!TryParseTime(token, ref timePosition, out time) || timePosition != token.Length)
                     return false;
-                }
 
                 value = new TomlValue(TomlValueKind.LocalTime, time, line, column);
                 return true;
@@ -69,12 +54,8 @@ namespace Mz.Toml.Internal
 
             var separator = token[10];
 
-            if (separator != 'T' &&
-                separator != 't' &&
-                separator != ' ')
-            {
+            if (separator != 'T' && separator != 't' && separator != ' ')
                 return false;
-            }
 
             var position = 11;
             TomlLocalTime localTime;
@@ -84,94 +65,60 @@ namespace Mz.Toml.Internal
 
             if (position == token.Length)
             {
-                value = new TomlValue(
-                    TomlValueKind.LocalDateTime,
-                    new TomlLocalDateTime(date, localTime),
-                    line,
-                    column);
-
+                value = new TomlValue(TomlValueKind.LocalDateTime, new TomlLocalDateTime(date, localTime), line, column);
                 return true;
             }
 
             var offsetMarker = token[position];
 
-            if ((offsetMarker == 'Z' || offsetMarker == 'z') &&
-                position + 1 == token.Length)
+            if ((offsetMarker == 'Z' || offsetMarker == 'z') && position + 1 == token.Length)
             {
-                value = new TomlValue(
-                    TomlValueKind.OffsetDateTime,
-                    new TomlOffsetDateTime(date, localTime, 0),
-                    line,
-                    column);
-
+                value = new TomlValue(TomlValueKind.OffsetDateTime, new TomlOffsetDateTime(date, localTime, 0), line, column);
                 return true;
             }
 
             if (offsetMarker != '+' && offsetMarker != '-')
                 return false;
 
-            if (position + 6 != token.Length ||
-                token[position + 3] != ':')
-            {
+            if (position + 6 != token.Length || token[position + 3] != ':')
                 return false;
-            }
 
             int offsetHour;
             int offsetMinute;
 
-            if (!ReadTwoDigits(token, position + 1, out offsetHour) ||
-                !ReadTwoDigits(token, position + 4, out offsetMinute))
-            {
+            if (!ReadTwoDigits(token, position + 1, out offsetHour) || !ReadTwoDigits(token, position + 4, out offsetMinute))
                 return false;
-            }
 
             if (offsetHour > 23 || offsetMinute > 59)
                 return false;
 
-            var offset = (offsetHour * 60) + offsetMinute;
+            var offset = offsetHour * 60 + offsetMinute;
 
-            var isUnknownLocalOffset =
-                offsetMarker == '-' &&
-                offsetHour == 0 &&
-                offsetMinute == 0;
+            var isUnknownLocalOffset = offsetMarker == '-' && offsetHour == 0 && offsetMinute == 0;
 
             if (offsetMarker == '-')
                 offset = -offset;
 
             value = new TomlValue(
-                TomlValueKind.OffsetDateTime,
-                new TomlOffsetDateTime(
-                    date,
-                    localTime,
-                    offset,
-                    isUnknownLocalOffset),
-                line,
-                column);
+                TomlValueKind.OffsetDateTime, 
+                new TomlOffsetDateTime(date, localTime, offset, isUnknownLocalOffset), 
+                line, column
+            );
 
             return true;
         }
 
         private static bool LooksLikeLocalTime(string token) =>
-            token.Length >= 8 &&
-            IsDigit(token[0]) &&
-            IsDigit(token[1]) &&
-            token[2] == ':' &&
-            IsDigit(token[3]) &&
-            IsDigit(token[4]) &&
-            token[5] == ':';
+            token.Length >= 8 && token[2] == ':' && token[5] == ':' &&
+            IsDigit(token[0]) && IsDigit(token[1]) &&
+            IsDigit(token[3]) && IsDigit(token[4]);
 
         private static bool LooksLikeDate(string token) =>
-            token.Length >= 10 &&
-            IsDigit(token[0]) &&
-            IsDigit(token[1]) &&
-            IsDigit(token[2]) &&
-            IsDigit(token[3]) &&
-            token[4] == '-' &&
-            IsDigit(token[5]) &&
-            IsDigit(token[6]) &&
-            token[7] == '-' &&
-            IsDigit(token[8]) &&
-            IsDigit(token[9]);
+            token.Length >= 10 && token[4] == '-' && token[7] == '-' &&
+            IsDigit(token[0]) && IsDigit(token[1]) &&
+            IsDigit(token[2]) && IsDigit(token[3]) &&
+            IsDigit(token[5]) && IsDigit(token[6]) &&
+            IsDigit(token[8]) && IsDigit(token[9]);
 
         private static bool TryParseDate(string token, out TomlLocalDate date)
         {
@@ -181,12 +128,14 @@ namespace Mz.Toml.Internal
             int month;
             int day;
 
-            if (!ReadFourDigits(token, 0, out year) ||
-                !ReadTwoDigits(token, 5, out month) ||
-                !ReadTwoDigits(token, 8, out day))
-            {
+            if (!ReadFourDigits(token, 0, out year))
                 return false;
-            }
+            
+            if (!ReadTwoDigits(token, 5, out month))
+                return false;
+            
+            if (!ReadTwoDigits(token, 8, out day))
+                return false;
 
             if (!TomlLocalDate.IsValidDate(year, month, day))
                 return false;
@@ -195,39 +144,31 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private static bool TryParseTime(
-            string token,
-            ref int position,
-            out TomlLocalTime time)
+        private static bool TryParseTime(string token, ref int position, out TomlLocalTime time)
         {
             time = null;
 
             if (position + 8 > token.Length)
                 return false;
 
-            if (token[position + 2] != ':' ||
-                token[position + 5] != ':')
-            {
+            if (token[position + 2] != ':' || token[position + 5] != ':')
                 return false;
-            }
 
             int hour;
             int minute;
             int second;
 
-            if (!ReadTwoDigits(token, position, out hour) ||
-                !ReadTwoDigits(token, position + 3, out minute) ||
-                !ReadTwoDigits(token, position + 6, out second))
-            {
+            if (!ReadTwoDigits(token, position, out hour))
+                
                 return false;
-            }
+            if (!ReadTwoDigits(token, position + 3, out minute))
+                
+                return false;
+            if (!ReadTwoDigits(token, position + 6, out second))
+                return false;
 
-            if (hour > 23 ||
-                minute > 59 ||
-                second > 60)
-            {
+            if (hour > 23 || minute > 59 || second > 60)
                 return false;
-            }
 
             position += 8;
 
@@ -240,24 +181,15 @@ namespace Mz.Toml.Internal
                 var fractionStart = position;
 
                 while (position < token.Length && IsDigit(token[position]))
-                {
                     position++;
-                }
 
                 if (position == fractionStart)
                     return false;
 
-                fractionalSeconds =
-                    token.Substring(
-                        fractionStart,
-                        position - fractionStart);
+                fractionalSeconds = token.Substring(fractionStart, position - fractionStart);
             }
 
-            time = new TomlLocalTime(
-                hour,
-                minute,
-                second,
-                fractionalSeconds);
+            time = new TomlLocalTime(hour, minute, second, fractionalSeconds);
 
             return true;
         }
@@ -295,9 +227,7 @@ namespace Mz.Toml.Internal
             if (!IsDigit(first) || !IsDigit(second))
                 return false;
 
-            value =
-                ((first - '0') * 10) +
-                (second - '0');
+            value = ((first - '0') * 10) + (second - '0');
 
             return true;
         }

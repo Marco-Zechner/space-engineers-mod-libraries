@@ -23,9 +23,7 @@ namespace Mz.Toml.Internal
                     return;
 
                 default:
-                    throw new InvalidOperationException(
-                        "Unsupported TOML node kind: " +
-                        node.Kind);
+                    throw new InvalidOperationException("Unsupported TOML node kind: " + node.Kind);
             }
         }
 
@@ -119,25 +117,23 @@ namespace Mz.Toml.Internal
                     return;
 
                 case TomlValueKind.OffsetDateTime:
-                    sb.Append(value.AsOffsetDateTime().ToString());
+                    sb.Append(value.AsOffsetDateTime());
                     return;
 
                 case TomlValueKind.LocalDateTime:
-                    sb.Append(value.AsLocalDateTime().ToString());
+                    sb.Append(value.AsLocalDateTime());
                     return;
 
                 case TomlValueKind.LocalDate:
-                    sb.Append(value.AsLocalDate().ToString());
+                    sb.Append(value.AsLocalDate());
                     return;
 
                 case TomlValueKind.LocalTime:
-                    sb.Append(value.AsLocalTime().ToString());
+                    sb.Append(value.AsLocalTime());
                     return;
 
                 default:
-                    throw new InvalidOperationException(
-                        "Unsupported TOML scalar kind: " +
-                        value.ValueKind);
+                    throw new InvalidOperationException("Unsupported TOML scalar kind: " + value.ValueKind);
             }
         }
     }

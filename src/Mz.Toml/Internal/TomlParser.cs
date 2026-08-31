@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Mz.Toml.Internal
@@ -48,7 +49,7 @@ namespace Mz.Toml.Internal
                 }
             }
 
-            return new TomlParseResult(new TomlDocument(_root), new TomlDiagnostic[0]);
+            return new TomlParseResult(new TomlDocument(_root), Array.Empty<TomlDiagnostic>());
         }
 
         private bool SkipDocumentTrivia(out TomlDiagnostic diagnostic)
@@ -100,7 +101,7 @@ namespace Mz.Toml.Internal
 
             if (IsEnd || Current == '#' || IsNewlineStart(Current))
             {
-                diagnostic = Error(TomlDiagnosticCode.MissingValue, "Expected a value after '='.", _line, _column);
+                diagnostic = Error("Expected a value after '='.", _line, _column, TomlDiagnosticCode.MissingValue);
                 return false;
             }
 
@@ -122,7 +123,7 @@ namespace Mz.Toml.Internal
 
             if (!IsNewlineStart(Current))
             {
-                diagnostic = Error(TomlDiagnosticCode.TrailingCharacters, "Unexpected characters after the TOML value.", _line, _column);
+                diagnostic = Error("Unexpected characters after the TOML value.", _line, _column, TomlDiagnosticCode.TrailingCharacters);
                 return false;
             }
 

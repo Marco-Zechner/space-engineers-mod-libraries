@@ -39,8 +39,10 @@ namespace Mz.Toml
         /// Set <paramref name="isUnknownLocalOffset"/> only for the RFC 3339
         /// negative-zero offset spelling -00:00.
         /// </summary>
-        public TomlOffsetDateTime(int year, int month, int day, int hour, int minute, int second, string fractionalSeconds, int offsetMinutes, bool isUnknownLocalOffset = false)
-            : this(new TomlLocalDate(year, month, day), new TomlLocalTime(hour, minute, second, fractionalSeconds), offsetMinutes, isUnknownLocalOffset) { }
+        public TomlOffsetDateTime(int year, int month, int day, int hour, int minute, int second, string fractionalSeconds, 
+            int offsetMinutes, bool isUnknownLocalOffset = false)
+            : this(new TomlLocalDate(year, month, day), new TomlLocalTime(hour, minute, second, fractionalSeconds), 
+                offsetMinutes, isUnknownLocalOffset) { }
 
         /// <summary>
         /// Gets the local date component before applying the offset.
@@ -83,7 +85,8 @@ namespace Mz.Toml
             var offsetMinute = absolute % 60;
             var sign = OffsetMinutes < 0 ? "-" : "+";
 
-            return $"{text}{sign}{offsetHour.ToString("D2", CultureInfo.InvariantCulture)}:{offsetMinute.ToString("D2", CultureInfo.InvariantCulture)}";
+            var inv = CultureInfo.InvariantCulture;
+            return $"{text}{sign}{offsetHour.ToString("D2", inv)}:{offsetMinute.ToString("D2", inv)}";
         }
     }
 }

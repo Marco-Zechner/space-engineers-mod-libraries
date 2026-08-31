@@ -13,14 +13,9 @@ namespace Mz.Toml.Internal
 
         private static void ValidateAcyclicNode(TomlNode node, List<TomlNode> activePath)
         {
-            for (var i = 0; i < activePath.Count; i++)
-            {
-                if (object.ReferenceEquals(activePath[i], node))
-                {
-                    throw new InvalidOperationException(
-                        "Cannot write a TOML document containing a cyclic node graph.");
-                }
-            }
+            foreach (var t in activePath)
+                if (ReferenceEquals(t, node))
+                    throw new InvalidOperationException("Cannot write a TOML document containing a cyclic node graph.");
 
             activePath.Add(node);
 
@@ -33,10 +28,8 @@ namespace Mz.Toml.Internal
                 {
                     var array = (TomlArray)node;
 
-                    for (var i = 0; i < array.Count; i++)
-                    {
-                        ValidateAcyclicNode(array[i], activePath);
-                    }
+                    foreach (var arrayItem in array)
+                        ValidateAcyclicNode(arrayItem, activePath);
 
                     break;
                 }
@@ -45,10 +38,8 @@ namespace Mz.Toml.Internal
                 {
                     var table = (TomlTable)node;
 
-                    foreach (var pair in table)
-                    {
+                    foreach (var pair in table) 
                         ValidateAcyclicNode(pair.Value, activePath);
-                    }
 
                     break;
                 }

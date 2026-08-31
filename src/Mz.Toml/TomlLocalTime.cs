@@ -63,7 +63,8 @@ namespace Mz.Toml
         /// </summary>
         public override string ToString()
         {
-            var text = $"{Hour.ToString("D2", CultureInfo.InvariantCulture)}:{Minute.ToString("D2", CultureInfo.InvariantCulture)}:{Second.ToString("D2", CultureInfo.InvariantCulture)}";
+            var inv = CultureInfo.InvariantCulture;
+            var text = $"{Hour.ToString("D2", inv)}:{Minute.ToString("D2", inv)}:{Second.ToString("D2", inv)}";
 
             if (FractionalSeconds.Length > 0)
                 text += $".{FractionalSeconds}";

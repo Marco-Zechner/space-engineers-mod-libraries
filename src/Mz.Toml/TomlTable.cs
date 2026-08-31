@@ -89,9 +89,7 @@ namespace Mz.Toml
         public IEnumerator<KeyValuePair<string, TomlNode>> GetEnumerator()
         {
             foreach (var key in _keys)
-            {
                 yield return new KeyValuePair<string, TomlNode>(key, _values[key]);
-            }
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

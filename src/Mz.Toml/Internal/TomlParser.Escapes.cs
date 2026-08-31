@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Text;
 
@@ -17,11 +16,8 @@ namespace Mz.Toml.Internal
 
             if (IsEnd || IsNewlineStart(Current))
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidEscape,
-                    "String ends immediately after an escape character.",
-                    escapeLine,
-                    escapeColumn);
+                diagnostic = Error("String ends immediately after an escape character.",
+                    escapeLine, escapeColumn, TomlDiagnosticCode.InvalidEscape);
                 return false;
             }
 
@@ -75,31 +71,20 @@ namespace Mz.Toml.Internal
                         out diagnostic);
 
                 default:
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidEscape,
-                        $"Unknown TOML escape sequence '\\{escaped}'.",
-                        escapeLine,
-                        escapeColumn);
+                    diagnostic = Error($"Unknown TOML escape sequence '\\{escaped}'.",
+                        escapeLine, escapeColumn, TomlDiagnosticCode.InvalidEscape);
                     return false;
             }
         }
 
-        private bool ParseUnicodeEscape(
-            StringBuilder sb,
-            int digitCount,
-            int escapeLine,
-            int escapeColumn,
-            out TomlDiagnostic diagnostic)
+        private bool ParseUnicodeEscape(StringBuilder sb, int digitCount, int escapeLine, int escapeColumn, out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
             if (_index + digitCount > _text.Length)
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidEscape,
-                    "Unicode escape does not contain enough hexadecimal digits.",
-                    escapeLine,
-                    escapeColumn);
+                diagnostic = Error("Unicode escape does not contain enough hexadecimal digits.",
+                    escapeLine, escapeColumn, TomlDiagnosticCode.InvalidEscape);
                 return false;
             }
 
@@ -107,15 +92,10 @@ namespace Mz.Toml.Internal
 
             for (var i = 0; i < digitCount; i++)
             {
-                if (IsEnd ||
-                    IsNewlineStart(Current) ||
-                    !IsHexDigit(Current))
+                if (IsEnd || IsNewlineStart(Current) || !IsHexDigit(Current))
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.InvalidEscape,
-                        "Unicode escape contains a non-hexadecimal character.",
-                        escapeLine,
-                        escapeColumn);
+                    diagnostic = Error("Unicode escape contains a non-hexadecimal character.",
+                        escapeLine, escapeColumn, TomlDiagnosticCode.InvalidEscape);
                     return false;
                 }
 
@@ -126,20 +106,11 @@ namespace Mz.Toml.Internal
 
             uint codePoint;
 
-            if (!uint.TryParse(
-                    hex,
-                    NumberStyles.AllowHexSpecifier,
-                    CultureInfo.InvariantCulture,
-                    out codePoint) ||
-                codePoint > 0x10FFFFu ||
-                (codePoint >= 0xD800u &&
-                 codePoint <= 0xDFFFu))
+            if (!uint.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out codePoint) ||
+                codePoint > 0x10FFFFu || (codePoint >= 0xD800u && codePoint <= 0xDFFFu))
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.InvalidEscape,
-                    "Unicode escape contains an invalid Unicode scalar value.",
-                    escapeLine,
-                    escapeColumn);
+                diagnostic = Error("Unicode escape contains an invalid Unicode scalar value.",
+                    escapeLine, escapeColumn, TomlDiagnosticCode.InvalidEscape);
                 return false;
             }
 

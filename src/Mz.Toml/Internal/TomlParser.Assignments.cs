@@ -4,11 +4,7 @@ namespace Mz.Toml.Internal
 {
     internal sealed partial class TomlParser
     {
-        private bool AssignKeyPath(
-            TomlTable startTable,
-            IList<TomlKeyPart> parts,
-            TomlNode value,
-            out TomlDiagnostic diagnostic)
+        private static bool AssignKeyPath(TomlTable startTable, List<TomlKeyPart> parts, TomlNode value, out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
@@ -33,48 +29,37 @@ namespace Mz.Toml.Internal
 
                 if (existing.Kind != TomlNodeKind.Table)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Key '{part.Value}' is already defined as a value and cannot be used as a table.",
-                        part.Line,
-                        part.Column);
+                    diagnostic = Error($"Key '{part.Value}' is already defined as a value and cannot be used as a table.", 
+                        part.Line, part.Column, TomlDiagnosticCode.TableConflict);
                     return false;
                 }
 
                 var existingTable = (TomlTable)existing;
 
-                if (existingTable.DefinitionKind == TomlTableDefinitionKind.Inline)
+                switch (existingTable.DefinitionKind)
                 {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Inline table '{part.Value}' is immutable and cannot be extended through a dotted key.",
-                        part.Line,
-                        part.Column);
-                    return false;
+                    case TomlTableDefinitionKind.Inline:
+                        diagnostic = Error($"Inline table '{part.Value}' is immutable and cannot be extended through a dotted key.", 
+                            part.Line, part.Column, TomlDiagnosticCode.TableConflict);
+                        return false;
+                    
+                    case TomlTableDefinitionKind.Explicit:
+                        diagnostic = Error($"Table '{part.Value}' was already explicitly defined and cannot be extended through a dotted key.", 
+                            part.Line, part.Column, TomlDiagnosticCode.TableConflict);
+                        return false;
+                    
+                    default:
+                        table = existingTable;
+                        break;
                 }
-
-                if (existingTable.DefinitionKind == TomlTableDefinitionKind.Explicit)
-                {
-                    diagnostic = Error(
-                        TomlDiagnosticCode.TableConflict,
-                        $"Table '{part.Value}' was already explicitly defined and cannot be extended through a dotted key.",
-                        part.Line,
-                        part.Column);
-                    return false;
-                }
-
-                table = existingTable;
             }
 
             var finalPart = parts[parts.Count - 1];
 
             if (table.ContainsKey(finalPart.Value))
             {
-                diagnostic = Error(
-                    TomlDiagnosticCode.DuplicateKey,
-                    $"The key '{finalPart.Value}' is already defined.",
-                    finalPart.Line,
-                    finalPart.Column);
+                diagnostic = Error($"The key '{finalPart.Value}' is already defined.", 
+                    finalPart.Line, finalPart.Column, TomlDiagnosticCode.DuplicateKey);
                 return false;
             }
 
