@@ -12,7 +12,7 @@ public sealed class ReleaseTagTests
         nameof(ReleaseTestData.LibraryIds),
         MemberType = typeof(ReleaseTestData)
     )]
-    public void CurrentVersionMatchesNewestLocalReleaseTag(
+    public void CurrentVersionMatchesNewestLocalReleaseTagOrIsInitialUnreleasedVersion(
         string packageId
     )
     {
@@ -30,10 +30,19 @@ public sealed class ReleaseTagTests
                 tagPrefix + "*"
             );
 
-        Assert.True(
-            tags.Length > 0,
-            $"Package '{packageId}' has no local release tags."
-        );
+        if (tags.Length == 0)
+        {
+            Assert.Equal(
+                "0.1.0",
+                library.Version
+            );
+
+            Assert.Single(
+                library.Changelog
+            );
+
+            return;
+        }
 
         var versionedTags =
             tags
