@@ -275,9 +275,7 @@ namespace Mz.TextTemplate
                 diagnostics
             );
 
-            SortDiagnosticsBySource(
-                diagnostics
-            );
+            TemplateDiagnosticUtilities.SortBySource(diagnostics);
 
             return
                 new TemplateParseResult(
@@ -783,38 +781,7 @@ namespace Mz.TextTemplate
             }
         }
 
-        private static void SortDiagnosticsBySource(
-            IList<TemplateDiagnostic> diagnostics
-        )
-        {
-            for (
-                int index = 1;
-                index < diagnostics.Count;
-                index++
-            )
-            {
-                TemplateDiagnostic current =
-                    diagnostics[index];
 
-                int destination =
-                    index - 1;
-
-                while (
-                    destination >= 0
-                    && diagnostics[destination].Span.Start
-                    > current.Span.Start
-                )
-                {
-                    diagnostics[destination + 1] =
-                        diagnostics[destination];
-
-                    destination--;
-                }
-
-                diagnostics[destination + 1] =
-                    current;
-            }
-        }
         private static void ParseTag(
             string source,
             int tagStart,
