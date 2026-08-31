@@ -8,8 +8,7 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Constructor_StoresHalfOpenRange()
         {
-            var span =
-                new SourceSpan(4, 3);
+            var span = new SourceSpan(4, 3);
 
             Assert.Equal(4, span.Start);
             Assert.Equal(3, span.Length);
@@ -19,52 +18,25 @@ namespace Mz.TextTemplate.Tests
             Assert.True(span.Contains(6));
             Assert.False(span.Contains(7));
 
-            Assert.Equal(
-                "[4..7)",
-                span.ToString()
-            );
+            Assert.Equal("[4..7)", span.ToString());
         }
 
         [Theory]
         [InlineData(-1, 0, "start")]
         [InlineData(0, -1, "length")]
-        public void Constructor_NegativeValue_ThrowsArgumentException(
-            int start,
-            int length,
-            string parameter
-        )
+        public void Constructor_NegativeValue_ThrowsArgumentException(int start, int length, string parameter)
         {
-            var exception =
-                Assert.Throws<ArgumentException>(
-                    () =>
-                        new SourceSpan(
-                            start,
-                            length
-                        )
-                );
+            var exception = Assert.Throws<ArgumentException>(() => new SourceSpan(start, length));
 
-            Assert.Equal(
-                parameter,
-                exception.ParamName
-            );
+            Assert.Equal(parameter, exception.ParamName);
         }
 
         [Fact]
         public void Constructor_OverflowingEnd_ThrowsArgumentException()
         {
-            var exception =
-                Assert.Throws<ArgumentException>(
-                    () =>
-                        new SourceSpan(
-                            int.MaxValue,
-                            1
-                        )
-                );
+            var exception = Assert.Throws<ArgumentException>(() => new SourceSpan(int.MaxValue, 1));
 
-            Assert.Equal(
-                "length",
-                exception.ParamName
-            );
+            Assert.Equal("length", exception.ParamName);
         }
 
         [Fact]

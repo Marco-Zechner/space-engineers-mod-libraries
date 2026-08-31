@@ -44,12 +44,9 @@ namespace Mz.TextTemplate.Tests
             var nodes = result.Document.Nodes;
             Assert.Equal(3, nodes.Length);
 
-            var prefix =
-                Assert.IsType<TemplateTextNode>(nodes[0]);
-            var tag =
-                Assert.IsType<TemplateTagNode>(nodes[1]);
-            var suffix =
-                Assert.IsType<TemplateTextNode>(nodes[2]);
+            var prefix = Assert.IsType<TemplateTextNode>(nodes[0]);
+            var tag = Assert.IsType<TemplateTagNode>(nodes[1]);
+            var suffix = Assert.IsType<TemplateTextNode>(nodes[2]);
 
             Assert.Equal("Hello ", prefix.Text);
             Assert.Equal("rank.server", tag.Name);
@@ -118,22 +115,14 @@ namespace Mz.TextTemplate.Tests
         [InlineData("rank.server")]
         [InlineData("player-name")]
         [InlineData("source.workspace-2")]
-        public void Parse_ValidTagName_HasNoDiagnostics(
-            string name
-        )
+        public void Parse_ValidTagName_HasNoDiagnostics(string name)
         {
-            var result =
-                TemplateParser.Parse(
-                    "{{" + name + "}}"
-                );
+            var result = TemplateParser.Parse("{{" + name + "}}");
 
             Assert.False(result.HasErrors);
             Assert.Empty(result.Diagnostics);
 
-            var tag =
-                Assert.IsType<TemplateTagNode>(
-                    Assert.Single(result.Document.Nodes)
-                );
+            var tag = Assert.IsType<TemplateTagNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal(name, tag.Name);
         }
@@ -141,17 +130,11 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_WhitespaceAroundName_IsIgnoredByTag()
         {
-            var result =
-                TemplateParser.Parse(
-                    "{{  name  }}"
-                );
+            var result = TemplateParser.Parse("{{  name  }}");
 
             Assert.False(result.HasErrors);
 
-            var tag =
-                Assert.IsType<TemplateTagNode>(
-                    Assert.Single(result.Document.Nodes)
-                );
+            var tag = Assert.IsType<TemplateTagNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal("name", tag.Name);
             Assert.Equal(
@@ -163,20 +146,13 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_SyntaxSpans_AreReturnedInSourceOrder()
         {
-            var result =
-                TemplateParser.Parse(
-                    "A {{name}} B {{rank.server}} C"
-                );
+            var result = TemplateParser.Parse("A {{name}} B {{rank.server}} C");
 
             Assert.False(result.HasErrors);
 
             var syntax = result.SyntaxSpans;
 
-            for (
-                int index = 1;
-                index < syntax.Length;
-                index++
-            )
+            for (int index = 1; index < syntax.Length; index++)
             {
                 Assert.True(
                     syntax[index - 1].Span.Start
@@ -188,10 +164,7 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_MultipleTags_PreservesStableOrder()
         {
-            var result =
-                TemplateParser.Parse(
-                    "[{{time}}] {{name}}: {{message}}"
-                );
+            var result = TemplateParser.Parse("[{{time}}] {{name}}: {{message}}");
 
             Assert.False(result.HasErrors);
 
@@ -200,36 +173,26 @@ namespace Mz.TextTemplate.Tests
 
             Assert.Equal(
                 "time",
-                Assert.IsType<TemplateTagNode>(
-                    nodes[1]
-                ).Name
+                Assert.IsType<TemplateTagNode>(nodes[1]).Name
             );
             Assert.Equal(
                 "name",
-                Assert.IsType<TemplateTagNode>(
-                    nodes[3]
-                ).Name
+                Assert.IsType<TemplateTagNode>(nodes[3]).Name
             );
             Assert.Equal(
                 "message",
-                Assert.IsType<TemplateTagNode>(
-                    nodes[5]
-                ).Name
+                Assert.IsType<TemplateTagNode>(nodes[5]).Name
             );
         }
 
         [Fact]
         public void Parse_EmptyTag_ReportsRecoverableError()
         {
-            var result =
-                TemplateParser.Parse(
-                    "a {{   }} b"
-                );
+            var result = TemplateParser.Parse("a {{   }} b");
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateParser.EmptyTagDiagnosticCode,
@@ -244,10 +207,7 @@ namespace Mz.TextTemplate.Tests
                 diagnostic.Span
             );
 
-            var tag =
-                Assert.IsType<TemplateTagNode>(
-                    result.Document.Nodes[1]
-                );
+            var tag = Assert.IsType<TemplateTagNode>(result.Document.Nodes[1]);
 
             Assert.Equal(string.Empty, tag.Name);
         }
@@ -255,24 +215,15 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_WhitespaceAfterTagName_StartsPositionalArgument()
         {
-            var result =
-                TemplateParser.Parse(
-                    "{{rank server}}"
-                );
+            var result = TemplateParser.Parse("{{rank server}}");
 
             Assert.False(result.HasErrors);
 
-            var tag =
-                Assert.IsType<TemplateTagNode>(
-                    Assert.Single(result.Document.Nodes)
-                );
+            var tag = Assert.IsType<TemplateTagNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal("rank", tag.Name);
 
-            var argument =
-                Assert.IsType<TemplatePositionalArgument>(
-                    Assert.Single(tag.Arguments)
-                );
+            var argument = Assert.IsType<TemplatePositionalArgument>(Assert.Single(tag.Arguments));
 
             Assert.Equal(
                 TemplateArgumentValueKind.Bare,
@@ -293,30 +244,20 @@ namespace Mz.TextTemplate.Tests
         [InlineData("rank.", 6)]
 
         [InlineData("rank/server", 6)]
-        public void Parse_InvalidTagName_ReportsOffendingCharacter(
-            string name,
-            int expectedSourceOffset
-        )
+        public void Parse_InvalidTagName_ReportsOffendingCharacter(string name, int expectedSourceOffset)
         {
-            var result =
-                TemplateParser.Parse(
-                    "{{" + name + "}}"
-                );
+            var result = TemplateParser.Parse("{{" + name + "}}");
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateParser.InvalidTagNameDiagnosticCode,
                 diagnostic.Code
             );
             Assert.Equal(
-                new SourceSpan(
-                    expectedSourceOffset,
-                    1
-                ),
+                new SourceSpan(expectedSourceOffset, 1),
                 diagnostic.Span
             );
         }
@@ -324,15 +265,11 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_UnterminatedTag_ReportsErrorAndPreservesTail()
         {
-            var result =
-                TemplateParser.Parse(
-                    "before {{name"
-                );
+            var result = TemplateParser.Parse("before {{name");
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateParser.UnterminatedTagDiagnosticCode,
@@ -348,30 +285,22 @@ namespace Mz.TextTemplate.Tests
 
             Assert.Equal(
                 "before ",
-                Assert.IsType<TemplateTextNode>(
-                    nodes[0]
-                ).Text
+                Assert.IsType<TemplateTextNode>(nodes[0]).Text
             );
             Assert.Equal(
                 "{{name",
-                Assert.IsType<TemplateTextNode>(
-                    nodes[1]
-                ).Text
+                Assert.IsType<TemplateTextNode>(nodes[1]).Text
             );
         }
 
         [Fact]
         public void Parse_UnexpectedClosingDelimiter_ReportsErrorButKeepsLiteral()
         {
-            var result =
-                TemplateParser.Parse(
-                    "before }} after"
-                );
+            var result = TemplateParser.Parse("before }} after");
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateParser.UnexpectedClosingDelimiterDiagnosticCode,
@@ -382,10 +311,7 @@ namespace Mz.TextTemplate.Tests
                 diagnostic.Span
             );
 
-            var text =
-                Assert.IsType<TemplateTextNode>(
-                    Assert.Single(result.Document.Nodes)
-                );
+            var text = Assert.IsType<TemplateTextNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal(
                 "before }} after",
@@ -396,20 +322,15 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_MultilineLiteral_PreservesAllNewlinesExactly()
         {
-            const string source =
-                "\nalpha\n\nomega\n";
+            const string source = "\nalpha\n\nomega\n";
 
-            var result =
-                TemplateParser.Parse(source);
+            var result = TemplateParser.Parse(source);
 
             Assert.False(result.HasErrors);
             Assert.Equal(source, result.Source);
             Assert.Empty(result.Diagnostics);
 
-            var textNode =
-                Assert.IsType<TemplateTextNode>(
-                    Assert.Single(result.Document.Nodes)
-                );
+            var textNode = Assert.IsType<TemplateTextNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal(source, textNode.Text);
             Assert.Equal(
@@ -417,8 +338,7 @@ namespace Mz.TextTemplate.Tests
                 textNode.Span
             );
 
-            var syntax =
-                Assert.Single(result.SyntaxSpans);
+            var syntax = Assert.Single(result.SyntaxSpans);
 
             Assert.Equal(
                 TemplateSyntaxKind.LiteralText,
@@ -432,10 +352,7 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Parse_Null_ThrowsArgumentNullException()
         {
-            var exception =
-                Assert.Throws<ArgumentNullException>(
-                    () => TemplateParser.Parse(null!)
-                );
+            var exception = Assert.Throws<ArgumentNullException>(() => TemplateParser.Parse(null!));
 
             Assert.Equal(
                 "source",
@@ -459,10 +376,7 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Result_CollectionsAreDefensiveCopies()
         {
-            var result =
-                TemplateParser.Parse(
-                    "{{name}}"
-                );
+            var result = TemplateParser.Parse("{{name}}");
 
             var nodes = result.Document.Nodes;
             nodes[0] = TemplateParser.Parse("mutated").Document.Nodes[0];
@@ -470,11 +384,7 @@ namespace Mz.TextTemplate.Tests
             var syntax = result.SyntaxSpans;
             syntax[0] = TemplateParser.Parse("mutated").SyntaxSpans[0];
 
-            Assert.IsType<TemplateTagNode>(
-                Assert.Single(
-                    result.Document.Nodes
-                )
-            );
+            Assert.IsType<TemplateTagNode>(Assert.Single(result.Document.Nodes));
 
             Assert.Equal(
                 TemplateSyntaxKind.Delimiter,

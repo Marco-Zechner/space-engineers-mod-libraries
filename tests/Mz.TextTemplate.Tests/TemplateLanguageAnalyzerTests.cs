@@ -8,38 +8,22 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_KnownValueAndCommandTags_ReclassifiesNames()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new[]
-                    {
-                        new TemplateTagDefinition(
-                            "name",
-                            TemplateTagRole.Value
-                        ),
-                        new TemplateTagDefinition(
-                            "tab",
-                            TemplateTagRole.Command
-                        )
-                    },
-                    new TemplateBlockDefinition[0]
+            var language = new TemplateLanguageDefinition(
+                    [
+                        new TemplateTagDefinition("name", TemplateTagRole.Value),
+                        new TemplateTagDefinition("tab", TemplateTagRole.Command)
+                    ],
+                    []
                 );
 
-            var parse =
-                TemplateParser.Parse(
-                    "{{name}} {{tab}}"
-                );
+            var parse = TemplateParser.Parse("{{name}} {{tab}}");
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    parse,
-                    language
-                );
+            var result = TemplateLanguageAnalyzer.Analyze(parse, language);
 
             Assert.False(result.HasErrors);
             Assert.Empty(result.Diagnostics);
 
-            var syntax =
-                result.SyntaxSpans;
+            var syntax = result.SyntaxSpans;
 
             Assert.Equal(
                 TemplateSyntaxKind.ValueName,
@@ -68,24 +52,16 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_UnknownTag_ReportsExactNameAndKeepsGenericSyntax()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new TemplateTagDefinition[0],
-                    new TemplateBlockDefinition[0]
-                );
+            var language = new TemplateLanguageDefinition([], []);
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{missing}}"
-                    ),
-                    language
-                );
+            var result = TemplateLanguageAnalyzer.Analyze(
+                TemplateParser.Parse("{{missing}}"),
+                language
+            );
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateLanguageAnalyzer.UnknownTagDiagnosticCode,
@@ -105,60 +81,34 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_KnownBlock_AnalyzesNestedTagsRecursively()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new[]
-                    {
-                        new TemplateTagDefinition(
-                            "name",
-                            TemplateTagRole.Value
-                        )
-                    },
-                    new[]
-                    {
-                        new TemplateBlockDefinition(
-                            "first"
-                        )
-                    }
+            var language = new TemplateLanguageDefinition(
+                    [new TemplateTagDefinition("name", TemplateTagRole.Value)],
+                    [new TemplateBlockDefinition("first")]
                 );
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{#first}}{{name}}{{/first}}"
-                    ),
-                    language
-                );
+            var result = TemplateLanguageAnalyzer.Analyze(
+                TemplateParser.Parse("{{#first}}{{name}}{{/first}}"),
+                language
+            );
 
             Assert.False(result.HasErrors);
             Assert.Empty(result.Diagnostics);
 
-            var syntax =
-                result.SyntaxSpans;
+            var syntax = result.SyntaxSpans;
 
-            bool valueFound = false;
-            bool blockFound = false;
+            var valueFound = false;
+            var blockFound = false;
 
-            for (
-                int index = 0;
-                index < syntax.Length;
-                index++
-            )
+            foreach (var t in syntax)
             {
-                if (
-                    syntax[index].Kind
-                    == TemplateSyntaxKind.ValueName
-                )
+                switch (t.Kind)
                 {
-                    valueFound = true;
-                }
-
-                if (
-                    syntax[index].Kind
-                    == TemplateSyntaxKind.BlockName
-                )
-                {
-                    blockFound = true;
+                    case TemplateSyntaxKind.ValueName:
+                        valueFound = true;
+                        break;
+                    case TemplateSyntaxKind.BlockName:
+                        blockFound = true;
+                        break;
                 }
             }
 
@@ -169,24 +119,16 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_UnknownBlock_ReportsOpeningNameOnce()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new TemplateTagDefinition[0],
-                    new TemplateBlockDefinition[0]
-                );
+            var language = new TemplateLanguageDefinition([], []);
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{#missing}}x{{/missing}}"
-                    ),
-                    language
-                );
+            var result = TemplateLanguageAnalyzer.Analyze(
+                TemplateParser.Parse("{{#missing}}x{{/missing}}"),
+                language
+            );
 
             Assert.True(result.HasErrors);
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateLanguageAnalyzer.UnknownBlockDiagnosticCode,
@@ -201,22 +143,14 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_InvalidTagName_DoesNotCascadeUnknownTag()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new TemplateTagDefinition[0],
-                    new TemplateBlockDefinition[0]
-                );
+            var language = new TemplateLanguageDefinition([], []);
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{1bad}}"
-                    ),
+            var result = TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{1bad}}"),
                     language
                 );
 
-            var diagnostic =
-                Assert.Single(result.Diagnostics);
+            var diagnostic = Assert.Single(result.Diagnostics);
 
             Assert.Equal(
                 TemplateParser.InvalidTagNameDiagnosticCode,
@@ -227,22 +161,14 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_InvalidBlockName_DoesNotCascadeUnknownBlock()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new TemplateTagDefinition[0],
-                    new TemplateBlockDefinition[0]
-                );
+            var language = new TemplateLanguageDefinition([], []);
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{#1bad}}x{{/1bad}}"
-                    ),
+            var result = TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{#1bad}}x{{/1bad}}"),
                     language
                 );
 
-            var diagnostics =
-                result.Diagnostics;
+            var diagnostics = result.Diagnostics;
 
             Assert.Equal(2, diagnostics.Length);
 
@@ -259,30 +185,18 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void Analyze_CombinedDiagnostics_AreReturnedInSourceOrder()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new TemplateTagDefinition[0],
-                    new TemplateBlockDefinition[0]
-                );
+            var language = new TemplateLanguageDefinition([], []);
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{missing}} {{1bad}} {{other}}"
-                    ),
+            var result = TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{missing}} {{1bad}} {{other}}"),
                     language
                 );
 
-            var diagnostics =
-                result.Diagnostics;
+            var diagnostics = result.Diagnostics;
 
             Assert.Equal(3, diagnostics.Length);
 
-            for (
-                int index = 1;
-                index < diagnostics.Length;
-                index++
-            )
+            for (int index = 1; index < diagnostics.Length; index++)
             {
                 Assert.True(
                     diagnostics[index - 1].Span.Start
@@ -339,11 +253,7 @@ namespace Mz.TextTemplate.Tests
         {
             var exception =
                 Assert.Throws<ArgumentException>(
-                    () =>
-                        new TemplateTagDefinition(
-                            "name",
-                            (TemplateTagRole)123
-                        )
+                    () => new TemplateTagDefinition("name", (TemplateTagRole)123)
                 );
 
             Assert.Equal(
@@ -354,23 +264,14 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void LanguageDefinition_DuplicateTagNames_AreRejected()
         {
-            var exception =
-                Assert.Throws<ArgumentException>(
-                    () =>
-                        new TemplateLanguageDefinition(
-                            new[]
-                            {
-                                new TemplateTagDefinition(
-                                    "name",
-                                    TemplateTagRole.Value
-                                ),
-                                new TemplateTagDefinition(
-                                    "name",
-                                    TemplateTagRole.Command
-                                )
-                            },
-                            new TemplateBlockDefinition[0]
-                        )
+            var exception = Assert.Throws<ArgumentException>(
+                    () => new TemplateLanguageDefinition(
+                        [
+                            new TemplateTagDefinition("name", TemplateTagRole.Value),
+                            new TemplateTagDefinition("name", TemplateTagRole.Command)
+                        ],
+                        []
+                    )
                 );
 
             Assert.Equal(
@@ -382,20 +283,13 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void LanguageDefinition_DuplicateBlockNames_AreRejected()
         {
-            var exception =
-                Assert.Throws<ArgumentException>(
-                    () =>
-                        new TemplateLanguageDefinition(
-                            new TemplateTagDefinition[0],
-                            new[]
-                            {
-                                new TemplateBlockDefinition(
-                                    "first"
-                                ),
-                                new TemplateBlockDefinition(
-                                    "first"
-                                )
-                            }
+            var exception = Assert.Throws<ArgumentException>(
+                    () => new TemplateLanguageDefinition(
+                            [],
+                            [
+                                new TemplateBlockDefinition("first"),
+                                new TemplateBlockDefinition("first")
+                            ]
                         )
                 );
 
@@ -408,53 +302,26 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void LanguageDefinition_TagAndBlockMayShareName()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new[]
-                    {
-                        new TemplateTagDefinition(
-                            "thing",
-                            TemplateTagRole.Value
-                        )
-                    },
-                    new[]
-                    {
-                        new TemplateBlockDefinition(
-                            "thing"
-                        )
-                    }
+            var language = new TemplateLanguageDefinition(
+                    [new TemplateTagDefinition("thing", TemplateTagRole.Value)],
+                    [new TemplateBlockDefinition("thing")]
                 );
 
-            var result =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{thing}}{{#thing}}x{{/thing}}"
-                    ),
+            var result = TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{thing}}{{#thing}}x{{/thing}}"),
                     language
                 );
 
             Assert.False(result.HasErrors);
             Assert.Empty(result.Diagnostics);
 
-            bool valueFound = false;
+            var valueFound = false;
 
-            var syntax =
-                result.SyntaxSpans;
+            var syntax = result.SyntaxSpans;
 
-            for (
-                int index = 0;
-                index < syntax.Length;
-                index++
-            )
-            {
-                if (
-                    syntax[index].Kind
-                    == TemplateSyntaxKind.ValueName
-                )
-                {
+            foreach (var t in syntax)
+                if (t.Kind == TemplateSyntaxKind.ValueName)
                     valueFound = true;
-                }
-            }
 
             Assert.True(valueFound);
         }
@@ -462,35 +329,16 @@ namespace Mz.TextTemplate.Tests
         [Fact]
         public void LanguageAndAnalysisCollections_AreDefensiveCopies()
         {
-            var language =
-                new TemplateLanguageDefinition(
-                    new[]
-                    {
-                        new TemplateTagDefinition(
-                            "name",
-                            TemplateTagRole.Value
-                        )
-                    },
-                    new[]
-                    {
-                        new TemplateBlockDefinition(
-                            "first"
-                        )
-                    }
+            var language = new TemplateLanguageDefinition(
+                    [new TemplateTagDefinition("name", TemplateTagRole.Value)],
+                    [new TemplateBlockDefinition("first")]
                 );
 
             var tags = language.Tags;
-            tags[0] =
-                new TemplateTagDefinition(
-                    "mutated",
-                    TemplateTagRole.Command
-                );
+            tags[0] = new TemplateTagDefinition("mutated", TemplateTagRole.Command);
 
             var blocks = language.Blocks;
-            blocks[0] =
-                new TemplateBlockDefinition(
-                    "mutated"
-                );
+            blocks[0] = new TemplateBlockDefinition("mutated");
 
             Assert.Equal(
                 "name",
@@ -501,18 +349,14 @@ namespace Mz.TextTemplate.Tests
                 language.Blocks[0].Name
             );
 
-            var analysis =
-                TemplateLanguageAnalyzer.Analyze(
-                    TemplateParser.Parse(
-                        "{{missing}}"
-                    ),
+            var analysis = TemplateLanguageAnalyzer.Analyze(
+                    TemplateParser.Parse("{{missing}}"),
                     language
                 );
 
             var diagnostics = analysis.Diagnostics;
 
-            var replacementAnalysis =
-                TemplateLanguageAnalyzer.Analyze(
+            var replacementAnalysis = TemplateLanguageAnalyzer.Analyze(
                     TemplateParser.Parse("{{other}}"),
                     language
                 );
