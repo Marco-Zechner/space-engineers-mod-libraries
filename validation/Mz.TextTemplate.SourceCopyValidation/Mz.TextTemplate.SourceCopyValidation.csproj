@@ -18,6 +18,9 @@
 
   <ItemGroup>
     <Compile
+      Include="..\..\src\Mz.SemanticVersioning\*.cs"
+      Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
+    <Compile
       Include="..\..\src\Mz.TextTemplate\**\*.cs"
       Exclude="..\..\src\Mz.TextTemplate\bin\**;..\..\src\Mz.TextTemplate\obj\**"
       Link="Libraries\Mz.TextTemplate\%(RecursiveDir)%(Filename)%(Extension)" />
