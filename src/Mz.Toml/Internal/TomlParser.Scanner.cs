@@ -56,10 +56,22 @@ namespace Mz.Toml.Internal
 
         private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end)
         {
+            AddSyntaxNode(kind, start, end, null);
+        }
+
+        private void AddSyntaxNode(
+            TomlSyntaxNodeKind kind,
+            int start,
+            int end,
+            TomlSourceSpan? valueSpan)
+        {
             if (end <= start)
                 return;
 
-            _syntaxNodes.Add(new TomlSyntaxNode(kind, new TomlSourceSpan(start, end - start)));
+            _syntaxNodes.Add(new TomlSyntaxNode(
+                kind,
+                new TomlSourceSpan(start, end - start),
+                valueSpan));
         }
 
         private void AddSyntaxTrivia(TomlSyntaxTriviaKind kind, int start, int end)

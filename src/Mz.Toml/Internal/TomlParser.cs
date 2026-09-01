@@ -164,12 +164,15 @@ namespace Mz.Toml.Internal
                 return false;
             }
 
+            var valueStart = _index;
             TomlNode value;
 
             if (!ParseValue(out value, out diagnostic))
                 return false;
 
-            AddSyntaxNode(syntaxKind, assignmentStart, _index);
+            var valueSpan = new TomlSourceSpan(valueStart, _index - valueStart);
+
+            AddSyntaxNode(syntaxKind, assignmentStart, _index, valueSpan);
             SkipSyntaxHorizontalWhitespace();
 
             if (!IsEnd && Current == '#')

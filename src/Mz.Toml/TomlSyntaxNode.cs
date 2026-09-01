@@ -6,9 +6,13 @@ namespace Mz.Toml
     public sealed class TomlSyntaxNode
     {
         internal TomlSyntaxNode(TomlSyntaxNodeKind kind, TomlSourceSpan span)
+            : this(kind, span, null) { }
+
+        internal TomlSyntaxNode(TomlSyntaxNodeKind kind, TomlSourceSpan span, TomlSourceSpan? valueSpan)
         {
             Kind = kind;
             Span = span;
+            ValueSpan = valueSpan;
         }
 
         /// <summary>
@@ -20,5 +24,11 @@ namespace Mz.Toml
         /// Gets the exact source range occupied by this node.
         /// </summary>
         public TomlSourceSpan Span { get; }
+
+        /// <summary>
+        /// Gets the exact value source range for an active or disabled assignment,
+        /// or null for syntax nodes that do not contain an assignment value.
+        /// </summary>
+        public TomlSourceSpan? ValueSpan { get; }
     }
 }

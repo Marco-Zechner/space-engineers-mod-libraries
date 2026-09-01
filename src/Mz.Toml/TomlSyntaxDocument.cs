@@ -78,6 +78,63 @@ namespace Mz.Toml
             return Source.Remove(node.Span.Start, 2);
         }
 
+        /// <summary>
+        /// Returns source with only the exact value range of the specified active
+        /// or disabled assignment replaced by <paramref name="valueSource"/>.
+        /// </summary>
+        public string ReplaceAssignmentValue(TomlSyntaxNode node, string valueSource)
+        {
+            ValidateOwnedNode(node);
+
+            if (node.Kind != TomlSyntaxNodeKind.Assignment &&
+                node.Kind != TomlSyntaxNodeKind.DisabledAssignment)
+            {
+                throw new ArgumentException(
+                    "The syntax node is not an active or disabled assignment.",
+                    nameof(node));
+            }
+
+            if (valueSource == null)
+                throw new ArgumentNullException(nameof(valueSource));
+
+            ValidateValueSource(valueSource);
+
+            if (!node.ValueSpan.HasValue)
+                throw new InvalidOperationException("The assignment syntax node does not contain a value span.");
+
+            var valueSpan = node.ValueSpan.Value;
+
+            return Source
+                .Remove(valueSpan.Start, valueSpan.Length)
+                .Insert(valueSpan.Start, valueSource);
+        }
+
+        private static void ValidateValueSource(string valueSource)
+        {
+            const string prefix = "value = ";
+            var parsed = Toml.TryParse(prefix + valueSource);
+
+            if (!parsed.IsSuccess ||
+                parsed.Syntax == null ||
+                parsed.Syntax.Nodes.Count == 0 ||
+                parsed.Syntax.Nodes[0].Kind != TomlSyntaxNodeKind.Assignment ||
+                !parsed.Syntax.Nodes[0].ValueSpan.HasValue)
+            {
+                throw new ArgumentException(
+                    "Replacement text must be exactly one valid TOML value.",
+                    nameof(valueSource));
+            }
+
+            var span = parsed.Syntax.Nodes[0].ValueSpan.Value;
+
+            if (span.Start != prefix.Length || span.Length != valueSource.Length)
+            {
+                throw new ArgumentException(
+                    "Replacement text must be exactly one valid TOML value.",
+                    nameof(valueSource));
+            }
+        }
+
         private void ValidateOwnedNode(TomlSyntaxNode node)
         {
             if (node == null)
