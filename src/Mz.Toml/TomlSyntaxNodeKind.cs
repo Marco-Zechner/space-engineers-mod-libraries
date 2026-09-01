@@ -36,13 +36,13 @@ namespace Mz.Toml
         ArrayTableHeader = 5,
 
         /// <summary>
-        /// A source range that could not be safely classified after parsing failed.
-        /// </summary>
-        Unparsed = 7,
-
-        /// <summary>
         /// A source-preserved assignment disabled with the custom '#!' marker.
         /// </summary>
-        DisabledAssignment = 6
+        DisabledAssignment = 6,
+
+        /// <summary>
+        /// A source range that could not be safely classified after parsing failed.
+        /// </summary>
+        Unparsed = 7
     }
 }

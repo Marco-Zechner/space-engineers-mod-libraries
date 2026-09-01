@@ -32,7 +32,9 @@ namespace Mz.Toml
         public string Source { get; }
 
         /// <summary>
-        /// Gets source-preserving syntax nodes in source order.
+        /// Gets source-preserving syntax nodes in source order. For decoded text,
+        /// these ranges preserve the complete source layout. A failed parse may end
+        /// with an Unparsed node covering source that could not be safely classified.
         /// </summary>
         public IReadOnlyList<TomlSyntaxNode> Nodes { get; }
 
@@ -44,7 +46,8 @@ namespace Mz.Toml
 
         /// <summary>
         /// Creates a stateful source-preserving editor for composing validated edits.
-        /// The source must currently be valid TOML.
+        /// The source must currently parse successfully; syntax retained from a failed
+        /// parse cannot be edited through this API.
         /// </summary>
         public TomlSourceEditor CreateEditor()
         {

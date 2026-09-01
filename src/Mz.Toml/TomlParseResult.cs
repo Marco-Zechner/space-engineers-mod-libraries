@@ -35,7 +35,11 @@ namespace Mz.Toml
         public IReadOnlyList<TomlDiagnostic> Diagnostics { get; }
 
         /// <summary>
-        /// Gets the exact source-preserving syntax document when one was produced.
+        /// Gets the exact source-preserving syntax document when source text was
+        /// available. Failed decoded-text parses retain syntax for safely classified
+        /// source and may contain an Unparsed node for the remaining source. This is
+        /// null when exact source text could not be produced, such as invalid UTF-8
+        /// byte input.
         /// </summary>
         public TomlSyntaxDocument Syntax { get; }
     }

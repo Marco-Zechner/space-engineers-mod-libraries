@@ -12,10 +12,10 @@ are valid for the application.
 
 ## Setup
 
-Install `Mz.Toml@0.1.0` in the project:
+Install `Mz.Toml@0.2.0` in the project:
 
 ```shell
-selibs add Mz.Toml@0.1.0
+selibs add Mz.Toml@0.2.0
 ```
 
 SELibs also installs the exact `Mz.SemanticVersioning` dependency required by
@@ -319,6 +319,126 @@ if (!result.IsSuccess)
     HandleDiagnostic(result.Diagnostics[0]);
 ```
 
+## Preserving a hand-edited configuration
+
+`Toml.Write` is appropriate when the application owns the whole generated
+document. When users also edit the file, use the source-preserving syntax
+instead so comments and formatting can remain untouched.
+
+For example, this changes only the value source of the `enabled` assignment:
+
+```csharp
+TomlParseResult result = Toml.TryParse(text);
+
+if (!result.IsSuccess)
+{
+    Log(result.Diagnostics[0].ToString());
+    return;
+}
+
+TomlSourceEditor editor = result.Syntax.CreateEditor();
+TomlSyntaxNode enabledAssignment = null;
+
+for (var i = 0; i < editor.Syntax.Nodes.Count; i++)
+{
+    TomlSyntaxNode node = editor.Syntax.Nodes[i];
+
+    if (node.Kind != TomlSyntaxNodeKind.Assignment)
+        continue;
+
+    string statement = editor.Source.Substring(
+        node.Span.Start,
+        node.Span.Length
+    );
+
+    if (statement.StartsWith("enabled", StringComparison.Ordinal))
+    {
+        enabledAssignment = node;
+        break;
+    }
+}
+
+if (enabledAssignment == null)
+    throw new FormatException("Missing TOML assignment 'enabled'.");
+
+editor.ReplaceAssignmentValue(enabledAssignment, "false");
+
+SaveConfiguration(editor.Source);
+```
+
+Only the assignment's exact `ValueSpan` changes. Existing whitespace, comments,
+line endings, and unrelated source remain unchanged.
+
+The same editor also exposes:
+
+```csharp
+editor.DisableAssignment(node);
+editor.EnableAssignment(node);
+editor.InsertSourceBefore(node, sourceFragment);
+editor.InsertSourceAfter(node, sourceFragment);
+editor.InsertSourceAtStart(sourceFragment);
+editor.InsertSourceAtEnd(sourceFragment);
+```
+
+A successful edit reparses the resulting text and refreshes `editor.Syntax`.
+That means node references from before the edit are stale. Reacquire the node
+you need from the current syntax before the next node-based operation.
+
+If an edit would make the document invalid, the editor throws and keeps its
+previous source and syntax unchanged.
+
+## Comments and trivia
+
+The syntax document keeps comments, whitespace, and newlines as exact source
+ranges.
+
+`TomlSyntaxTrivia.Placement` reports objective layout:
+
+- `TopLevel` for trivia between statements;
+- `WithinStatement` for trivia lexically inside a statement or value;
+- `Trailing` for same-line trivia after a completed statement.
+
+This intentionally does not decide comment ownership. A configuration host can
+build its own field/comment conventions without Mz.Toml guessing whether a
+user comment belongs to a specific field.
+
+## Disabled assignments
+
+Mz.Toml defines this source extension:
+
+```toml
+enabled = true
+#!experimentalMode = "unsafe"
+```
+
+The `#!` form is parsed as `TomlSyntaxNodeKind.DisabledAssignment`. Its key and
+value must still use valid assignment syntax, but the assignment does not
+populate the semantic document.
+
+Ordinary comments still begin with `#`. `#!` is an Mz.Toml extension and is not
+part of standard TOML 1.0.
+
+A host may use disabled assignments to represent an inactive optional setting,
+including a null-like application state. Mz.Toml itself does not convert a
+disabled assignment into a null value.
+
+## Working with invalid user source
+
+A failed `Toml.TryParse(string)` still has no semantic `Document`, but it can
+retain an exact `Syntax` document for diagnostics or a host editor.
+
+Safely recognized source remains classified. Any remaining source that cannot
+be classified safely after the first fatal parse failure is represented by
+`TomlSyntaxNodeKind.Unparsed`.
+
+Do not assume every failed parse contains `Unparsed`: a semantic failure such as
+a duplicate key can be completely classified before it is rejected.
+
+When the `byte[]` overload rejects invalid UTF-8, no trusted decoded source
+exists and `result.Syntax` is null.
+
+`TomlSourceEditor` deliberately accepts only currently valid TOML, so recovery
+or repair policy stays with the consuming application.
 ## Important writer behavior
 
 `Toml.Write` is a canonical writer, not a document editor.
@@ -332,8 +452,9 @@ preserve the parsed source's:
 - original numeric spelling;
 - table-layout choices.
 
-Do not parse and rewrite a hand-edited file if preserving its presentation is a
-requirement.
+Do not round-trip a hand-edited file through the semantic document and canonical
+writer if preserving its presentation is a requirement. Use
+`TomlSyntaxDocument` or `TomlSourceEditor` for source-preserving changes.
 
 The writer rejects cyclic programmatic node graphs. Reusing the same node in
 multiple acyclic locations is supported.
@@ -351,6 +472,11 @@ usual choices are:
 - represent the concept through another explicit TOML structure.
 
 Do not expect `Mz.Toml` to serialize a null node or null scalar.
+
+Mz.Toml's `#!` disabled-assignment extension can be used by a consuming
+configuration layer as an explicit inactive or null-like source state, but that
+mapping is application policy. The semantic TOML document simply excludes the
+disabled assignment.
 
 ## Source-copy use in Space Engineers
 

@@ -4,7 +4,8 @@ namespace Mz.Toml
 {
     /// <summary>
     /// Composes source-preserving TOML edits while refreshing syntax after every
-    /// successful change.
+    /// successful change. Each edit is validated by reparsing the complete resulting
+    /// source. A failed edit leaves the current source and syntax unchanged.
     /// </summary>
     public sealed class TomlSourceEditor
     {
