@@ -41,5 +41,55 @@ namespace Mz.Toml
         /// Trivia may lie inside a larger syntax node such as a multiline array assignment.
         /// </summary>
         public IReadOnlyList<TomlSyntaxTrivia> Trivia { get; }
+
+        /// <summary>
+        /// Returns source with the specified active assignment disabled by inserting
+        /// the custom '#!' marker at the assignment start.
+        /// </summary>
+        public string DisableAssignment(TomlSyntaxNode node)
+        {
+            ValidateOwnedNode(node);
+
+            if (node.Kind != TomlSyntaxNodeKind.Assignment)
+                throw new ArgumentException("The syntax node is not an active assignment.", nameof(node));
+
+            return Source.Insert(node.Span.Start, "#!");
+        }
+
+        /// <summary>
+        /// Returns source with the specified disabled assignment enabled by removing
+        /// only its custom '#!' marker.
+        /// </summary>
+        public string EnableAssignment(TomlSyntaxNode node)
+        {
+            ValidateOwnedNode(node);
+
+            if (node.Kind != TomlSyntaxNodeKind.DisabledAssignment)
+                throw new ArgumentException("The syntax node is not a disabled assignment.", nameof(node));
+
+            if (node.Span.Length < 2 ||
+                node.Span.Start + 1 >= Source.Length ||
+                Source[node.Span.Start] != '#' ||
+                Source[node.Span.Start + 1] != '!')
+            {
+                throw new InvalidOperationException("The disabled assignment does not contain the expected '#!' marker.");
+            }
+
+            return Source.Remove(node.Span.Start, 2);
+        }
+
+        private void ValidateOwnedNode(TomlSyntaxNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
+
+            for (var index = 0; index < Nodes.Count; index++)
+            {
+                if (ReferenceEquals(Nodes[index], node))
+                    return;
+            }
+
+            throw new ArgumentException("The syntax node does not belong to this syntax document.", nameof(node));
+        }
     }
 }
