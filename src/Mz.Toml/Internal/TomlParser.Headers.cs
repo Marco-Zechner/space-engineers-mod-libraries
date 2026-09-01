@@ -39,11 +39,11 @@ namespace Mz.Toml.Internal
             }
 
             AddSyntaxNode(isArrayOfTables ? TomlSyntaxNodeKind.ArrayTableHeader : TomlSyntaxNodeKind.TableHeader, headerStart, _index);
-            SkipSyntaxHorizontalWhitespace();
+            SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.Trailing);
 
             if (!IsEnd && Current == '#')
             {
-                if (!SkipSyntaxComment(out diagnostic))
+                if (!SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic))
                     return false;
             }
 
@@ -56,7 +56,7 @@ namespace Mz.Toml.Internal
                     return false;
                 }
 
-                if (!ConsumeSyntaxNewline(out diagnostic))
+                if (!ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                     return false;
             }
 

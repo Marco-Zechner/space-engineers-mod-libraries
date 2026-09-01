@@ -5,10 +5,14 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlSyntaxTrivia
     {
-        internal TomlSyntaxTrivia(TomlSyntaxTriviaKind kind, TomlSourceSpan span)
+        internal TomlSyntaxTrivia(
+            TomlSyntaxTriviaKind kind,
+            TomlSourceSpan span,
+            TomlSyntaxTriviaPlacement placement)
         {
             Kind = kind;
             Span = span;
+            Placement = placement;
         }
 
         /// <summary>
@@ -20,5 +24,11 @@ namespace Mz.Toml
         /// Gets the exact source range occupied by this trivia.
         /// </summary>
         public TomlSourceSpan Span { get; }
+
+        /// <summary>
+        /// Gets the objective source-layout placement of this trivia.
+        /// This does not assign comments to semantic fields or statements.
+        /// </summary>
+        public TomlSyntaxTriviaPlacement Placement { get; }
     }
 }

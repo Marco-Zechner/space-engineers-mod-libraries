@@ -68,7 +68,7 @@ namespace Mz.Toml.Internal
 
             while (!IsEnd)
             {
-                SkipSyntaxHorizontalWhitespace();
+                SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.TopLevel);
 
                 if (IsEnd)
                     return true;
@@ -78,13 +78,13 @@ namespace Mz.Toml.Internal
                     if (IsDisabledAssignmentStart)
                         return true;
 
-                    if (!SkipSyntaxComment(out diagnostic))
+                    if (!SkipSyntaxComment(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                         return false;
 
                     if (IsEnd)
                         return true;
 
-                    if (!ConsumeSyntaxNewline(out diagnostic))
+                    if (!ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                         return false;
 
                     continue;
@@ -93,7 +93,7 @@ namespace Mz.Toml.Internal
                 if (!IsNewlineStart(Current))
                     return true;
 
-                if (!ConsumeSyntaxNewline(out diagnostic))
+                if (!ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                     return false;
             }
 
@@ -173,11 +173,11 @@ namespace Mz.Toml.Internal
             var valueSpan = new TomlSourceSpan(valueStart, _index - valueStart);
 
             AddSyntaxNode(syntaxKind, assignmentStart, _index, valueSpan);
-            SkipSyntaxHorizontalWhitespace();
+            SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.Trailing);
 
             if (!IsEnd && Current == '#')
             {
-                if (!SkipSyntaxComment(out diagnostic))
+                if (!SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic))
                     return false;
             }
 
@@ -193,7 +193,7 @@ namespace Mz.Toml.Internal
                     return false;
                 }
 
-                if (!ConsumeSyntaxNewline(out diagnostic))
+                if (!ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                     return false;
             }
 
