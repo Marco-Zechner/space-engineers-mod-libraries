@@ -23,8 +23,7 @@ public sealed class TomlTriviaClassificationTests
             (" ", TomlSyntaxTriviaKind.Whitespace, TomlSyntaxTriviaPlacement.WithinStatement),
             ("\r\n", TomlSyntaxTriviaKind.Newline, TomlSyntaxTriviaPlacement.TopLevel)
         ],
-            syntax.Trivia.Select(trivia =>
-                (TextOf(syntax, trivia), trivia.Kind, trivia.Placement))
+            syntax.Trivia.Select(trivia => (TextOf(syntax, trivia), trivia.Kind, trivia.Placement))
         );
     }
 
@@ -57,8 +56,7 @@ public sealed class TomlTriviaClassificationTests
         Assert.Contains(
             syntax.Trivia,
             trivia =>
-                TextOf(syntax, trivia) == " " &&
-                trivia.Span.Start == 2 &&
+                TextOf(syntax, trivia) == " " && trivia.Span.Start == 2 &&
                 trivia.Placement == TomlSyntaxTriviaPlacement.WithinStatement
         );
 
@@ -85,8 +83,7 @@ public sealed class TomlTriviaClassificationTests
             "enabled = true\n";
 
         var syntax = Toml.TryParse(source).Syntax;
-        var comment = syntax.Trivia.Single(trivia =>
-            trivia.Kind == TomlSyntaxTriviaKind.Comment);
+        var comment = syntax.Trivia.Single(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment);
 
         Assert.Equal("# settings", TextOf(syntax, comment));
         Assert.Equal(TomlSyntaxTriviaPlacement.Trailing, comment.Placement);
@@ -109,38 +106,20 @@ public sealed class TomlTriviaClassificationTests
             "]\r\n";
 
         var syntax = Toml.TryParse(source).Syntax;
-        var assignment = syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         var nested = syntax.Trivia
-            .Where(trivia =>
-                trivia.Span.Start >= assignment.Span.Start &&
-                trivia.Span.End <= assignment.Span.End)
+            .Where(trivia => trivia.Span.Start >= assignment.Span.Start && trivia.Span.End <= assignment.Span.End)
             .ToArray();
 
         Assert.NotEmpty(nested);
-        Assert.All(
-            nested,
-            trivia => Assert.Equal(
-                TomlSyntaxTriviaPlacement.WithinStatement,
-                trivia.Placement)
-        );
+        Assert.All(nested, trivia => Assert.Equal(TomlSyntaxTriviaPlacement.WithinStatement, trivia.Placement));
 
-        Assert.Contains(
-            nested,
-            trivia =>
-                trivia.Kind == TomlSyntaxTriviaKind.Comment &&
-                TextOf(syntax, trivia) == "# first"
-        );
+        Assert.Contains(nested, trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TextOf(syntax, trivia) == "# first");
 
-        Assert.Contains(
-            nested,
-            trivia =>
-                trivia.Kind == TomlSyntaxTriviaKind.Comment &&
-                TextOf(syntax, trivia) == "# between"
-        );
+        Assert.Contains(nested, trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TextOf(syntax, trivia) == "# between");
 
-        var finalNewline = syntax.Trivia.Last();
+        var finalNewline = syntax.Trivia[^1];
 
         Assert.Equal("\r\n", TextOf(syntax, finalNewline));
         Assert.Equal(TomlSyntaxTriviaPlacement.TopLevel, finalNewline.Placement);
@@ -152,20 +131,14 @@ public sealed class TomlTriviaClassificationTests
         const string source = "a . b =   { x = 1, y = 2 }  # tail\n";
 
         var syntax = Toml.TryParse(source).Syntax;
-        var assignment = syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         Assert.All(
-            syntax.Trivia.Where(trivia =>
-                trivia.Span.Start >= assignment.Span.Start &&
-                trivia.Span.End <= assignment.Span.End),
-            trivia => Assert.Equal(
-                TomlSyntaxTriviaPlacement.WithinStatement,
-                trivia.Placement)
+            syntax.Trivia.Where(trivia => trivia.Span.Start >= assignment.Span.Start && trivia.Span.End <= assignment.Span.End),
+            trivia => Assert.Equal(TomlSyntaxTriviaPlacement.WithinStatement, trivia.Placement)
         );
 
-        var trailingComment = syntax.Trivia.Single(trivia =>
-            trivia.Kind == TomlSyntaxTriviaKind.Comment);
+        var trailingComment = syntax.Trivia.Single(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment);
 
         Assert.Equal(TomlSyntaxTriviaPlacement.Trailing, trailingComment.Placement);
     }
@@ -180,8 +153,7 @@ public sealed class TomlTriviaClassificationTests
             "second = 2\n";
 
         var syntax = Toml.TryParse(source).Syntax;
-        var comment = syntax.Trivia.Single(trivia =>
-            trivia.Kind == TomlSyntaxTriviaKind.Comment);
+        var comment = syntax.Trivia.Single(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment);
 
         Assert.Equal(TomlSyntaxTriviaPlacement.TopLevel, comment.Placement);
     }
@@ -194,8 +166,7 @@ public sealed class TomlTriviaClassificationTests
             "# eof comment";
 
         var syntax = Toml.TryParse(source).Syntax;
-        var comment = syntax.Trivia.Single(trivia =>
-            trivia.Kind == TomlSyntaxTriviaKind.Comment);
+        var comment = syntax.Trivia.Single(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment);
 
         Assert.Equal(TomlSyntaxTriviaPlacement.TopLevel, comment.Placement);
     }
@@ -211,14 +182,9 @@ public sealed class TomlTriviaClassificationTests
         var syntax = Toml.TryParse(source).Syntax;
 
         Assert.Equal(3, syntax.Trivia.Count);
-        Assert.All(
-            syntax.Trivia.Take(2),
-            trivia => Assert.Equal(
-                TomlSyntaxTriviaPlacement.WithinStatement,
-                trivia.Placement)
-        );
+        Assert.All(syntax.Trivia.Take(2), trivia => Assert.Equal(TomlSyntaxTriviaPlacement.WithinStatement, trivia.Placement));
 
-        Assert.Equal(TomlSyntaxTriviaPlacement.TopLevel, syntax.Trivia.Last().Placement);
+        Assert.Equal(TomlSyntaxTriviaPlacement.TopLevel, syntax.Trivia[^1].Placement);
     }
 
     private static string TextOf(TomlSyntaxDocument syntax, TomlSyntaxTrivia trivia)

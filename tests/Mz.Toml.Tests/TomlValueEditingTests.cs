@@ -169,8 +169,7 @@ public sealed class TomlValueEditingTests
         var syntax = Toml.TryParse("value = 1\n").Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => syntax.ReplaceAssignmentValue(assignment, replacement));
+        var exception = Assert.Throws<ArgumentException>(() => syntax.ReplaceAssignmentValue(assignment, replacement));
 
         Assert.Equal("valueSource", exception.ParamName);
         Assert.Equal("value = 1\n", syntax.Source);
@@ -182,8 +181,7 @@ public sealed class TomlValueEditingTests
         var syntax = Toml.TryParse("value = 1\n").Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentNullException>(
-            () => syntax.ReplaceAssignmentValue(assignment, null));
+        var exception = Assert.Throws<ArgumentNullException>(() => syntax.ReplaceAssignmentValue(assignment, null));
 
         Assert.Equal("valueSource", exception.ParamName);
     }
@@ -194,8 +192,7 @@ public sealed class TomlValueEditingTests
         var syntax = Toml.TryParse("# comment\nvalue = 1\n").Syntax;
         var comment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Comment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => syntax.ReplaceAssignmentValue(comment, "2"));
+        var exception = Assert.Throws<ArgumentException>(() => syntax.ReplaceAssignmentValue(comment, "2"));
 
         Assert.Equal("node", exception.ParamName);
     }
@@ -207,8 +204,7 @@ public sealed class TomlValueEditingTests
         var second = Toml.TryParse("value = 1\n").Syntax;
         var foreign = second.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => first.ReplaceAssignmentValue(foreign, "2"));
+        var exception = Assert.Throws<ArgumentException>(() => first.ReplaceAssignmentValue(foreign, "2"));
 
         Assert.Equal("node", exception.ParamName);
     }

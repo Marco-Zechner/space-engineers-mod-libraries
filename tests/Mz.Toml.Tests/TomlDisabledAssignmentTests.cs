@@ -151,10 +151,7 @@ public sealed class TomlDisabledAssignmentTests
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Document.Root.ContainsKey("value"));
-        Assert.DoesNotContain(
-            result.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment
-        );
+        Assert.DoesNotContain(result.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
         Assert.Contains(
             result.Syntax.Nodes,
             node => node.Kind == TomlSyntaxNodeKind.Comment &&
@@ -175,10 +172,7 @@ public sealed class TomlDisabledAssignmentTests
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Document.Root.ContainsKey("values"));
-        Assert.DoesNotContain(
-            result.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment
-        );
+        Assert.DoesNotContain(result.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
         Assert.Contains(
             result.Syntax.Trivia,
             trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment &&
@@ -226,6 +220,7 @@ public sealed class TomlDisabledAssignmentTests
         Assert.Equal(13, diagnostic.Column);
         Assert.Contains("Expected a value", diagnostic.Message, StringComparison.Ordinal);
     }
+    
     [Theory]
     [InlineData("#!\n")]
     [InlineData("#! broken\n")]

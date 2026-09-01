@@ -65,10 +65,7 @@ public sealed class TomlInvalidSourceSyntaxTests
             result.Syntax.Nodes.Select(node => node.Kind)
         );
 
-        Assert.DoesNotContain(
-            result.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.Unparsed
-        );
+        Assert.DoesNotContain(result.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.Unparsed);
     }
 
     [Fact]
@@ -214,10 +211,7 @@ public sealed class TomlInvalidSourceSyntaxTests
         Assert.NotNull(result.Document);
         Assert.NotNull(result.Syntax);
 
-        Assert.DoesNotContain(
-            result.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.Unparsed
-        );
+        Assert.DoesNotContain(result.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.Unparsed);
 
         Assert.Equal(source, Reconstruct(result.Syntax));
     }

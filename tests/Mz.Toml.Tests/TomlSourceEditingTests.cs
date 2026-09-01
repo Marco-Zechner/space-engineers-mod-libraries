@@ -110,10 +110,7 @@ public sealed class TomlSourceEditingTests
         Assert.True(reparsed.IsSuccess);
         Assert.False(reparsed.Document.Root.ContainsKey("value"));
         Assert.True(reparsed.Document.Root.ContainsKey("other"));
-        Assert.Contains(
-            reparsed.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment
-        );
+        Assert.Contains(reparsed.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
     }
 
     [Fact]
@@ -132,10 +129,7 @@ public sealed class TomlSourceEditingTests
         Assert.True(reparsed.IsSuccess);
         Assert.True(reparsed.Document.Root.ContainsKey("value"));
         Assert.True(reparsed.Document.Root.ContainsKey("other"));
-        Assert.DoesNotContain(
-            reparsed.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment
-        );
+        Assert.DoesNotContain(reparsed.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
     }
 
     [Fact]

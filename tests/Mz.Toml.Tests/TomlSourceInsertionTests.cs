@@ -99,10 +99,7 @@ public sealed class TomlSourceInsertionTests
 
         Assert.True(reparsed.IsSuccess);
         Assert.False(reparsed.Document.Root.ContainsKey("optional"));
-        Assert.Contains(
-            reparsed.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment
-        );
+        Assert.Contains(reparsed.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
     }
 
     [Fact]
@@ -113,10 +110,7 @@ public sealed class TomlSourceInsertionTests
         var syntax = Toml.TryParse(source).Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var edited = syntax.InsertSourceBefore(
-            assignment,
-            "# generated description\r\n\r\n"
-        );
+        var edited = syntax.InsertSourceBefore(assignment, "# generated description\r\n\r\n");
 
         Assert.Equal(
             "# generated description\r\n" +
@@ -199,8 +193,7 @@ public sealed class TomlSourceInsertionTests
         var syntax = Toml.TryParse("value = 1\n").Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => syntax.InsertSourceBefore(assignment, sourceFragment));
+        var exception = Assert.Throws<ArgumentException>(() => syntax.InsertSourceBefore(assignment, sourceFragment));
 
         Assert.Equal("sourceFragment", exception.ParamName);
         Assert.Equal("value = 1\n", syntax.Source);
@@ -216,8 +209,7 @@ public sealed class TomlSourceInsertionTests
         var syntax = Toml.TryParse(source).Syntax;
         var after = syntax.Nodes.Last(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => syntax.InsertSourceBefore(after, "value = 3\n"));
+        var exception = Assert.Throws<ArgumentException>(() => syntax.InsertSourceBefore(after, "value = 3\n"));
 
         Assert.Equal("sourceFragment", exception.ParamName);
         Assert.Equal(source, syntax.Source);
@@ -231,8 +223,7 @@ public sealed class TomlSourceInsertionTests
         var syntax = Toml.TryParse(source).Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => syntax.InsertSourceAfter(assignment, "other = 2"));
+        var exception = Assert.Throws<ArgumentException>(() => syntax.InsertSourceAfter(assignment, "other = 2"));
 
         Assert.Equal("sourceFragment", exception.ParamName);
     }
@@ -243,8 +234,7 @@ public sealed class TomlSourceInsertionTests
         var syntax = Toml.TryParse("value = 1\n").Syntax;
         var assignment = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentNullException>(
-            () => syntax.InsertSourceBefore(assignment, null));
+        var exception = Assert.Throws<ArgumentNullException>(() => syntax.InsertSourceBefore(assignment, null));
 
         Assert.Equal("sourceFragment", exception.ParamName);
     }
@@ -254,8 +244,7 @@ public sealed class TomlSourceInsertionTests
     {
         var syntax = Toml.TryParse("value = 1\n").Syntax;
 
-        var exception = Assert.Throws<ArgumentNullException>(
-            () => syntax.InsertSourceAtEnd(null));
+        var exception = Assert.Throws<ArgumentNullException>(() => syntax.InsertSourceAtEnd(null));
 
         Assert.Equal("sourceFragment", exception.ParamName);
     }
@@ -267,8 +256,7 @@ public sealed class TomlSourceInsertionTests
         var second = Toml.TryParse("value = 1\n").Syntax;
         var foreign = second.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => first.InsertSourceBefore(foreign, "other = 2\n"));
+        var exception = Assert.Throws<ArgumentException>(() => first.InsertSourceBefore(foreign, "other = 2\n"));
 
         Assert.Equal("node", exception.ParamName);
     }
@@ -280,8 +268,7 @@ public sealed class TomlSourceInsertionTests
         var second = Toml.TryParse("value = 1\n").Syntax;
         var foreign = second.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => first.InsertSourceAfter(foreign, "\nother = 2"));
+        var exception = Assert.Throws<ArgumentException>(() => first.InsertSourceAfter(foreign, "\nother = 2"));
 
         Assert.Equal("node", exception.ParamName);
     }
@@ -289,11 +276,9 @@ public sealed class TomlSourceInsertionTests
     private static int IndexOfKind(TomlSyntaxDocument syntax, TomlSyntaxNodeKind kind)
     {
         for (var index = 0; index < syntax.Nodes.Count; index++)
-        {
             if (syntax.Nodes[index].Kind == kind)
                 return index;
-        }
-
+        
         throw new InvalidOperationException("Expected syntax node kind was not found.");
     }
 

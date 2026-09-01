@@ -168,37 +168,18 @@ public sealed class TomlLosslessSyntaxTests
 
         Assert.Equal(
         [
-            " ",
-            " ",
-            "\r\n",
-            "  ",
-            " ",
-            "# first",
-            "\r\n",
-            "  ",
-            "# between",
-            "\r\n",
-            "  ",
-            "\r\n",
+            " ", " ", "\r\n",
+            "  ", " ", "# first", "\r\n",
+            "  ", "# between", "\r\n",
+            "  ", "\r\n",
             "\r\n"
         ],
             syntax.Trivia.Select(trivia => source.Substring(trivia.Span.Start, trivia.Span.Length))
         );
 
-        Assert.Equal(
-            2,
-            syntax.Trivia.Count(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment)
-        );
-
-        Assert.Contains(
-            syntax.Trivia,
-            trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# first"
-        );
-
-        Assert.Contains(
-            syntax.Trivia,
-            trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# between"
-        );
+        Assert.Equal(2, syntax.Trivia.Count(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment));
+        Assert.Contains(syntax.Trivia, trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# first");
+        Assert.Contains(syntax.Trivia, trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# between");
     }
 
     [Fact]
@@ -230,9 +211,7 @@ public sealed class TomlLosslessSyntaxTests
 
         Assert.Equal(
         [
-            " ",
-            " ",
-            "\r\n"
+            " ", " ", "\r\n"
         ],
             syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
         );
@@ -247,18 +226,7 @@ public sealed class TomlLosslessSyntaxTests
 
         Assert.Equal(
         [
-            " ",
-            " ",
-            " ",
-            "   ",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",
-            "\n"
+            " ", " ", " ", "   ", " ", " ", " ", " ", " ", " ", " ", "\n"
         ],
             syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
         );
@@ -273,9 +241,7 @@ public sealed class TomlLosslessSyntaxTests
 
         Assert.Equal(
         [
-            " ",
-            " ",
-            "\n"
+            " ", " ", "\n"
         ],
             syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
         );

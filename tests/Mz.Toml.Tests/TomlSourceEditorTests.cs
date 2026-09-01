@@ -31,14 +31,14 @@ public sealed class TomlSourceEditorTests
         var syntax = Toml.TryParse(source).Syntax;
         var active = syntax.Nodes.Single(node =>
             node.Kind == TomlSyntaxNodeKind.Assignment &&
-            TextOf(syntax, node).StartsWith("value", StringComparison.Ordinal));
+            TextOf(syntax, node).StartsWith("value", StringComparison.Ordinal)
+        );
 
         var editor = syntax.CreateEditor();
 
         editor.DisableAssignment(active);
 
-        var disabled = editor.Syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
+        var disabled = editor.Syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
 
         editor.ReplaceAssignmentValue(disabled, "[2, 3]");
 
@@ -61,8 +61,7 @@ public sealed class TomlSourceEditorTests
     {
         var syntax = Toml.TryParse("value = 1\n").Syntax;
         var originalSyntax = syntax;
-        var originalNode = syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var originalNode = syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         var editor = syntax.CreateEditor();
 
@@ -71,8 +70,7 @@ public sealed class TomlSourceEditorTests
         Assert.NotSame(originalSyntax, editor.Syntax);
         Assert.Equal("value = 2\n", editor.Source);
 
-        var refreshed = editor.Syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var refreshed = editor.Syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         Assert.NotSame(originalNode, refreshed);
         Assert.Equal("2", TextOf(editor.Syntax, refreshed.ValueSpan.GetValueOrDefault()));
@@ -86,19 +84,15 @@ public sealed class TomlSourceEditorTests
             "second = 2\n"
         ).Syntax;
 
-        var first = syntax.Nodes.First(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var first = syntax.Nodes.First(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
-        var second = syntax.Nodes.Last(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var second = syntax.Nodes.Last(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         var editor = syntax.CreateEditor();
 
         editor.ReplaceAssignmentValue(first, "10");
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => editor.ReplaceAssignmentValue(second, "20")
-        );
+        var exception = Assert.Throws<ArgumentException>(() => editor.ReplaceAssignmentValue(second, "20"));
 
         Assert.Equal("node", exception.ParamName);
         Assert.Equal(
@@ -120,8 +114,7 @@ public sealed class TomlSourceEditorTests
 
         editor.InsertSourceAtStart("# generated\n");
 
-        var assignment = editor.Syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var assignment = editor.Syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         editor.ReplaceAssignmentValue(assignment, "42");
 
@@ -144,12 +137,9 @@ public sealed class TomlSourceEditorTests
         var editor = syntax.CreateEditor();
         var beforeSyntax = editor.Syntax;
 
-        var disabled = editor.Syntax.Nodes.Single(node =>
-            node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
+        var disabled = editor.Syntax.Nodes.Single(node => node.Kind == TomlSyntaxNodeKind.DisabledAssignment);
 
-        Assert.Throws<InvalidOperationException>(
-            () => editor.EnableAssignment(disabled)
-        );
+        Assert.Throws<InvalidOperationException>(() => editor.EnableAssignment(disabled));
 
         Assert.Equal(source, editor.Source);
         Assert.Same(beforeSyntax, editor.Syntax);
@@ -170,14 +160,9 @@ public sealed class TomlSourceEditorTests
 
         Assert.False(failed.IsSuccess);
         Assert.NotNull(failed.Syntax);
-        Assert.Contains(
-            failed.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.Unparsed
-        );
+        Assert.Contains(failed.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.Unparsed);
 
-        Assert.Throws<InvalidOperationException>(
-            () => failed.Syntax.CreateEditor()
-        );
+        Assert.Throws<InvalidOperationException>(() => failed.Syntax.CreateEditor());
     }
 
     [Fact]
@@ -190,14 +175,9 @@ public sealed class TomlSourceEditorTests
 
         Assert.False(failed.IsSuccess);
         Assert.NotNull(failed.Syntax);
-        Assert.DoesNotContain(
-            failed.Syntax.Nodes,
-            node => node.Kind == TomlSyntaxNodeKind.Unparsed
-        );
+        Assert.DoesNotContain(failed.Syntax.Nodes, node => node.Kind == TomlSyntaxNodeKind.Unparsed);
 
-        Assert.Throws<InvalidOperationException>(
-            () => failed.Syntax.CreateEditor()
-        );
+        Assert.Throws<InvalidOperationException>(() => failed.Syntax.CreateEditor());
     }
 
     [Fact]
@@ -211,13 +191,11 @@ public sealed class TomlSourceEditorTests
         var syntax = Toml.TryParse(source).Syntax;
         var editor = syntax.CreateEditor();
 
-        var second = editor.Syntax.Nodes.Last(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var second = editor.Syntax.Nodes.Last(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         editor.ReplaceAssignmentValue(second, "\"new\"");
 
-        var first = editor.Syntax.Nodes.First(node =>
-            node.Kind == TomlSyntaxNodeKind.Assignment);
+        var first = editor.Syntax.Nodes.First(node => node.Kind == TomlSyntaxNodeKind.Assignment);
 
         editor.DisableAssignment(first);
 
