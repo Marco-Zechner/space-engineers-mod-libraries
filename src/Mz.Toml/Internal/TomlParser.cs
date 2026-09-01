@@ -8,6 +8,7 @@ namespace Mz.Toml.Internal
         private readonly string _text;
         private readonly TomlTable _root;
         private readonly List<TomlSyntaxNode> _syntaxNodes;
+        private readonly List<TomlSyntaxTrivia> _syntaxTrivia;
         private TomlTable _currentTable;
         private int _index;
         private int _line;
@@ -17,6 +18,7 @@ namespace Mz.Toml.Internal
         {
             _text = text;
             _syntaxNodes = new List<TomlSyntaxNode>();
+            _syntaxTrivia = new List<TomlSyntaxTrivia>();
             _index = 0;
             _line = 1;
             _column = 1;
@@ -51,7 +53,7 @@ namespace Mz.Toml.Internal
                 }
             }
 
-            var syntax = new TomlSyntaxDocument(_text, _syntaxNodes);
+            var syntax = new TomlSyntaxDocument(_text, _syntaxNodes, _syntaxTrivia);
             return new TomlParseResult(new TomlDocument(_root), Array.Empty<TomlDiagnostic>(), syntax);
         }
 
@@ -101,7 +103,7 @@ namespace Mz.Toml.Internal
                 return false;
 
             AdvanceCharacter();
-            SkipHorizontalWhitespace();
+            SkipTriviaHorizontalWhitespace();
 
             if (IsEnd || Current == '#' || IsNewlineStart(Current))
             {

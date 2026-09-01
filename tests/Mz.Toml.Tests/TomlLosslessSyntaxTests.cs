@@ -120,6 +120,197 @@ public sealed class TomlLosslessSyntaxTests
 
         Assert.False(syntax.Nodes is ICollection<TomlSyntaxNode>);
     }
+
+    [Fact]
+    public void Trivia_Exposes_Top_Level_Comments_Whitespace_And_Newlines()
+    {
+        const string source =
+            "# heading\r\n" +
+            "  value = 1  # note\r\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(
+        [
+            TomlSyntaxTriviaKind.Comment,
+            TomlSyntaxTriviaKind.Newline,
+            TomlSyntaxTriviaKind.Whitespace,
+            TomlSyntaxTriviaKind.Whitespace,
+            TomlSyntaxTriviaKind.Whitespace,
+            TomlSyntaxTriviaKind.Whitespace,
+            TomlSyntaxTriviaKind.Comment,
+            TomlSyntaxTriviaKind.Newline
+        ],
+            syntax.Trivia.Select(trivia => trivia.Kind)
+        );
+
+        Assert.Equal("# heading", TriviaTextOf(syntax, 0));
+        Assert.Equal("\r\n", TriviaTextOf(syntax, 1));
+        Assert.Equal("  ", TriviaTextOf(syntax, 2));
+        Assert.Equal(" ", TriviaTextOf(syntax, 3));
+        Assert.Equal(" ", TriviaTextOf(syntax, 4));
+        Assert.Equal("  ", TriviaTextOf(syntax, 5));
+        Assert.Equal("# note", TriviaTextOf(syntax, 6));
+        Assert.Equal("\r\n", TriviaTextOf(syntax, 7));
+    }
+
+    [Fact]
+    public void Trivia_Exposes_Comments_And_Layout_Inside_Multiline_Array()
+    {
+        const string source =
+            "values = [\r\n" +
+            "  1, # first\r\n" +
+            "  # between\r\n" +
+            "  2,\r\n" +
+            "]\r\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(
+        [
+            " ",
+            " ",
+            "\r\n",
+            "  ",
+            " ",
+            "# first",
+            "\r\n",
+            "  ",
+            "# between",
+            "\r\n",
+            "  ",
+            "\r\n",
+            "\r\n"
+        ],
+            syntax.Trivia.Select(trivia => source.Substring(trivia.Span.Start, trivia.Span.Length))
+        );
+
+        Assert.Equal(
+            2,
+            syntax.Trivia.Count(trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment)
+        );
+
+        Assert.Contains(
+            syntax.Trivia,
+            trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# first"
+        );
+
+        Assert.Contains(
+            syntax.Trivia,
+            trivia => trivia.Kind == TomlSyntaxTriviaKind.Comment && TriviaTextOf(syntax, trivia) == "# between"
+        );
+    }
+
+    [Fact]
+    public void Array_Trivia_Does_Not_Split_Top_Level_Assignment_Node()
+    {
+        const string source =
+            "values = [\n" +
+            "  1, # first\n" +
+            "  2\n" +
+            "]\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(TomlSyntaxNodeKind.Assignment, syntax.Nodes[0].Kind);
+        Assert.Equal(source.TrimEnd('\n'), TextOf(syntax, 0));
+        Assert.Equal(TomlSyntaxNodeKind.Newline, syntax.Nodes[1].Kind);
+        Assert.Equal(source, string.Concat(syntax.Nodes.Select(node => TextOf(syntax, node))));
+    }
+
+    [Fact]
+    public void Multiline_String_Content_Newlines_Are_Not_Trivia()
+    {
+        const string source =
+            "message = \"\"\"\r\n" +
+            "line one\r\n" +
+            "line two\"\"\"\r\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(
+        [
+            " ",
+            " ",
+            "\r\n"
+        ],
+            syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
+        );
+    }
+
+    [Fact]
+    public void Trivia_Exposes_Whitespace_Inside_Dotted_Keys_And_Inline_Tables()
+    {
+        const string source = "a . b =   { x = 1, y = 2 }\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(
+        [
+            " ",
+            " ",
+            " ",
+            "   ",
+            " ",
+            " ",
+            " ",
+            " ",
+            " ",
+            " ",
+            " ",
+            "\n"
+        ],
+            syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
+        );
+    }
+
+    [Fact]
+    public void String_Content_Whitespace_Is_Not_Trivia()
+    {
+        const string source = "name = \"hello world\"\n";
+
+        var syntax = Toml.TryParse(source).Syntax;
+
+        Assert.Equal(
+        [
+            " ",
+            " ",
+            "\n"
+        ],
+            syntax.Trivia.Select(trivia => TriviaTextOf(syntax, trivia))
+        );
+    }
+    [Fact]
+    public void Trivia_Spans_Are_Source_Ordered_And_Do_Not_Overlap()
+    {
+        const string source =
+            "values = [\r\n" +
+            "  1, # first\r\n" +
+            "  2\r\n" +
+            "] # after\r\n";
+
+        var trivia = Toml.TryParse(source).Syntax.Trivia;
+
+        for (var index = 1; index < trivia.Count; index++)
+            Assert.True(trivia[index - 1].Span.End <= trivia[index].Span.Start);
+    }
+    [Fact]
+    public void Trivia_Is_ReadOnly()
+    {
+        var syntax = Toml.TryParse("# comment\nvalue = 1\n").Syntax;
+
+        Assert.False(syntax.Trivia is ICollection<TomlSyntaxTrivia>);
+    }
+
+    private static string TextOf(TomlSyntaxDocument syntax, TomlSyntaxNode node)
+        => syntax.Source.Substring(node.Span.Start, node.Span.Length);
+
+    private static string TriviaTextOf(TomlSyntaxDocument syntax, int index)
+        => TriviaTextOf(syntax, syntax.Trivia[index]);
+
+    private static string TriviaTextOf(TomlSyntaxDocument syntax, TomlSyntaxTrivia trivia)
+        => syntax.Source.Substring(trivia.Span.Start, trivia.Span.Length);
+
     private static string TextOf(TomlSyntaxDocument syntax, int index)
     {
         var span = syntax.Nodes[index].Span;

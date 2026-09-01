@@ -62,11 +62,20 @@ namespace Mz.Toml.Internal
             _syntaxNodes.Add(new TomlSyntaxNode(kind, new TomlSourceSpan(start, end - start)));
         }
 
+        private void AddSyntaxTrivia(TomlSyntaxTriviaKind kind, int start, int end)
+        {
+            if (end <= start)
+                return;
+
+            _syntaxTrivia.Add(new TomlSyntaxTrivia(kind, new TomlSourceSpan(start, end - start)));
+        }
+
         private void SkipSyntaxHorizontalWhitespace()
         {
             var start = _index;
             SkipHorizontalWhitespace();
             AddSyntaxNode(TomlSyntaxNodeKind.Whitespace, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index);
         }
 
         private bool SkipSyntaxComment(out TomlDiagnostic diagnostic)
@@ -77,6 +86,7 @@ namespace Mz.Toml.Internal
                 return false;
 
             AddSyntaxNode(TomlSyntaxNodeKind.Comment, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Comment, start, _index);
             return true;
         }
 
@@ -88,6 +98,36 @@ namespace Mz.Toml.Internal
                 return false;
 
             AddSyntaxNode(TomlSyntaxNodeKind.Newline, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Newline, start, _index);
+            return true;
+        }
+
+        private void SkipTriviaHorizontalWhitespace()
+        {
+            var start = _index;
+            SkipHorizontalWhitespace();
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index);
+        }
+
+        private bool SkipTriviaComment(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!SkipComment(out diagnostic))
+                return false;
+
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Comment, start, _index);
+            return true;
+        }
+
+        private bool ConsumeTriviaNewline(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!ConsumeNewline(out diagnostic))
+                return false;
+
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Newline, start, _index);
             return true;
         }
 

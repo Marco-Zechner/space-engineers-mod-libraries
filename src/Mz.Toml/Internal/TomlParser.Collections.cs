@@ -93,7 +93,7 @@ namespace Mz.Toml.Internal
             var column = _column;
 
             AdvanceCharacter();
-            SkipHorizontalWhitespace();
+            SkipTriviaHorizontalWhitespace();
 
             var table = new TomlTable(line, column, TomlTableDefinitionKind.Inline);
 
@@ -125,7 +125,7 @@ namespace Mz.Toml.Internal
                     return false;
 
                 AdvanceCharacter();
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (IsEnd || Current == '}' || Current == ',' || Current == '#' || IsNewlineStart(Current))
                 {
@@ -141,7 +141,7 @@ namespace Mz.Toml.Internal
                 if (!AssignKeyPath(table, parts, value, out diagnostic))
                     return false;
 
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (IsEnd)
                 {
@@ -163,7 +163,7 @@ namespace Mz.Toml.Internal
                 }
 
                 AdvanceCharacter();
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (IsEnd)
                 {
@@ -192,20 +192,20 @@ namespace Mz.Toml.Internal
 
             while (!IsEnd)
             {
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (IsEnd)
                     return true;
 
                 if (Current == '#')
                 {
-                    if (!SkipComment(out diagnostic))
+                    if (!SkipTriviaComment(out diagnostic))
                         return false;
 
                     if (IsEnd)
                         return true;
 
-                    if (!ConsumeNewline(out diagnostic))
+                    if (!ConsumeTriviaNewline(out diagnostic))
                         return false;
 
                     continue;
@@ -214,7 +214,7 @@ namespace Mz.Toml.Internal
                 if (!IsNewlineStart(Current))
                     return true;
 
-                if (!ConsumeNewline(out diagnostic))
+                if (!ConsumeTriviaNewline(out diagnostic))
                     return false;
             }
 
