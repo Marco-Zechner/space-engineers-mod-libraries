@@ -33,6 +33,11 @@ namespace Mz.Toml
         /// <summary>
         /// An array-of-tables header.
         /// </summary>
-        ArrayTableHeader = 5
+        ArrayTableHeader = 5,
+
+        /// <summary>
+        /// A source-preserved assignment disabled with the custom '#!' marker.
+        /// </summary>
+        DisabledAssignment = 6
     }
 }

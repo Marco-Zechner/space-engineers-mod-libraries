@@ -41,7 +41,12 @@ namespace Mz.Toml.Internal
                 if (IsEnd)
                     break;
 
-                if (Current == '[')
+                if (IsDisabledAssignmentStart)
+                {
+                    if (!ParseDisabledAssignment(out diagnostic))
+                        return Failure(diagnostic);
+                }
+                else if (Current == '[')
                 {
                     if (!ParseTableHeader(out diagnostic))
                         return Failure(diagnostic);
@@ -70,6 +75,9 @@ namespace Mz.Toml.Internal
 
                 if (Current == '#')
                 {
+                    if (IsDisabledAssignmentStart)
+                        return true;
+
                     if (!SkipSyntaxComment(out diagnostic))
                         return false;
 
@@ -94,9 +102,54 @@ namespace Mz.Toml.Internal
 
         private bool ParseAssignment(out TomlDiagnostic diagnostic)
         {
+            return ParseAssignmentCore(
+                TomlSyntaxNodeKind.Assignment,
+                true,
+                _index,
+                out diagnostic);
+        }
+
+        private bool ParseDisabledAssignment(out TomlDiagnostic diagnostic)
+        {
+            var assignmentStart = _index;
+
+            AdvanceCharacter();
+            AdvanceCharacter();
+
+            if (ParseAssignmentCore(
+                TomlSyntaxNodeKind.DisabledAssignment,
+                false,
+                assignmentStart,
+                out diagnostic))
+                return true;
+
+            if (diagnostic == null)
+            {
+                diagnostic = Error(
+                    "Invalid disabled TOML assignment.",
+                    _line,
+                    _column,
+                    TomlDiagnosticCode.InvalidDisabledAssignment);
+                return false;
+            }
+
+            diagnostic = Error(
+                diagnostic.Message,
+                diagnostic.Line,
+                diagnostic.Column,
+                TomlDiagnosticCode.InvalidDisabledAssignment);
+
+            return false;
+        }
+
+        private bool ParseAssignmentCore(
+            TomlSyntaxNodeKind syntaxKind,
+            bool assignSemanticValue,
+            int assignmentStart,
+            out TomlDiagnostic diagnostic)
+        {
             diagnostic = null;
 
-            var assignmentStart = _index;
             List<TomlKeyPart> parts;
 
             if (!ParseKeyPath('=', false, out parts, out diagnostic))
@@ -116,7 +169,7 @@ namespace Mz.Toml.Internal
             if (!ParseValue(out value, out diagnostic))
                 return false;
 
-            AddSyntaxNode(TomlSyntaxNodeKind.Assignment, assignmentStart, _index);
+            AddSyntaxNode(syntaxKind, assignmentStart, _index);
             SkipSyntaxHorizontalWhitespace();
 
             if (!IsEnd && Current == '#')
@@ -125,19 +178,31 @@ namespace Mz.Toml.Internal
                     return false;
             }
 
-            if (IsEnd)
-                return AssignKeyPath(_currentTable, parts, value, out diagnostic);
-
-            if (!IsNewlineStart(Current))
+            if (!IsEnd)
             {
-                diagnostic = Error("Unexpected characters after the TOML value.", _line, _column, TomlDiagnosticCode.TrailingCharacters);
-                return false;
+                if (!IsNewlineStart(Current))
+                {
+                    diagnostic = Error(
+                        "Unexpected characters after the TOML value.",
+                        _line,
+                        _column,
+                        TomlDiagnosticCode.TrailingCharacters);
+                    return false;
+                }
+
+                if (!ConsumeSyntaxNewline(out diagnostic))
+                    return false;
             }
 
-            if (!ConsumeSyntaxNewline(out diagnostic))
-                return false;
+            if (!assignSemanticValue)
+                return true;
 
             return AssignKeyPath(_currentTable, parts, value, out diagnostic);
         }
+
+        private bool IsDisabledAssignmentStart =>
+            _index + 1 < _text.Length &&
+            _text[_index] == '#' &&
+            _text[_index + 1] == '!';
     }
 }
