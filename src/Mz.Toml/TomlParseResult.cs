@@ -9,10 +9,14 @@ namespace Mz.Toml
     public sealed class TomlParseResult
     {
         internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics)
+            : this(document, diagnostics, null) { }
+
+        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics, TomlSyntaxDocument syntax)
         {
             var copy = new List<TomlDiagnostic>(diagnostics);
             Document = document;
             Diagnostics = new TomlReadOnlyList<TomlDiagnostic>(copy);
+            Syntax = syntax;
         }
 
         /// <summary>
@@ -29,5 +33,10 @@ namespace Mz.Toml
         /// Gets parse diagnostics. The collection is empty on success.
         /// </summary>
         public IReadOnlyList<TomlDiagnostic> Diagnostics { get; }
+
+        /// <summary>
+        /// Gets the exact source-preserving syntax document when one was produced.
+        /// </summary>
+        public TomlSyntaxDocument Syntax { get; }
     }
 }

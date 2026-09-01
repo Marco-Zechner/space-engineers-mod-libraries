@@ -54,6 +54,43 @@ namespace Mz.Toml.Internal
             return true;
         }
 
+        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end)
+        {
+            if (end <= start)
+                return;
+
+            _syntaxNodes.Add(new TomlSyntaxNode(kind, new TomlSourceSpan(start, end - start)));
+        }
+
+        private void SkipSyntaxHorizontalWhitespace()
+        {
+            var start = _index;
+            SkipHorizontalWhitespace();
+            AddSyntaxNode(TomlSyntaxNodeKind.Whitespace, start, _index);
+        }
+
+        private bool SkipSyntaxComment(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!SkipComment(out diagnostic))
+                return false;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Comment, start, _index);
+            return true;
+        }
+
+        private bool ConsumeSyntaxNewline(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!ConsumeNewline(out diagnostic))
+                return false;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Newline, start, _index);
+            return true;
+        }
+
         private void SkipHorizontalWhitespace()
         {
             while (!IsEnd && IsHorizontalWhitespace(Current))
