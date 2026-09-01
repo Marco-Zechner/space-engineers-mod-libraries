@@ -54,6 +54,86 @@ namespace Mz.Toml.Internal
             return true;
         }
 
+        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end) 
+            => AddSyntaxNode(kind, start, end, null);
+
+        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end, TomlSourceSpan? valueSpan)
+        {
+            if (end <= start)
+                return;
+
+            _syntaxNodes.Add(new TomlSyntaxNode(kind, new TomlSourceSpan(start, end - start), valueSpan));
+        }
+
+        private void AddSyntaxTrivia(TomlSyntaxTriviaKind kind, int start, int end, TomlSyntaxTriviaPlacement placement)
+        {
+            if (end <= start)
+                return;
+
+            _syntaxTrivia.Add(new TomlSyntaxTrivia(kind, new TomlSourceSpan(start, end - start), placement));
+        }
+
+        private void SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement placement)
+        {
+            var start = _index;
+            SkipHorizontalWhitespace();
+            AddSyntaxNode(TomlSyntaxNodeKind.Whitespace, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index, placement);
+        }
+
+        private bool SkipSyntaxComment(TomlSyntaxTriviaPlacement placement, out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!SkipComment(out diagnostic))
+                return false;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Comment, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Comment, start, _index, placement);
+            return true;
+        }
+
+        private bool ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement placement, out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!ConsumeNewline(out diagnostic))
+                return false;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Newline, start, _index);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Newline, start, _index, placement);
+            return true;
+        }
+
+        private void SkipTriviaHorizontalWhitespace()
+        {
+            var start = _index;
+            SkipHorizontalWhitespace();
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
+        }
+
+        private bool SkipTriviaComment(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!SkipComment(out diagnostic))
+                return false;
+
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Comment, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
+            return true;
+        }
+
+        private bool ConsumeTriviaNewline(out TomlDiagnostic diagnostic)
+        {
+            var start = _index;
+
+            if (!ConsumeNewline(out diagnostic))
+                return false;
+
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Newline, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
+            return true;
+        }
+
         private void SkipHorizontalWhitespace()
         {
             while (!IsEnd && IsHorizontalWhitespace(Current))
@@ -98,7 +178,17 @@ namespace Mz.Toml.Internal
         private static TomlDiagnostic Error(string message, int line, int column, TomlDiagnosticCode code) =>
             new TomlDiagnostic(message, line, column, code);
 
-        private static TomlParseResult Failure(TomlDiagnostic diagnostic) =>
-            new TomlParseResult(null, new[] { diagnostic });
+        private TomlParseResult Failure(TomlDiagnostic diagnostic)
+        {
+            var coveredEnd = 0;
+            if (_syntaxNodes.Count != 0)
+                coveredEnd = _syntaxNodes[_syntaxNodes.Count - 1].Span.End;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Unparsed, coveredEnd, _text.Length);
+
+            var syntax = new TomlSyntaxDocument(_text, _syntaxNodes, _syntaxTrivia);
+
+            return new TomlParseResult(null, new[] { diagnostic }, syntax);
+        }
     }
 }

@@ -8,11 +8,12 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlParseResult
     {
-        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics)
+        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics, TomlSyntaxDocument syntax = null)
         {
             var copy = new List<TomlDiagnostic>(diagnostics);
             Document = document;
             Diagnostics = new TomlReadOnlyList<TomlDiagnostic>(copy);
+            Syntax = syntax;
         }
 
         /// <summary>
@@ -29,5 +30,14 @@ namespace Mz.Toml
         /// Gets parse diagnostics. The collection is empty on success.
         /// </summary>
         public IReadOnlyList<TomlDiagnostic> Diagnostics { get; }
+
+        /// <summary>
+        /// Gets the exact source-preserving syntax document when source text was
+        /// available. Failed decoded-text parses retain syntax for safely classified
+        /// source and may contain an Unparsed node for the remaining source. This is
+        /// null when exact source text could not be produced, such as invalid UTF-8
+        /// byte input.
+        /// </summary>
+        public TomlSyntaxDocument Syntax { get; }
     }
 }

@@ -8,6 +8,7 @@ namespace Mz.Toml.Internal
         {
             diagnostic = null;
 
+            var headerStart = _index;
             var headerLine = _line;
             var headerColumn = _column;
 
@@ -37,13 +38,11 @@ namespace Mz.Toml.Internal
                 AdvanceCharacter();
             }
 
-            SkipHorizontalWhitespace();
+            AddSyntaxNode(isArrayOfTables ? TomlSyntaxNodeKind.ArrayTableHeader : TomlSyntaxNodeKind.TableHeader, headerStart, _index);
+            SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.Trailing);
 
-            if (!IsEnd && Current == '#')
-            {
-                if (!SkipComment(out diagnostic))
-                    return false;
-            }
+            if (!IsEnd && Current == '#' && !SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic)) 
+                return false;
 
             if (!IsEnd)
             {
@@ -54,7 +53,7 @@ namespace Mz.Toml.Internal
                     return false;
                 }
 
-                if (!ConsumeNewline(out diagnostic))
+                if (!ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement.TopLevel, out diagnostic))
                     return false;
             }
 

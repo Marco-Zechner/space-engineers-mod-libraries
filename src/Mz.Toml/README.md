@@ -1,8 +1,8 @@
 # Mz.Toml
 
-`Mz.Toml` is a strict TOML 1.0 parser, document model, and deterministic
-writer designed for source-copy use in Space Engineers mods and ordinary
-.NET projects.
+`Mz.Toml` is a strict TOML 1.0 parser, document model, deterministic canonical
+writer, and source-preserving syntax/editor library designed for source-copy use
+in Space Engineers mods and ordinary .NET projects.
 
 The package has an exact dependency on `Mz.SemanticVersioning` `0.1.1`,
 matching the shared version and changelog model used by the other libraries in
@@ -16,10 +16,17 @@ The library supports:
 - offset date-times, local date-times, local dates, and local times;
 - strict UTF-8 byte parsing with BOM handling;
 - deterministic canonical writing;
-- line and column diagnostics for parse failures.
+- exact source-preserving syntax nodes and character spans;
+- preserved whitespace, newlines, and comments with objective placement data;
+- the explicit Mz.Toml `#!` disabled-assignment extension;
+- source-preserving enable, disable, value replacement, and source insertion;
+- composable validated edits through `TomlSourceEditor`;
+- recoverable syntax information for failed decoded-text parses;
+- stable line and column diagnostics for parse failures.
 
-The writer intentionally produces canonical TOML rather than preserving the
-input's comments, whitespace, or original layout.
+`Toml.Write` remains a canonical semantic writer. It intentionally does not
+preserve presentation details from parsed input. Use the syntax and source
+editing APIs when comments, whitespace, spelling, and layout must remain intact.
 
 ## Install
 
@@ -32,7 +39,7 @@ From the root of a mod project:
 
 ```shell
 selibs init
-selibs add Mz.Toml@0.1.0
+selibs add Mz.Toml@0.2.0
 ```
 
 Skip `selibs init` when the project already contains `selibs.json`.
@@ -62,7 +69,7 @@ Data/Scripts/ExampleMod/Libraries/Mz.SemanticVersioning
 Data/Scripts/ExampleMod/Libraries/Mz.Toml
 ```
 
-For `Mz.Toml` `0.1.0`, use `Mz.SemanticVersioning` `0.1.1`.
+For `Mz.Toml` `0.2.0`, use `Mz.SemanticVersioning` `0.1.1`.
 
 Keep both folder structures intact and compile every contained `.cs` file as
 part of the mod. Do not combine source files from different release versions.
@@ -127,6 +134,142 @@ One UTF-8 BOM is accepted only at the beginning of the input. The string API
 is intentionally an already-decoded Unicode API and therefore cannot detect
 decoding errors that occurred before the string reached `Mz.Toml`.
 
+## Inspect exact source syntax
+
+Successful string parses expose both the semantic `Document` and an exact
+source-preserving `Syntax` document:
+
+```csharp
+TomlParseResult result = Toml.TryParse(text);
+
+if (!result.IsSuccess)
+{
+    HandleTomlFailure(result.Diagnostics[0]);
+    return;
+}
+
+TomlSyntaxDocument syntax = result.Syntax;
+string exactSource = syntax.Source;
+```
+
+`TomlSyntaxDocument.Source` is the exact decoded input string. `Nodes` contains
+ordered top-level source ranges such as assignments, table headers, comments,
+whitespace, and newlines. `TomlSourceSpan` uses zero-based half-open character
+ranges: `Start` is inclusive and `End` is exclusive.
+
+Assignments expose `ValueSpan`, allowing a host to identify only the original
+value spelling without losing the surrounding key, whitespace, or trailing
+comment.
+
+`Trivia` separately reports whitespace, newlines, and comments. Trivia may
+overlap a larger statement node, for example whitespace inside an array.
+`TomlSyntaxTriviaPlacement` objectively classifies trivia as:
+
+- `TopLevel` between top-level statements;
+- `WithinStatement` lexically inside a statement or value;
+- `Trailing` on the same line after a completed statement.
+
+Placement describes source layout only. `Mz.Toml` does not decide that a
+particular comment "belongs" to a semantic field.
+
+## Disabled assignments
+
+Mz.Toml 0.2.0 adds an explicit source extension for disabled assignments:
+
+```toml
+enabled = true
+#!experimental = "off"
+```
+
+`#!` at the beginning of a top-level assignment disables that assignment.
+The remainder must still be a valid assignment, but the disabled value is not
+added to the semantic `TomlDocument`.
+
+This syntax is an **Mz.Toml extension**, not TOML 1.0 syntax. Ordinary `#`
+comments remain ordinary comments. A malformed disabled assignment reports
+`TomlDiagnosticCode.InvalidDisabledAssignment`.
+
+Hosts may choose to interpret a disabled assignment as an optional, inactive,
+or null-like configuration field, but `Mz.Toml` itself does not assign such
+application semantics.
+
+## Preserve source while editing
+
+`TomlSyntaxDocument` provides immutable one-shot source editing methods:
+
+- `DisableAssignment`;
+- `EnableAssignment`;
+- `ReplaceAssignmentValue`;
+- `InsertSourceBefore`;
+- `InsertSourceAfter`;
+- `InsertSourceAtStart`;
+- `InsertSourceAtEnd`.
+
+These methods return a new source string and leave the syntax document
+unchanged.
+
+For multiple edits, create a `TomlSourceEditor`:
+
+```csharp
+TomlParseResult result = Toml.TryParse(text);
+
+if (!result.IsSuccess)
+    throw new InvalidOperationException(result.Diagnostics[0].ToString());
+
+TomlSourceEditor editor = result.Syntax.CreateEditor();
+
+TomlSyntaxNode assignment = null;
+
+for (var i = 0; i < editor.Syntax.Nodes.Count; i++)
+{
+    TomlSyntaxNode node = editor.Syntax.Nodes[i];
+
+    if (node.Kind == TomlSyntaxNodeKind.Assignment)
+    {
+        assignment = node;
+        break;
+    }
+}
+
+if (assignment == null)
+    throw new InvalidOperationException("No assignment was found.");
+
+editor.ReplaceAssignmentValue(assignment, "42");
+
+string editedSource = editor.Source;
+```
+
+Every successful editor operation reparses the complete resulting source and
+replaces `editor.Syntax`. Node objects from an earlier editor state are
+therefore stale and are rejected; reacquire nodes from the current
+`editor.Syntax` before the next node-based edit.
+
+Edits are atomic. If an operation would make the resulting TOML invalid, the
+operation throws and the editor keeps its previous `Source` and `Syntax`.
+
+Insertion fragments must themselves be non-empty valid TOML and must also
+produce a valid complete document at the requested insertion point.
+
+## Syntax retained on failed decoded text
+
+`Toml.TryParse(string)` remains semantically strict: a failed parse has
+`IsSuccess == false` and `Document == null`.
+
+For decoded string input, the result can still expose `Syntax`. Source that was
+safely recognized before failure remains classified. When parsing stops before
+the remaining source can be classified safely, a `TomlSyntaxNodeKind.Unparsed`
+node preserves that remainder exactly.
+
+A semantic failure can be fully classified without an `Unparsed` node. For
+example, duplicate keys may be syntactically recognized completely while still
+making the parse fail semantically.
+
+The strict byte API is different when UTF-8 decoding itself fails. In that
+case there is no trusted exact decoded string, so `Syntax` is null and the
+diagnostic is `TomlDiagnosticCode.InvalidEncoding`.
+
+`CreateEditor()` requires currently valid TOML and rejects syntax documents
+retained from failed parses.
 ## Build a document programmatically
 
 Create nodes directly when TOML is being generated rather than parsed:

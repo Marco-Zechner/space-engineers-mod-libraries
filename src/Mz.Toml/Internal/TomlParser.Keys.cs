@@ -10,7 +10,7 @@ namespace Mz.Toml.Internal
             parts = new List<TomlKeyPart>();
             diagnostic = null;
 
-            SkipHorizontalWhitespace();
+            SkipTriviaHorizontalWhitespace();
 
             while (true)
             {
@@ -55,7 +55,7 @@ namespace Mz.Toml.Internal
 
                 parts.Add(new TomlKeyPart(key, line, column));
 
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (IsEnd || IsNewlineStart(Current) || Current == '#')
                 {
@@ -75,7 +75,7 @@ namespace Mz.Toml.Internal
                 }
 
                 AdvanceCharacter();
-                SkipHorizontalWhitespace();
+                SkipTriviaHorizontalWhitespace();
 
                 if (!IsEnd && !IsNewlineStart(Current) && Current != '#' && Current != '.' &&
                     Current != terminator) continue;

@@ -89,6 +89,11 @@ namespace Mz.Toml
         /// <summary>
         /// The input byte sequence is not valid UTF-8 TOML text.
         /// </summary>
-        InvalidEncoding
+        InvalidEncoding,
+
+        /// <summary>
+        /// A custom '#!' disabled assignment is malformed.
+        /// </summary>
+        InvalidDisabledAssignment
     }
 }

@@ -16,7 +16,7 @@ namespace Mz.Toml
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
-        public const int Minor = 1;
+        public const int Minor = 2;
 
         /// <summary>
         /// Gets the patch version number.
@@ -35,6 +35,18 @@ namespace Mz.Toml
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.2.0",
+                    new[]
+                    {
+                        "Added exact source-preserving syntax spans, comments, trivia, and objective trivia placement.",
+                        "Added the custom '#!' disabled-assignment extension while keeping disabled values out of the semantic document.",
+                        "Added source-preserving enable, disable, value-replacement, and validated source-insertion operations.",
+                        "Added recoverable syntax information for invalid decoded source, including explicit unparsed ranges.",
+                        "Added the composable TomlSourceEditor with refreshed syntax, stale-node rejection, and atomic validated edits.",
+                        "Kept strict TOML 1.0 semantic parsing, deterministic canonical writing, and Space Engineers C# 6 source-copy compatibility."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.1.0",
                     new[]
