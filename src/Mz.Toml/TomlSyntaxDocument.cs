@@ -43,6 +43,23 @@ namespace Mz.Toml
         public IReadOnlyList<TomlSyntaxTrivia> Trivia { get; }
 
         /// <summary>
+        /// Creates a stateful source-preserving editor for composing validated edits.
+        /// The source must currently be valid TOML.
+        /// </summary>
+        public TomlSourceEditor CreateEditor()
+        {
+            var parsed = Toml.TryParse(Source);
+
+            if (!parsed.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    "A source editor can only be created for currently valid TOML source.");
+            }
+
+            return new TomlSourceEditor(this);
+        }
+
+        /// <summary>
         /// Returns source with the specified active assignment disabled by inserting
         /// the custom '#!' marker at the assignment start.
         /// </summary>
