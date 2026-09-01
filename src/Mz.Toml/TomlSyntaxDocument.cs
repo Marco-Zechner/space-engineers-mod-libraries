@@ -79,6 +79,44 @@ namespace Mz.Toml
         }
 
         /// <summary>
+        /// Returns source with <paramref name="sourceFragment"/> inserted immediately
+        /// before the specified owned top-level syntax node.
+        /// </summary>
+        public string InsertSourceBefore(TomlSyntaxNode node, string sourceFragment)
+        {
+            ValidateOwnedNode(node);
+            return InsertValidatedSource(node.Span.Start, sourceFragment);
+        }
+
+        /// <summary>
+        /// Returns source with <paramref name="sourceFragment"/> inserted immediately
+        /// after the specified owned top-level syntax node.
+        /// </summary>
+        public string InsertSourceAfter(TomlSyntaxNode node, string sourceFragment)
+        {
+            ValidateOwnedNode(node);
+            return InsertValidatedSource(node.Span.End, sourceFragment);
+        }
+
+        /// <summary>
+        /// Returns source with <paramref name="sourceFragment"/> inserted at the
+        /// beginning of the document.
+        /// </summary>
+        public string InsertSourceAtStart(string sourceFragment)
+        {
+            return InsertValidatedSource(0, sourceFragment);
+        }
+
+        /// <summary>
+        /// Returns source with <paramref name="sourceFragment"/> inserted at the
+        /// end of the document.
+        /// </summary>
+        public string InsertSourceAtEnd(string sourceFragment)
+        {
+            return InsertValidatedSource(Source.Length, sourceFragment);
+        }
+
+        /// <summary>
         /// Returns source with only the exact value range of the specified active
         /// or disabled assignment replaced by <paramref name="valueSource"/>.
         /// </summary>
@@ -107,6 +145,30 @@ namespace Mz.Toml
             return Source
                 .Remove(valueSpan.Start, valueSpan.Length)
                 .Insert(valueSpan.Start, valueSource);
+        }
+
+        private string InsertValidatedSource(int offset, string sourceFragment)
+        {
+            if (sourceFragment == null)
+                throw new ArgumentNullException(nameof(sourceFragment));
+
+            if (sourceFragment.Length == 0 || !Toml.TryParse(sourceFragment).IsSuccess)
+            {
+                throw new ArgumentException(
+                    "The inserted source fragment must be non-empty valid TOML source.",
+                    nameof(sourceFragment));
+            }
+
+            var edited = Source.Insert(offset, sourceFragment);
+
+            if (!Toml.TryParse(edited).IsSuccess)
+            {
+                throw new ArgumentException(
+                    "The inserted source fragment would make the TOML document invalid.",
+                    nameof(sourceFragment));
+            }
+
+            return edited;
         }
 
         private static void ValidateValueSource(string valueSource)
