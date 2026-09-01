@@ -210,7 +210,23 @@ namespace Mz.Toml.Internal
         private static TomlDiagnostic Error(string message, int line, int column, TomlDiagnosticCode code) =>
             new TomlDiagnostic(message, line, column, code);
 
-        private static TomlParseResult Failure(TomlDiagnostic diagnostic) =>
-            new TomlParseResult(null, new[] { diagnostic });
+        private TomlParseResult Failure(TomlDiagnostic diagnostic)
+        {
+            var coveredEnd = _syntaxNodes.Count == 0
+                ? 0
+                : _syntaxNodes[_syntaxNodes.Count - 1].Span.End;
+
+            AddSyntaxNode(TomlSyntaxNodeKind.Unparsed, coveredEnd, _text.Length);
+
+            var syntax = new TomlSyntaxDocument(
+                _text,
+                _syntaxNodes,
+                _syntaxTrivia);
+
+            return new TomlParseResult(
+                null,
+                new[] { diagnostic },
+                syntax);
+        }
     }
 }
