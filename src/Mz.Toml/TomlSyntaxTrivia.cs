@@ -5,10 +5,7 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlSyntaxTrivia
     {
-        internal TomlSyntaxTrivia(
-            TomlSyntaxTriviaKind kind,
-            TomlSourceSpan span,
-            TomlSyntaxTriviaPlacement placement)
+        internal TomlSyntaxTrivia(TomlSyntaxTriviaKind kind, TomlSourceSpan span, TomlSyntaxTriviaPlacement placement)
         {
             Kind = kind;
             Span = span;

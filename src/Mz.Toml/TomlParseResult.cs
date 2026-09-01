@@ -8,10 +8,7 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlParseResult
     {
-        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics)
-            : this(document, diagnostics, null) { }
-
-        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics, TomlSyntaxDocument syntax)
+        internal TomlParseResult(TomlDocument document, IEnumerable<TomlDiagnostic> diagnostics, TomlSyntaxDocument syntax = null)
         {
             var copy = new List<TomlDiagnostic>(diagnostics);
             Document = document;

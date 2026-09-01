@@ -41,11 +41,8 @@ namespace Mz.Toml.Internal
             AddSyntaxNode(isArrayOfTables ? TomlSyntaxNodeKind.ArrayTableHeader : TomlSyntaxNodeKind.TableHeader, headerStart, _index);
             SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.Trailing);
 
-            if (!IsEnd && Current == '#')
-            {
-                if (!SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic))
-                    return false;
-            }
+            if (!IsEnd && Current == '#' && !SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic)) 
+                return false;
 
             if (!IsEnd)
             {

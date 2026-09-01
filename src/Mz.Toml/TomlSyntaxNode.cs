@@ -5,10 +5,7 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlSyntaxNode
     {
-        internal TomlSyntaxNode(TomlSyntaxNodeKind kind, TomlSourceSpan span)
-            : this(kind, span, null) { }
-
-        internal TomlSyntaxNode(TomlSyntaxNodeKind kind, TomlSourceSpan span, TomlSourceSpan? valueSpan)
+        internal TomlSyntaxNode(TomlSyntaxNodeKind kind, TomlSourceSpan span, TomlSourceSpan? valueSpan = null)
         {
             Kind = kind;
             Span = span;

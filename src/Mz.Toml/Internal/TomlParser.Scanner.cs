@@ -54,39 +54,23 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end)
-        {
-            AddSyntaxNode(kind, start, end, null);
-        }
+        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end) 
+            => AddSyntaxNode(kind, start, end, null);
 
-        private void AddSyntaxNode(
-            TomlSyntaxNodeKind kind,
-            int start,
-            int end,
-            TomlSourceSpan? valueSpan)
+        private void AddSyntaxNode(TomlSyntaxNodeKind kind, int start, int end, TomlSourceSpan? valueSpan)
         {
             if (end <= start)
                 return;
 
-            _syntaxNodes.Add(new TomlSyntaxNode(
-                kind,
-                new TomlSourceSpan(start, end - start),
-                valueSpan));
+            _syntaxNodes.Add(new TomlSyntaxNode(kind, new TomlSourceSpan(start, end - start), valueSpan));
         }
 
-        private void AddSyntaxTrivia(
-            TomlSyntaxTriviaKind kind,
-            int start,
-            int end,
-            TomlSyntaxTriviaPlacement placement)
+        private void AddSyntaxTrivia(TomlSyntaxTriviaKind kind, int start, int end, TomlSyntaxTriviaPlacement placement)
         {
             if (end <= start)
                 return;
 
-            _syntaxTrivia.Add(new TomlSyntaxTrivia(
-                kind,
-                new TomlSourceSpan(start, end - start),
-                placement));
+            _syntaxTrivia.Add(new TomlSyntaxTrivia(kind, new TomlSourceSpan(start, end - start), placement));
         }
 
         private void SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement placement)
@@ -97,9 +81,7 @@ namespace Mz.Toml.Internal
             AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index, placement);
         }
 
-        private bool SkipSyntaxComment(
-            TomlSyntaxTriviaPlacement placement,
-            out TomlDiagnostic diagnostic)
+        private bool SkipSyntaxComment(TomlSyntaxTriviaPlacement placement, out TomlDiagnostic diagnostic)
         {
             var start = _index;
 
@@ -111,9 +93,7 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool ConsumeSyntaxNewline(
-            TomlSyntaxTriviaPlacement placement,
-            out TomlDiagnostic diagnostic)
+        private bool ConsumeSyntaxNewline(TomlSyntaxTriviaPlacement placement, out TomlDiagnostic diagnostic)
         {
             var start = _index;
 
@@ -129,11 +109,7 @@ namespace Mz.Toml.Internal
         {
             var start = _index;
             SkipHorizontalWhitespace();
-            AddSyntaxTrivia(
-                TomlSyntaxTriviaKind.Whitespace,
-                start,
-                _index,
-                TomlSyntaxTriviaPlacement.WithinStatement);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Whitespace, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
         }
 
         private bool SkipTriviaComment(out TomlDiagnostic diagnostic)
@@ -143,11 +119,7 @@ namespace Mz.Toml.Internal
             if (!SkipComment(out diagnostic))
                 return false;
 
-            AddSyntaxTrivia(
-                TomlSyntaxTriviaKind.Comment,
-                start,
-                _index,
-                TomlSyntaxTriviaPlacement.WithinStatement);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Comment, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
             return true;
         }
 
@@ -158,11 +130,7 @@ namespace Mz.Toml.Internal
             if (!ConsumeNewline(out diagnostic))
                 return false;
 
-            AddSyntaxTrivia(
-                TomlSyntaxTriviaKind.Newline,
-                start,
-                _index,
-                TomlSyntaxTriviaPlacement.WithinStatement);
+            AddSyntaxTrivia(TomlSyntaxTriviaKind.Newline, start, _index, TomlSyntaxTriviaPlacement.WithinStatement);
             return true;
         }
 
@@ -212,21 +180,15 @@ namespace Mz.Toml.Internal
 
         private TomlParseResult Failure(TomlDiagnostic diagnostic)
         {
-            var coveredEnd = _syntaxNodes.Count == 0
-                ? 0
-                : _syntaxNodes[_syntaxNodes.Count - 1].Span.End;
+            var coveredEnd = 0;
+            if (_syntaxNodes.Count != 0)
+                coveredEnd = _syntaxNodes[_syntaxNodes.Count - 1].Span.End;
 
             AddSyntaxNode(TomlSyntaxNodeKind.Unparsed, coveredEnd, _text.Length);
 
-            var syntax = new TomlSyntaxDocument(
-                _text,
-                _syntaxNodes,
-                _syntaxTrivia);
+            var syntax = new TomlSyntaxDocument(_text, _syntaxNodes, _syntaxTrivia);
 
-            return new TomlParseResult(
-                null,
-                new[] { diagnostic },
-                syntax);
+            return new TomlParseResult(null, new[] { diagnostic }, syntax);
         }
     }
 }

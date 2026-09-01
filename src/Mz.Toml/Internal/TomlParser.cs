@@ -100,14 +100,8 @@ namespace Mz.Toml.Internal
             return true;
         }
 
-        private bool ParseAssignment(out TomlDiagnostic diagnostic)
-        {
-            return ParseAssignmentCore(
-                TomlSyntaxNodeKind.Assignment,
-                true,
-                _index,
-                out diagnostic);
-        }
+        private bool ParseAssignment(out TomlDiagnostic diagnostic) 
+            => ParseAssignmentCore(TomlSyntaxNodeKind.Assignment, true, _index, out diagnostic);
 
         private bool ParseDisabledAssignment(out TomlDiagnostic diagnostic)
         {
@@ -116,37 +110,20 @@ namespace Mz.Toml.Internal
             AdvanceCharacter();
             AdvanceCharacter();
 
-            if (ParseAssignmentCore(
-                TomlSyntaxNodeKind.DisabledAssignment,
-                false,
-                assignmentStart,
-                out diagnostic))
+            if (ParseAssignmentCore(TomlSyntaxNodeKind.DisabledAssignment, false, assignmentStart, out diagnostic))
                 return true;
 
             if (diagnostic == null)
             {
-                diagnostic = Error(
-                    "Invalid disabled TOML assignment.",
-                    _line,
-                    _column,
-                    TomlDiagnosticCode.InvalidDisabledAssignment);
+                diagnostic = Error("Invalid disabled TOML assignment.", _line, _column, TomlDiagnosticCode.InvalidDisabledAssignment);
                 return false;
             }
 
-            diagnostic = Error(
-                diagnostic.Message,
-                diagnostic.Line,
-                diagnostic.Column,
-                TomlDiagnosticCode.InvalidDisabledAssignment);
-
+            diagnostic = Error(diagnostic.Message, diagnostic.Line, diagnostic.Column, TomlDiagnosticCode.InvalidDisabledAssignment);
             return false;
         }
 
-        private bool ParseAssignmentCore(
-            TomlSyntaxNodeKind syntaxKind,
-            bool assignSemanticValue,
-            int assignmentStart,
-            out TomlDiagnostic diagnostic)
+        private bool ParseAssignmentCore(TomlSyntaxNodeKind syntaxKind, bool assignSemanticValue, int assignmentStart, out TomlDiagnostic diagnostic)
         {
             diagnostic = null;
 
@@ -175,21 +152,15 @@ namespace Mz.Toml.Internal
             AddSyntaxNode(syntaxKind, assignmentStart, _index, valueSpan);
             SkipSyntaxHorizontalWhitespace(TomlSyntaxTriviaPlacement.Trailing);
 
-            if (!IsEnd && Current == '#')
-            {
-                if (!SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic))
-                    return false;
-            }
+            if (!IsEnd && Current == '#' && !SkipSyntaxComment(TomlSyntaxTriviaPlacement.Trailing, out diagnostic)) 
+                return false;
 
             if (!IsEnd)
             {
                 if (!IsNewlineStart(Current))
                 {
-                    diagnostic = Error(
-                        "Unexpected characters after the TOML value.",
-                        _line,
-                        _column,
-                        TomlDiagnosticCode.TrailingCharacters);
+                    diagnostic = Error("Unexpected characters after the TOML value.",
+                        _line, _column, TomlDiagnosticCode.TrailingCharacters);
                     return false;
                 }
 
@@ -203,9 +174,9 @@ namespace Mz.Toml.Internal
             return AssignKeyPath(_currentTable, parts, value, out diagnostic);
         }
 
-        private bool IsDisabledAssignmentStart =>
-            _index + 1 < _text.Length &&
-            _text[_index] == '#' &&
-            _text[_index + 1] == '!';
+        private bool IsDisabledAssignmentStart 
+            => _index + 1 < _text.Length &&
+               _text[_index] == '#' &&
+               _text[_index + 1] == '!';
     }
 }

@@ -9,10 +9,7 @@ namespace Mz.Toml
     /// </summary>
     public sealed class TomlSyntaxDocument
     {
-        internal TomlSyntaxDocument(
-            string source,
-            IEnumerable<TomlSyntaxNode> nodes,
-            IEnumerable<TomlSyntaxTrivia> trivia)
+        internal TomlSyntaxDocument(string source, IEnumerable<TomlSyntaxNode> nodes, IEnumerable<TomlSyntaxTrivia> trivia)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -54,10 +51,7 @@ namespace Mz.Toml
             var parsed = Toml.TryParse(Source);
 
             if (!parsed.IsSuccess)
-            {
-                throw new InvalidOperationException(
-                    "A source editor can only be created for currently valid TOML source.");
-            }
+                throw new InvalidOperationException("A source editor can only be created for currently valid TOML source.");
 
             return new TomlSourceEditor(this);
         }
@@ -87,14 +81,11 @@ namespace Mz.Toml
             if (node.Kind != TomlSyntaxNodeKind.DisabledAssignment)
                 throw new ArgumentException("The syntax node is not a disabled assignment.", nameof(node));
 
-            if (node.Span.Length < 2 ||
-                node.Span.Start + 1 >= Source.Length ||
-                Source[node.Span.Start] != '#' ||
-                Source[node.Span.Start + 1] != '!')
-            {
+            var potentialMarker = Source.Remove(0, Math.Min(node.Span.Start, Source.Length));
+            
+            if (!potentialMarker.StartsWith("#!"))
                 throw new InvalidOperationException("The disabled assignment does not contain the expected '#!' marker.");
-            }
-
+            
             return Source.Remove(node.Span.Start, 2);
         }
 
@@ -122,19 +113,15 @@ namespace Mz.Toml
         /// Returns source with <paramref name="sourceFragment"/> inserted at the
         /// beginning of the document.
         /// </summary>
-        public string InsertSourceAtStart(string sourceFragment)
-        {
-            return InsertValidatedSource(0, sourceFragment);
-        }
+        public string InsertSourceAtStart(string sourceFragment) 
+            => InsertValidatedSource(0, sourceFragment);
 
         /// <summary>
         /// Returns source with <paramref name="sourceFragment"/> inserted at the
         /// end of the document.
         /// </summary>
-        public string InsertSourceAtEnd(string sourceFragment)
-        {
-            return InsertValidatedSource(Source.Length, sourceFragment);
-        }
+        public string InsertSourceAtEnd(string sourceFragment) 
+            => InsertValidatedSource(Source.Length, sourceFragment);
 
         /// <summary>
         /// Returns source with only the exact value range of the specified active
@@ -144,13 +131,8 @@ namespace Mz.Toml
         {
             ValidateOwnedNode(node);
 
-            if (node.Kind != TomlSyntaxNodeKind.Assignment &&
-                node.Kind != TomlSyntaxNodeKind.DisabledAssignment)
-            {
-                throw new ArgumentException(
-                    "The syntax node is not an active or disabled assignment.",
-                    nameof(node));
-            }
+            if (node.Kind != TomlSyntaxNodeKind.Assignment && node.Kind != TomlSyntaxNodeKind.DisabledAssignment)
+                throw new ArgumentException("The syntax node is not an active or disabled assignment.", nameof(node));
 
             if (valueSource == null)
                 throw new ArgumentNullException(nameof(valueSource));
@@ -162,9 +144,7 @@ namespace Mz.Toml
 
             var valueSpan = node.ValueSpan.Value;
 
-            return Source
-                .Remove(valueSpan.Start, valueSpan.Length)
-                .Insert(valueSpan.Start, valueSource);
+            return Source.Remove(valueSpan.Start, valueSpan.Length).Insert(valueSpan.Start, valueSource);
         }
 
         private string InsertValidatedSource(int offset, string sourceFragment)
@@ -173,20 +153,12 @@ namespace Mz.Toml
                 throw new ArgumentNullException(nameof(sourceFragment));
 
             if (sourceFragment.Length == 0 || !Toml.TryParse(sourceFragment).IsSuccess)
-            {
-                throw new ArgumentException(
-                    "The inserted source fragment must be non-empty valid TOML source.",
-                    nameof(sourceFragment));
-            }
+                throw new ArgumentException("The inserted source fragment must be non-empty valid TOML source.", nameof(sourceFragment));
 
             var edited = Source.Insert(offset, sourceFragment);
 
             if (!Toml.TryParse(edited).IsSuccess)
-            {
-                throw new ArgumentException(
-                    "The inserted source fragment would make the TOML document invalid.",
-                    nameof(sourceFragment));
-            }
+                throw new ArgumentException("The inserted source fragment would make the TOML document invalid.", nameof(sourceFragment));
 
             return edited;
         }
@@ -196,25 +168,20 @@ namespace Mz.Toml
             const string prefix = "value = ";
             var parsed = Toml.TryParse(prefix + valueSource);
 
-            if (!parsed.IsSuccess ||
-                parsed.Syntax == null ||
-                parsed.Syntax.Nodes.Count == 0 ||
-                parsed.Syntax.Nodes[0].Kind != TomlSyntaxNodeKind.Assignment ||
-                !parsed.Syntax.Nodes[0].ValueSpan.HasValue)
-            {
-                throw new ArgumentException(
-                    "Replacement text must be exactly one valid TOML value.",
-                    nameof(valueSource));
-            }
+            const string errorMessage = "Replacement text must be exactly one valid TOML value.";
+            if (!parsed.IsSuccess || parsed.Syntax == null)
+                throw new ArgumentException(errorMessage + " Parsing failed.", nameof(valueSource));
+            
+            if (parsed.Syntax.Nodes.Count == 0 || parsed.Syntax.Nodes[0].Kind != TomlSyntaxNodeKind.Assignment)
+                throw new ArgumentException(errorMessage + " Parsed syntax has no valid assignment.", nameof(valueSource));
+            
+            if (!parsed.Syntax.Nodes[0].ValueSpan.HasValue)
+                throw new ArgumentException(errorMessage + " Parsed syntax has no valid value span.", nameof(valueSource));
 
             var span = parsed.Syntax.Nodes[0].ValueSpan.Value;
 
             if (span.Start != prefix.Length || span.Length != valueSource.Length)
-            {
-                throw new ArgumentException(
-                    "Replacement text must be exactly one valid TOML value.",
-                    nameof(valueSource));
-            }
+                throw new ArgumentException(errorMessage + " Parsed value does not match the expected format.", nameof(valueSource));
         }
 
         private void ValidateOwnedNode(TomlSyntaxNode node)
@@ -222,11 +189,9 @@ namespace Mz.Toml
             if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
-            for (var index = 0; index < Nodes.Count; index++)
-            {
-                if (ReferenceEquals(Nodes[index], node))
+            foreach (var t in Nodes)
+                if (ReferenceEquals(t, node))
                     return;
-            }
 
             throw new ArgumentException("The syntax node does not belong to this syntax document.", nameof(node));
         }

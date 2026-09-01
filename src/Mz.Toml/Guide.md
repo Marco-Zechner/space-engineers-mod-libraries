@@ -346,10 +346,7 @@ for (var i = 0; i < editor.Syntax.Nodes.Count; i++)
     if (node.Kind != TomlSyntaxNodeKind.Assignment)
         continue;
 
-    string statement = editor.Source.Substring(
-        node.Span.Start,
-        node.Span.Length
-    );
+    string statement = editor.Source.Substring(node.Span.Start, node.Span.Length);
 
     if (statement.StartsWith("enabled", StringComparison.Ordinal))
     {
