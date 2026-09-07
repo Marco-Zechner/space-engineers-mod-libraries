@@ -21,7 +21,7 @@ namespace Mz.Networking
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 0;
+        public const int Patch = 1;
 
         /// <summary>
         /// Gets the version string.
@@ -35,6 +35,13 @@ namespace Mz.Networking
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.2.1",
+                    new[]
+                    {
+                        "Improved internal variable declarations and formatting."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.2.0",
                     new[]
