@@ -20,19 +20,10 @@ namespace Example.EchoApi
         private const string EchoEndpoint = "Echo";
         private const string AddEndpoint = "Add";
 
-        private static readonly ApiEndpointContract EndpointContract =
-            new ApiEndpointContract(
-                new[]
-                {
-                    new ApiEndpointRequirement(
-                        EchoEndpoint,
-                        typeof(Func<string, string>)
-                    ),
-                    new ApiEndpointRequirement(
-                        AddEndpoint,
-                        typeof(Func<int, int, int>)
-                    )
-                }
+        private static readonly ApiEndpointContract _endpointContract = new ApiEndpointContract(
+                new ApiEndpointRequirement(EchoEndpoint, typeof(Func<string, string>)), 
+                new ApiEndpointRequirement(AddEndpoint, typeof(Func<int, int, int>)
+                )
             );
 
         private static ApiDiscoveryConsumer _consumer;
@@ -54,22 +45,12 @@ namespace Example.EchoApi
         /// <summary>
         /// Gets whether Init has created the underlying discovery consumer.
         /// </summary>
-        public static bool IsInitialized
-        {
-            get { return _consumer != null; }
-        }
+        public static bool IsInitialized => _consumer != null;
 
         /// <summary>
         /// Gets whether all public API methods are currently callable.
         /// </summary>
-        public static bool IsReady
-        {
-            get
-            {
-                return _echo != null
-                    && _add != null;
-            }
-        }
+        public static bool IsReady => _echo != null && _add != null;
 
         /// <summary>
         /// Gets the latest human-readable connection or contract error.
@@ -83,25 +64,15 @@ namespace Example.EchoApi
         /// provider. Subscribe to Ready and Unavailable before calling Init,
         /// because an already-running provider may connect synchronously.
         /// </summary>
-        public static void Init(
-            string consumerModId,
-            string consumerDisplayName,
-            int consumerVersionMajor,
-            int consumerVersionMinor,
-            int consumerVersionPatch
-        )
+        public static void Init(string consumerModId, string consumerDisplayName, int consumerVersionMajor, 
+                                int consumerVersionMinor, int consumerVersionPatch)
         {
             if (_consumer != null)
                 return;
 
             var consumerIdentity = new ApiModIdentity(
-                consumerModId,
-                consumerDisplayName,
-                new SemanticVersion(
-                    consumerVersionMajor,
-                    consumerVersionMinor,
-                    consumerVersionPatch
-                )
+                consumerModId, consumerDisplayName,
+                new SemanticVersion(consumerVersionMajor, consumerVersionMinor, consumerVersionPatch)
             );
 
             var requirement = new ApiRequirement(
@@ -113,21 +84,15 @@ namespace Example.EchoApi
             );
 
             var dependency = new ApiDependencyDescriptor(
-                consumerIdentity,
-                requirement,
-                ApiDependencyKind.Required,
+                consumerIdentity, requirement, ApiDependencyKind.Required,
                 "Uses the Example Echo API"
             );
 
-            var consumer = new ApiDiscoveryConsumer(
-                new SpaceEngineersModMessageBus(),
-                dependency
-            );
+            var consumer = new ApiDiscoveryConsumer(new SpaceEngineersModMessageBus(), dependency);
 
             consumer.Connected += OnConnected;
             consumer.Disconnected += OnDisconnected;
-            consumer.WireIncompatibilityObserved +=
-                OnWireIncompatibilityObserved;
+            consumer.WireIncompatibilityObserved += OnWireIncompatibilityObserved;
 
             _consumer = consumer;
             LastError = null;
@@ -141,8 +106,7 @@ namespace Example.EchoApi
             {
                 consumer.Connected -= OnConnected;
                 consumer.Disconnected -= OnDisconnected;
-                consumer.WireIncompatibilityObserved -=
-                    OnWireIncompatibilityObserved;
+                consumer.WireIncompatibilityObserved -= OnWireIncompatibilityObserved;
 
                 _consumer = null;
                 ClearEndpoints();
@@ -157,7 +121,7 @@ namespace Example.EchoApi
         /// </summary>
         public static void Close()
         {
-            var consumer = _consumer;
+            ApiDiscoveryConsumer consumer = _consumer;
 
             _consumer = null;
             ClearEndpoints();
@@ -167,8 +131,7 @@ namespace Example.EchoApi
             {
                 consumer.Connected -= OnConnected;
                 consumer.Disconnected -= OnDisconnected;
-                consumer.WireIncompatibilityObserved -=
-                    OnWireIncompatibilityObserved;
+                consumer.WireIncompatibilityObserved -= OnWireIncompatibilityObserved;
 
                 consumer.Dispose();
             }
@@ -213,34 +176,16 @@ namespace Example.EchoApi
         {
             try
             {
-                EndpointContract.EnsureCompatible(
-                    eventArgs.Connection
-                );
+                _endpointContract.EnsureCompatible(eventArgs.Connection);
 
                 Func<string, string> echo;
                 Func<int, int, int> add;
 
-                if (
-                    !eventArgs.Connection.TryGetEndpoint(
-                        EchoEndpoint,
-                        out echo
-                    )
-                ) {
-                    throw new InvalidOperationException(
-                        "The Echo endpoint could not be loaded."
-                    );
-                }
+                if (!eventArgs.Connection.TryGetEndpoint(EchoEndpoint, out echo))
+                    throw new InvalidOperationException("The Echo endpoint could not be loaded.");
 
-                if (
-                    !eventArgs.Connection.TryGetEndpoint(
-                        AddEndpoint,
-                        out add
-                    )
-                ) {
-                    throw new InvalidOperationException(
-                        "The Add endpoint could not be loaded."
-                    );
-                }
+                if (!eventArgs.Connection.TryGetEndpoint(AddEndpoint, out add))
+                    throw new InvalidOperationException("The Add endpoint could not be loaded.");
 
                 _echo = echo;
                 _add = add;
@@ -252,40 +197,27 @@ namespace Example.EchoApi
             {
                 ClearEndpoints();
 
-                LastError =
-                    "The connected provider has an invalid endpoint "
-                    + "contract: "
-                    + exception.Message;
+                LastError = $"The connected provider has an invalid endpoint contract: {exception.Message}";
 
                 RaiseEvent(Unavailable);
             }
         }
 
-        private static void OnDisconnected(
-            ApiDisconnectedEventArgs eventArgs
-        )
+        private static void OnDisconnected(ApiDisconnectedEventArgs eventArgs)
         {
             bool wasReady = IsReady;
 
             ClearEndpoints();
 
-            LastError =
-                "The API provider disconnected: "
-                + eventArgs.Reason
-                + ".";
+            LastError = $"The API provider disconnected: {eventArgs.Reason}.";
 
             if (wasReady)
                 RaiseEvent(Unavailable);
         }
 
-        private static void OnWireIncompatibilityObserved(
-            ApiWireIncompatibilityEventArgs eventArgs
-        )
+        private static void OnWireIncompatibilityObserved(ApiWireIncompatibilityEventArgs eventArgs)
         {
-            LastError =
-                "The provider uses an incompatible discovery protocol: "
-                + eventArgs.CompatibilityStatus
-                + ".";
+            LastError = $"The provider uses an incompatible discovery protocol: {eventArgs.CompatibilityStatus}.";
 
             RaiseEvent(Unavailable);
         }
@@ -299,11 +231,7 @@ namespace Example.EchoApi
         private static void EnsureInitialized()
         {
             if (_consumer == null)
-            {
-                throw new InvalidOperationException(
-                    "Call ExampleEchoApi.Init before using the API."
-                );
-            }
+                throw new InvalidOperationException("Call ExampleEchoApi.Init before using the API.");
         }
 
         private static void EnsureReady()
@@ -311,12 +239,9 @@ namespace Example.EchoApi
             EnsureInitialized();
 
             if (!IsReady)
-            {
                 throw new InvalidOperationException(
-                    "The Example Echo API is not ready. "
-                    + (LastError ?? "No compatible provider is connected.")
+                    $"The Example Echo API is not ready. {LastError ?? "No compatible provider is connected."}"
                 );
-            }
         }
 
         private static void RaiseEvent(Action callback)
@@ -324,19 +249,17 @@ namespace Example.EchoApi
             if (callback == null)
                 return;
 
-            Delegate[] handlers = callback.GetInvocationList();
+            var handlers = callback.GetInvocationList();
 
-            for (int index = 0; index < handlers.Length; index++)
+            foreach (Delegate handler in handlers)
             {
                 try
                 {
-                    ((Action)handlers[index])();
+                    ((Action)handler)();
                 }
                 catch (Exception exception)
                 {
-                    LastError =
-                        "An API wrapper event subscriber failed: "
-                        + exception.Message;
+                    LastError = $"An API wrapper event subscriber failed: {exception.Message}";
                 }
             }
         }

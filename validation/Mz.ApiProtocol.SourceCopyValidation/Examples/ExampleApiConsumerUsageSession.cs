@@ -11,8 +11,7 @@ namespace Example.ApiConsumerMod
     /// This file contains no ApiProtocol discovery or endpoint code.
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public sealed class ExampleApiConsumerUsageSession :
-        MySessionComponentBase
+    public sealed class ExampleApiConsumerUsageSession : MySessionComponentBase
     {
         public override void BeforeStart()
         {
@@ -22,7 +21,7 @@ namespace Example.ApiConsumerMod
             ExampleEchoApi.Unavailable += OnApiUnavailable;
 
             ExampleEchoApi.Init(
-                "example.echo-api-consumer",
+                "example.echo-api-consumer", 
                 "Example Echo API Consumer",
                 1,
                 0,
@@ -32,11 +31,7 @@ namespace Example.ApiConsumerMod
             // IsReady may already be true when Init returns. The Ready event
             // above has already run in that case.
             if (!ExampleEchoApi.IsReady)
-            {
-                ShowMessage(
-                    "Waiting for the Example Echo API provider."
-                );
-            }
+                ShowMessage("Waiting for the Example Echo API provider.");
         }
 
         protected override void UnloadData()
@@ -51,27 +46,15 @@ namespace Example.ApiConsumerMod
             // From this point onward the consuming mod calls normal,
             // strongly-typed methods. It does not deal with discovery,
             // endpoint names, delegates, or compatibility checks.
-            string echoResult = ExampleEchoApi.Echo(
-                "Hello from the consuming mod"
-            );
+            string echoResult = ExampleEchoApi.Echo("Hello from the consuming mod");
 
             int sumResult = ExampleEchoApi.Add(20, 22);
 
-            ShowMessage(
-                echoResult
-                + ". 20 + 22 = "
-                + sumResult
-                + "."
-            );
+            ShowMessage($"{echoResult}. 20 + 22 = {sumResult}.");
         }
 
-        private static void OnApiUnavailable()
-        {
-            ShowMessage(
-                ExampleEchoApi.LastError
-                ?? "The Example Echo API is unavailable."
-            );
-        }
+        private static void OnApiUnavailable() 
+            => ShowMessage(ExampleEchoApi.LastError ?? "The Example Echo API is unavailable.");
 
         private static void ShowMessage(string message)
         {
@@ -81,10 +64,7 @@ namespace Example.ApiConsumerMod
             if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
-            MyAPIGateway.Utilities.ShowMessage(
-                "API Consumer",
-                message
-            );
+            MyAPIGateway.Utilities.ShowMessage("API Consumer", message);
         }
     }
 }

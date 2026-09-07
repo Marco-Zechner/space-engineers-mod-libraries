@@ -15,8 +15,7 @@ namespace Example.ApiProviderMod
     /// that mod before compiling it.
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
-    public sealed class ExampleApiProviderSession :
-        MySessionComponentBase
+    public sealed class ExampleApiProviderSession : MySessionComponentBase
     {
         // These values form the public contract. Consumers must use the same
         // API ID, endpoint names, and exact delegate types.
@@ -35,14 +34,10 @@ namespace Example.ApiProviderMod
             );
 
             var apiDescriptor = new ApiDescriptor(
-                ApiId,
-                new SemanticVersion(1, 0, 0)
+                ApiId, new SemanticVersion(1, 0, 0)
             );
 
-            var endpoints =
-                new Dictionary<string, Delegate>(
-                    StringComparer.Ordinal
-                )
+            var endpoints = new Dictionary<string, Delegate>(StringComparer.Ordinal)
                 {
                     {
                         EchoEndpoint,
@@ -54,24 +49,16 @@ namespace Example.ApiProviderMod
                     }
                 };
 
-            _provider = new ApiDiscoveryProvider(
-                new SpaceEngineersModMessageBus(),
-                providerIdentity,
-                apiDescriptor,
-                endpoints
-            );
+            _provider = new ApiDiscoveryProvider(new SpaceEngineersModMessageBus(), providerIdentity, apiDescriptor, endpoints);
 
             _provider.ConsumerObserved += OnConsumerObserved;
-            _provider.WireIncompatibilityObserved +=
-                OnWireIncompatibilityObserved;
+            _provider.WireIncompatibilityObserved += OnWireIncompatibilityObserved;
 
             // Start registers the discovery handler and immediately announces
             // that this provider is available.
             _provider.Start();
 
-            ShowMessage(
-                "Provider started for " + ApiId + " 1.0.0."
-            );
+            ShowMessage($"Provider started for {ApiId} 1.0.0.");
         }
 
         protected override void UnloadData()
@@ -87,9 +74,7 @@ namespace Example.ApiProviderMod
             }
             catch (Exception exception)
             {
-                ShowMessage(
-                    "Provider shutdown failed: " + exception.Message
-                );
+                ShowMessage($"Provider shutdown failed: {exception.Message}");
             }
             finally
             {
@@ -97,41 +82,21 @@ namespace Example.ApiProviderMod
             }
         }
 
-        private static string Echo(string value)
-        {
-            return "Provider echoed: " + (value ?? string.Empty);
-        }
+        private static string Echo(string value) 
+            => $"Provider echoed: {( value ?? string.Empty )}";
 
-        private static int Add(int left, int right)
-        {
-            return left + right;
-        }
+        private static int Add(int left, int right) 
+            => left + right;
 
-        private static void OnConsumerObserved(
-            ApiConsumerObservedEventArgs eventArgs
-        )
-        {
-            ShowMessage(
-                "Observed consumer "
-                + eventArgs.Consumer.DisplayName
-                + ". Compatibility: "
-                + eventArgs.CompatibilityStatus
-                + "."
+        private static void OnConsumerObserved(ApiConsumerObservedEventArgs eventArgs) 
+            => ShowMessage(
+                $"Observed consumer {eventArgs.Consumer.DisplayName}. Compatibility: {eventArgs.CompatibilityStatus}."
             );
-        }
 
-        private static void OnWireIncompatibilityObserved(
-            ApiWireIncompatibilityEventArgs eventArgs
-        )
-        {
-            ShowMessage(
-                "Incompatible discovery protocol from "
-                + eventArgs.RemoteMod.DisplayName
-                + ": "
-                + eventArgs.CompatibilityStatus
-                + "."
+        private static void OnWireIncompatibilityObserved(ApiWireIncompatibilityEventArgs eventArgs) 
+            => ShowMessage(
+                $"Incompatible discovery protocol from {eventArgs.RemoteMod.DisplayName}: {eventArgs.CompatibilityStatus}."
             );
-        }
 
         private static void ShowMessage(string message)
         {
@@ -143,10 +108,7 @@ namespace Example.ApiProviderMod
             if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
-            MyAPIGateway.Utilities.ShowMessage(
-                "API Provider",
-                message
-            );
+            MyAPIGateway.Utilities.ShowMessage("API Provider", message);
         }
     }
 }
