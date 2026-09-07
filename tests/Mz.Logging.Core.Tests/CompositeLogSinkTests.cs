@@ -39,7 +39,7 @@ namespace Mz.Logging.Tests
             Assert.Same(entry, Assert.Single(second.Entries));
         }
 
-        private static readonly string[] Expected1 = ["first", "second", "third"];
+        private static readonly string[] _expected1 = ["first", "second", "third"];
 
         [Fact]
         public void Write_DispatchesInRegistrationOrder()
@@ -56,7 +56,7 @@ namespace Mz.Logging.Tests
 
             composite.Write(CreateEntry());
 
-            Assert.Equal(Expected1, calls);
+            Assert.Equal(_expected1, calls);
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace Mz.Logging.Tests
             Assert.Throws<ArgumentNullException>(() => composite.Write(null!));
         }
 
-        private static readonly string[] Expected2 = ["failing"];
+        private static readonly string[] _expected2 = ["failing"];
 
         [Fact]
         public void Write_SinkFailurePropagatesAndStopsDispatch()
@@ -104,7 +104,7 @@ namespace Mz.Logging.Tests
             var composite = new CompositeLogSink(failing, later);
 
             Assert.Throws<InvalidOperationException>(() => composite.Write(CreateEntry()));
-            Assert.Equal(Expected2, calls);
+            Assert.Equal(_expected2, calls);
         }
 
         private static LogEntry CreateEntry() 
