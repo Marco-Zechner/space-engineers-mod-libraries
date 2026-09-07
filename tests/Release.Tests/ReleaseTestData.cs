@@ -10,23 +10,13 @@ public static class ReleaseTestData
     {
         get
         {
-            var data =
-                new TheoryData<string>();
+            var data = new TheoryData<string>();
 
-            foreach (
-                string packageId in
-                ReleaseRepository
-                    .Load()
-                    .Libraries
-                    .Keys
-                    .OrderBy(
-                        value => value,
-                        StringComparer.Ordinal
-                    )
+            foreach (string packageId in ReleaseRepository
+                                         .Load().Libraries.Keys
+                                         .OrderBy(value => value, StringComparer.Ordinal)
             )
-            {
                 data.Add(packageId);
-            }
 
             return data;
         }
