@@ -1,5 +1,4 @@
 using System;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -11,54 +10,23 @@ namespace Mz.ApiProtocol.Tests
         {
             ApiDiscoveryRequest request = CreateRequest();
 
-            var eventArgs = new ApiConsumerObservedEventArgs(
-                request,
-                ApiCompatibilityStatus.ProviderTooNew
-            );
+            var eventArgs = new ApiConsumerObservedEventArgs(request, ApiCompatibilityStatus.ProviderTooNew);
 
             Assert.Same(request, eventArgs.Request);
-
-            Assert.Same(
-                request.Dependency,
-                eventArgs.Dependency
-            );
-
-            Assert.Same(
-                request.Dependency.Consumer,
-                eventArgs.Consumer
-            );
-
-            Assert.Equal(
-                ApiCompatibilityStatus.ProviderTooNew,
-                eventArgs.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                request.WireProtocolVersion,
-                eventArgs.ConsumerWireProtocolVersion
-            );
-
-            Assert.Equal(
-                request.LibraryVersion,
-                eventArgs.ConsumerLibraryVersion
-            );
-
-            Assert.Equal(
-                request.CorrelationId,
-                eventArgs.CorrelationId
-            );
+            Assert.Same(request.Dependency, eventArgs.Dependency);
+            Assert.Same(request.Dependency.Consumer, eventArgs.Consumer);
+            Assert.Equal(ApiCompatibilityStatus.ProviderTooNew, eventArgs.CompatibilityStatus);
+            Assert.Equal(request.WireProtocolVersion, eventArgs.ConsumerWireProtocolVersion);
+            Assert.Equal(request.LibraryVersion, eventArgs.ConsumerLibraryVersion);
+            Assert.Equal(request.CorrelationId, eventArgs.CorrelationId);
         }
 
         [Fact]
         public void Constructor_NullRequest_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
-                    new ApiConsumerObservedEventArgs(
-                        null!,
-                        ApiCompatibilityStatus.Compatible
-                    );
+                    new ApiConsumerObservedEventArgs(null!, ApiCompatibilityStatus.Compatible);
                 }
             );
         }
@@ -67,42 +35,23 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(4)]
         [InlineData(100)]
-        public void Constructor_InvalidStatus_ThrowsArgumentException(
-            int numericStatus
-        )
+        public void Constructor_InvalidStatus_ThrowsArgumentException(int numericStatus)
         {
-            Assert.Throws<ArgumentException>(
-                delegate
+            Assert.Throws<ArgumentException>(() =>
                 {
-                    new ApiConsumerObservedEventArgs(
-                        CreateRequest(),
-                        (ApiCompatibilityStatus)numericStatus
-                    );
+                    new ApiConsumerObservedEventArgs(CreateRequest(), (ApiCompatibilityStatus)numericStatus);
                 }
             );
         }
 
-        private static ApiDiscoveryRequest CreateRequest()
-        {
-            return new ApiDiscoveryRequest(
-                new ApiDependencyDescriptor(
-                    new ApiModIdentity(
-                        "Mz.ConsumerMod",
-                        "Consumer Mod",
-                        new SemanticVersion(2, 0, 0)
-                    ),
-                    new ApiRequirement(
-                        "Mz.CommandAPI",
-                        new ApiVersionRange(
-                            new SemanticVersion(1, 0, 0),
-                            new SemanticVersion(2, 0, 0)
-                        )
-                    ),
-                    ApiDependencyKind.Optional,
-                    "Adds command integration"
-                ),
-                Guid.NewGuid()
-            );
-        }
+        private static ApiDiscoveryRequest CreateRequest() => new(
+            new ApiDependencyDescriptor(
+                new ApiModIdentity("Mz.ConsumerMod", "Consumer Mod", new(2, 0, 0)),
+                new ApiRequirement("Mz.CommandAPI", new(new(1, 0, 0), new(2, 0, 0))),
+                ApiDependencyKind.Optional,
+                "Adds command integration"
+            ),
+            Guid.NewGuid()
+        );
     }
 }

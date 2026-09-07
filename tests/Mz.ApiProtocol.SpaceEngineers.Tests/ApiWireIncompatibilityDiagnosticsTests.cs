@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.SpaceEngineers.Tests
@@ -14,15 +13,11 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
             ApiWireIncompatibilityEventArgs observed = null!;
 
-            provider.WireIncompatibilityObserved +=
-                delegate(ApiWireIncompatibilityEventArgs eventArgs)
-                {
-                    observed = eventArgs;
-                };
+            provider.WireIncompatibilityObserved += eventArgs => observed = eventArgs;
 
             provider.Start();
 
@@ -42,25 +37,10 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             Assert.NotNull(observed);
 
-            Assert.Equal(
-                "Mz.FutureConsumer",
-                observed.RemoteMod.Id
-            );
-
-            Assert.Equal(
-                new SemanticVersion(8, 1, 0),
-                observed.RemoteLibraryVersion
-            );
-
-            Assert.Equal(
-                ApiWireCompatibilityStatus.RemoteTooNew,
-                observed.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                ApiWireMessageKind.Request,
-                observed.MessageKind
-            );
+            Assert.Equal("Mz.FutureConsumer", observed.RemoteMod.Id);
+            Assert.Equal(new(8, 1, 0), observed.RemoteLibraryVersion);
+            Assert.Equal(ApiWireCompatibilityStatus.RemoteTooNew, observed.CompatibilityStatus);
+            Assert.Equal(ApiWireMessageKind.Request, observed.MessageKind);
         }
 
         [Fact]
@@ -68,15 +48,11 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var consumer = CreateConsumer(bus);
+            using ApiDiscoveryConsumer consumer = CreateConsumer(bus);
 
             ApiWireIncompatibilityEventArgs observed = null!;
 
-            consumer.WireIncompatibilityObserved +=
-                delegate(ApiWireIncompatibilityEventArgs eventArgs)
-                {
-                    observed = eventArgs;
-                };
+            consumer.WireIncompatibilityObserved += eventArgs => observed = eventArgs;
 
             consumer.Start();
 
@@ -96,65 +72,28 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
 
             Assert.NotNull(observed);
             Assert.False(consumer.IsConnected);
-
-            Assert.Equal(
-                "Mz.FutureProvider",
-                observed.RemoteMod.Id
-            );
-
-            Assert.Equal(
-                ApiWireCompatibilityStatus.RemoteTooNew,
-                observed.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                ApiWireMessageKind.Announcement,
-                observed.MessageKind
-            );
+            Assert.Equal("Mz.FutureProvider", observed.RemoteMod.Id);
+            Assert.Equal(ApiWireCompatibilityStatus.RemoteTooNew, observed.CompatibilityStatus);
+            Assert.Equal(ApiWireMessageKind.Announcement, observed.MessageKind);
         }
 
-        private static ApiDiscoveryProvider CreateProvider(
-            IModMessageBus bus
-        )
-        {
-            return new ApiDiscoveryProvider(
+        private static ApiDiscoveryProvider CreateProvider(IModMessageBus bus) 
+            => new(
                 bus,
-                new ApiModIdentity(
-                    "Mz.CommandApiMod",
-                    "Command API",
-                    new SemanticVersion(1, 4, 0)
-                ),
-                new ApiDescriptor(
-                    "Mz.CommandAPI",
-                    new SemanticVersion(1, 5, 0)
-                ),
+                new ApiModIdentity("Mz.CommandApiMod", "Command API", new(1, 4, 0)),
+                new ApiDescriptor("Mz.CommandAPI", new(1, 5, 0)),
                 new Dictionary<string, Delegate>()
             );
-        }
 
-        private static ApiDiscoveryConsumer CreateConsumer(
-            IModMessageBus bus
-        )
-        {
-            return new ApiDiscoveryConsumer(
+        private static ApiDiscoveryConsumer CreateConsumer(IModMessageBus bus) 
+            => new(
                 bus,
                 new ApiDependencyDescriptor(
-                    new ApiModIdentity(
-                        "Mz.ConsumerMod",
-                        "Consumer Mod",
-                        new SemanticVersion(2, 0, 0)
-                    ),
-                    new ApiRequirement(
-                        "Mz.CommandAPI",
-                        new ApiVersionRange(
-                            new SemanticVersion(1, 0, 0),
-                            new SemanticVersion(2, 0, 0)
-                        )
-                    ),
+                    new ApiModIdentity("Mz.ConsumerMod", "Consumer Mod", new(2, 0, 0)),
+                    new ApiRequirement("Mz.CommandAPI", new(new(1, 0, 0), new(2, 0, 0))),
                     ApiDependencyKind.Optional,
                     "Adds Command API integration"
                 )
             );
-        }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -10,10 +9,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_CopiesEndpoints()
         {
-            Action endpoint =
-                delegate
-                {
-                };
+            Action endpoint = delegate { };
 
             var endpoints = new Dictionary<string, Delegate>
             {
@@ -28,35 +24,21 @@ namespace Mz.ApiProtocol.Tests
                 endpoints
             );
             
-            var connection = new ApiConnection(
-                announcement
-            );
+            var connection = new ApiConnection(announcement);
 
             endpoints.Clear();
 
-            Assert.Same(
-                endpoint,
-                connection.Endpoints["Ping"]
-            );
+            Assert.Same(endpoint, connection.Endpoints["Ping"]);
         }
 
         [Fact]
         public void TryGetEndpoint_MatchingDelegate_ReturnsTrue()
         {
-            Action<string> endpoint =
-                delegate
-                {
-                };
+            Action<string> endpoint = delegate { };
 
-            var connection = CreateConnection(
-                "Echo",
-                endpoint
-            );
+            ApiConnection connection = CreateConnection("Echo", endpoint);
 
-            var found = connection.TryGetEndpoint(
-                "Echo",
-                out Action<string> result
-            );
+            bool found = connection.TryGetEndpoint("Echo", out Action<string> result);
 
             Assert.True(found);
             Assert.Same(endpoint, result);
@@ -65,17 +47,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryGetEndpoint_MissingEndpoint_ReturnsFalse()
         {
-            var connection = CreateConnection(
-                "Ping",
-                (Action)delegate
-                {
-                }
-            );
+            ApiConnection connection = CreateConnection("Ping", (Action)delegate { });
 
-            var found = connection.TryGetEndpoint(
-                "Missing",
-                out Action result
-            );
+            bool found = connection.TryGetEndpoint("Missing", out Action result);
 
             Assert.False(found);
             Assert.Null(result);
@@ -84,17 +58,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryGetEndpoint_WrongDelegateType_ReturnsFalse()
         {
-            var connection = CreateConnection(
-                "Ping",
-                (Action)delegate
-                {
-                }
-            );
+            ApiConnection connection = CreateConnection("Ping", (Action)delegate { });
 
-            var found = connection.TryGetEndpoint(
-                "Ping",
-                out Action<string> result
-            );
+            bool found = connection.TryGetEndpoint("Ping", out Action<string> result);
 
             Assert.False(found);
             Assert.Null(result);
@@ -103,23 +69,12 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryGetEndpoint_NonDelegateType_ReturnsFalse()
         {
-            var connection = CreateConnection(
-                "Ping",
-                (Action)delegate
-                {
-                }
-            );
-            var found = connection.TryGetEndpoint(
-                "Ping",
-                out string result
-            );
+            ApiConnection connection = CreateConnection("Ping", (Action)delegate { });
+            bool found = connection.TryGetEndpoint("Ping", out string result);
             Assert.False(found);
             Assert.Null(result);
         }
-        private static ApiConnection CreateConnection(
-            string endpointName,
-            Delegate endpoint
-        )
+        private static ApiConnection CreateConnection(string endpointName, Delegate endpoint)
         {
             var announcement = new ApiAnnouncement(
                 CreateProviderIdentity(),
@@ -132,26 +87,13 @@ namespace Mz.ApiProtocol.Tests
                 }
             );
             
-            return new ApiConnection(
-                announcement
-            );
+            return new(announcement);
         }
 
-        private static ApiDescriptor CreateDescriptor()
-        {
-            return new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(1, 0, 0)
-            );
-        }
-        
-        private static ApiModIdentity CreateProviderIdentity()
-        {
-            return new ApiModIdentity(
-                "Mz.CommandApiMod",
-                "Command API",
-                new SemanticVersion(1, 4, 0)
-            );
-        }
+        private static ApiDescriptor CreateDescriptor() 
+            => new("Mz.CommandAPI", new(1, 0, 0));
+
+        private static ApiModIdentity CreateProviderIdentity() 
+            => new("Mz.CommandApiMod", "Command API", new(1, 4, 0));
     }
 }

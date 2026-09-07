@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -10,17 +9,11 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_CopiesAndNormalizesEndpoints()
         {
-            Action endpoint =
-                delegate
-                {
-                };
+            Action endpoint = delegate { };
 
             var source = new Dictionary<string, Delegate>
             {
-                {
-                    "  RegisterCommand  ",
-                    endpoint
-                }
+                { "  RegisterCommand  ", endpoint }
             };
             
             var announcement = new ApiAnnouncement(
@@ -33,36 +26,19 @@ namespace Mz.ApiProtocol.Tests
 
             source.Clear();
 
-            var stored = Assert.Single(
-                announcement.Endpoints
-            ).Value;
+            Delegate stored = Assert.Single(announcement.Endpoints).Value;
 
             Assert.Same(endpoint, stored);
-
-            Assert.True(
-                announcement.Endpoints.ContainsKey(
-                    "RegisterCommand"
-                )
-            );
+            Assert.True(announcement.Endpoints.ContainsKey("RegisterCommand"));
         }
 
         [Fact]
         public void Constructor_UsesCaseSensitiveEndpointNames()
         {
-            Action upper =
-                delegate
-                {
-                };
-
-            Action lower =
-                delegate
-                {
-                };
-
             var endpoints = new Dictionary<string, Delegate>
             {
-                { "Register", upper },
-                { "register", lower }
+                { "Register", (Action)Upper },
+                { "register", (Action)Lower }
             };
 
             var announcement = new ApiAnnouncement(
@@ -74,13 +50,16 @@ namespace Mz.ApiProtocol.Tests
             );
 
             Assert.Equal(2, announcement.Endpoints.Count);
+            return;
+
+            void Lower() { }
+            void Upper() { }
         }
 
         [Fact]
         public void Constructor_NullDescriptor_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
                     new ApiAnnouncement(
                         CreateProviderIdentity(),
@@ -96,8 +75,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullEndpoints_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
                     new ApiAnnouncement(
                         CreateProviderIdentity(),
@@ -113,22 +91,14 @@ namespace Mz.ApiProtocol.Tests
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidEndpointName_ThrowsArgumentException(
-            string endpointName
-        )
+        public void Constructor_InvalidEndpointName_ThrowsArgumentException(string endpointName)
         {
             var endpoints = new Dictionary<string, Delegate>
             {
-                {
-                    endpointName,
-                    (Action)delegate
-                    {
-                    }
-                }
+                { endpointName, (Action)delegate { } }
             };
 
-            Assert.Throws<ArgumentException>(
-                delegate
+            Assert.Throws<ArgumentException>(() =>
                 {
                     new ApiAnnouncement(
                         CreateProviderIdentity(),
@@ -149,8 +119,7 @@ namespace Mz.ApiProtocol.Tests
                 { "RegisterCommand", null! }
             };
 
-            Assert.Throws<ArgumentException>(
-                delegate
+            Assert.Throws<ArgumentException>(() =>
                 {
                     new ApiAnnouncement(
                         CreateProviderIdentity(),
@@ -163,21 +132,10 @@ namespace Mz.ApiProtocol.Tests
             );
         }
 
-        private static ApiDescriptor CreateDescriptor()
-        {
-            return new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(1, 0, 0)
-            );
-        }
-        
-        private static ApiModIdentity CreateProviderIdentity()
-        {
-            return new ApiModIdentity(
-                "Mz.CommandApiMod",
-                "Command API",
-                new SemanticVersion(1, 4, 0)
-            );
-        }
+        private static ApiDescriptor CreateDescriptor() 
+            => new("Mz.CommandAPI", new(1, 0, 0));
+
+        private static ApiModIdentity CreateProviderIdentity() 
+            => new("Mz.CommandApiMod", "Command API", new(1, 4, 0));
     }
 }

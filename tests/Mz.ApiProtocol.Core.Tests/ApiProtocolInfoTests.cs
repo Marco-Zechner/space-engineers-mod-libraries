@@ -10,66 +10,26 @@ namespace Mz.ApiProtocol.Tests
         public void CurrentVersions_AreDefined()
         {
             Assert.True(new SemanticVersion(0, 2, 2) <= ApiProtocolInfo.LibraryVersion);
-
-            Assert.Equal(
-                new SemanticVersion(1, 0, 0),
-                ApiProtocolInfo.WireProtocolVersion
-            );
+            Assert.Equal(new(1, 0, 0), ApiProtocolInfo.WireProtocolVersion);
         }
 
         [Theory]
         [InlineData(1, 0, 0)]
         [InlineData(1, 5, 0)]
         [InlineData(1, 999, 999)]
-        public void EvaluateWireProtocol_SameMajor_ReturnsCompatible(
-            int major,
-            int minor,
-            int patch
-        )
-        {
-            Assert.Equal(
-                ApiWireCompatibilityStatus.Compatible,
-                ApiProtocolInfo.EvaluateWireProtocol(
-                    new SemanticVersion(
-                        major,
-                        minor,
-                        patch
-                    )
-                )
-            );
-        }
+        public void EvaluateWireProtocol_SameMajor_ReturnsCompatible(int major, int minor, int patch) 
+            => Assert.Equal(ApiWireCompatibilityStatus.Compatible, ApiProtocolInfo.EvaluateWireProtocol(new(major, minor, patch)));
 
         [Fact]
-        public void EvaluateWireProtocol_OlderMajor_ReturnsRemoteTooOld()
-        {
-            Assert.Equal(
-                ApiWireCompatibilityStatus.RemoteTooOld,
-                ApiProtocolInfo.EvaluateWireProtocol(
-                    new SemanticVersion(0, 99, 0)
-                )
-            );
-        }
+        public void EvaluateWireProtocol_OlderMajor_ReturnsRemoteTooOld() 
+            => Assert.Equal(ApiWireCompatibilityStatus.RemoteTooOld, ApiProtocolInfo.EvaluateWireProtocol(new(0, 99, 0)));
 
         [Fact]
-        public void EvaluateWireProtocol_NewerMajor_ReturnsRemoteTooNew()
-        {
-            Assert.Equal(
-                ApiWireCompatibilityStatus.RemoteTooNew,
-                ApiProtocolInfo.EvaluateWireProtocol(
-                    new SemanticVersion(2, 0, 0)
-                )
-            );
-        }
+        public void EvaluateWireProtocol_NewerMajor_ReturnsRemoteTooNew() 
+            => Assert.Equal(ApiWireCompatibilityStatus.RemoteTooNew, ApiProtocolInfo.EvaluateWireProtocol(new(2, 0, 0)));
 
         [Fact]
-        public void EvaluateWireProtocol_Null_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    ApiProtocolInfo.EvaluateWireProtocol(null!);
-                }
-            );
-        }
+        public void EvaluateWireProtocol_Null_ThrowsArgumentNullException() 
+            => Assert.Throws<ArgumentNullException>(() => ApiProtocolInfo.EvaluateWireProtocol(null!));
     }
 }

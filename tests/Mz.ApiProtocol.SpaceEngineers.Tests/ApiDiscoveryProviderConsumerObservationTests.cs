@@ -14,29 +14,24 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
             ApiConsumerObservedEventArgs observed = null!;
 
-            provider.ConsumerObserved +=
-                delegate(ApiConsumerObservedEventArgs eventArgs)
-                {
-                    observed = eventArgs;
-                };
+            provider.ConsumerObserved += eventArgs => observed = eventArgs;
 
             provider.Start();
 
-            int announcementsBeforeRequest =
-                CountAnnouncements(bus);
+            int announcementsBeforeRequest = CountAnnouncements(bus);
 
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
                     CreateDependency(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(2, 0, 0),
+                        new(1, 0, 0), 
+                        new(2, 0, 0), 
                         ApiDependencyKind.Optional
                     ),
                     correlationId
@@ -44,31 +39,11 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             );
 
             Assert.NotNull(observed);
-
-            Assert.Equal(
-                "Mz.ConsumerMod",
-                observed.Consumer.Id
-            );
-
-            Assert.Equal(
-                ApiDependencyKind.Optional,
-                observed.Dependency.Kind
-            );
-
-            Assert.Equal(
-                ApiCompatibilityStatus.Compatible,
-                observed.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                correlationId,
-                observed.CorrelationId
-            );
-
-            Assert.Equal(
-                announcementsBeforeRequest + 1,
-                CountAnnouncements(bus)
-            );
+            Assert.Equal("Mz.ConsumerMod", observed.Consumer.Id);
+            Assert.Equal(ApiDependencyKind.Optional, observed.Dependency.Kind);
+            Assert.Equal(ApiCompatibilityStatus.Compatible, observed.CompatibilityStatus);
+            Assert.Equal(correlationId, observed.CorrelationId);
+            Assert.Equal(announcementsBeforeRequest + 1, CountAnnouncements(bus));
         }
 
         [Fact]
@@ -76,27 +51,22 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
             ApiConsumerObservedEventArgs observed = null!;
 
-            provider.ConsumerObserved +=
-                delegate(ApiConsumerObservedEventArgs eventArgs)
-                {
-                    observed = eventArgs;
-                };
+            provider.ConsumerObserved += eventArgs => observed = eventArgs;
 
             provider.Start();
 
-            int announcementsBeforeRequest =
-                CountAnnouncements(bus);
+            int announcementsBeforeRequest = CountAnnouncements(bus);
 
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
                     CreateDependency(
-                        new SemanticVersion(2, 0, 0),
-                        new SemanticVersion(3, 0, 0),
+                        new(2, 0, 0),
+                        new(3, 0, 0),
                         ApiDependencyKind.Required
                     ),
                     Guid.NewGuid()
@@ -104,21 +74,9 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             );
 
             Assert.NotNull(observed);
-
-            Assert.Equal(
-                ApiCompatibilityStatus.ProviderTooOld,
-                observed.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                ApiDependencyKind.Required,
-                observed.Dependency.Kind
-            );
-
-            Assert.Equal(
-                announcementsBeforeRequest,
-                CountAnnouncements(bus)
-            );
+            Assert.Equal(ApiCompatibilityStatus.ProviderTooOld, observed.CompatibilityStatus);
+            Assert.Equal(ApiDependencyKind.Required, observed.Dependency.Kind);
+            Assert.Equal(announcementsBeforeRequest, CountAnnouncements(bus));
         }
 
         [Fact]
@@ -126,15 +84,11 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
             ApiConsumerObservedEventArgs observed = null!;
 
-            provider.ConsumerObserved +=
-                delegate(ApiConsumerObservedEventArgs eventArgs)
-                {
-                    observed = eventArgs;
-                };
+            provider.ConsumerObserved += eventArgs => observed = eventArgs;
 
             provider.Start();
 
@@ -145,8 +99,8 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
                     CreateDependency(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(1, 5, 0),
+                        new(1, 0, 0),
+                        new(1, 5, 0),
                         ApiDependencyKind.Optional
                     ),
                     Guid.NewGuid()
@@ -154,16 +108,8 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             );
 
             Assert.NotNull(observed);
-
-            Assert.Equal(
-                ApiCompatibilityStatus.ProviderTooNew,
-                observed.CompatibilityStatus
-            );
-
-            Assert.Equal(
-                announcementsBeforeRequest,
-                CountAnnouncements(bus)
-            );
+            Assert.Equal(ApiCompatibilityStatus.ProviderTooNew, observed.CompatibilityStatus);
+            Assert.Equal(announcementsBeforeRequest, CountAnnouncements(bus));
         }
 
         [Fact]
@@ -171,41 +117,28 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
-            provider.ConsumerObserved +=
-                delegate
-                {
-                    throw new InvalidOperationException(
-                        "Subscriber failed."
-                    );
-                };
+            provider.ConsumerObserved += _ => throw new InvalidOperationException("Subscriber failed.");
 
             provider.Start();
 
-            int announcementsBeforeRequest =
-                CountAnnouncements(bus);
+            int announcementsBeforeRequest = CountAnnouncements(bus);
 
             bus.Send(
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
                     CreateDependency(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(2, 0, 0),
+                        new(1, 0, 0),
+                        new(2, 0, 0),
                         ApiDependencyKind.Optional
                     ),
                     Guid.NewGuid()
                 )
             );
 
-            Assert.Equal(
-                announcementsBeforeRequest + 1,
-                CountAnnouncements(bus)
-            );
-
-            Assert.IsType<InvalidOperationException>(
-                provider.LastError
-            );
+            Assert.Equal(announcementsBeforeRequest + 1, CountAnnouncements(bus));
+            Assert.IsType<InvalidOperationException>(provider.LastError);
         }
 
         [Fact]
@@ -213,23 +146,12 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         {
             var bus = new InMemoryModMessageBus();
 
-            using var provider = CreateProvider(bus);
+            using ApiDiscoveryProvider provider = CreateProvider(bus);
 
-            bool laterSubscriberCalled = false;
+            var laterSubscriberCalled = false;
 
-            provider.ConsumerObserved +=
-                delegate
-                {
-                    throw new InvalidOperationException(
-                        "First subscriber failed."
-                    );
-                };
-
-            provider.ConsumerObserved +=
-                delegate
-                {
-                    laterSubscriberCalled = true;
-                };
+            provider.ConsumerObserved += _ => throw new InvalidOperationException("First subscriber failed.");
+            provider.ConsumerObserved += _ => laterSubscriberCalled = true;
 
             provider.Start();
 
@@ -237,8 +159,8 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 ChannelId,
                 ApiDiscoveryWireProtocol.CreateRequest(
                     CreateDependency(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(2, 0, 0),
+                        new(1, 0, 0),
+                        new(2, 0, 0),
                         ApiDependencyKind.Optional
                     ),
                     Guid.NewGuid()
@@ -248,69 +170,29 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             Assert.True(laterSubscriberCalled);
         }
 
-        private static ApiDiscoveryProvider CreateProvider(
-            IModMessageBus bus
-        )
-        {
-            return new ApiDiscoveryProvider(
+        private static ApiDiscoveryProvider CreateProvider(IModMessageBus bus) 
+            => new(
                 bus,
-                new ApiModIdentity(
-                    "Mz.CommandApiMod",
-                    "Command API",
-                    new SemanticVersion(1, 4, 0)
-                ),
-                new ApiDescriptor(
-                    "Mz.CommandAPI",
-                    new SemanticVersion(1, 5, 0)
-                ),
+                new ApiModIdentity("Mz.CommandApiMod", "Command API", new(1, 4, 0)),
+                new ApiDescriptor("Mz.CommandAPI", new(1, 5, 0)),
                 new Dictionary<string, Delegate>()
             );
-        }
 
-        private static ApiDependencyDescriptor CreateDependency(
-            SemanticVersion minimum,
-            SemanticVersion maximum,
-            ApiDependencyKind kind
-        )
-        {
-            return new ApiDependencyDescriptor(
-                new ApiModIdentity(
-                    "Mz.ConsumerMod",
-                    "Consumer Mod",
-                    new SemanticVersion(2, 0, 0)
-                ),
-                new ApiRequirement(
-                    "Mz.CommandAPI",
-                    new ApiVersionRange(
-                        minimum,
-                        maximum
-                    )
-                ),
+        private static ApiDependencyDescriptor CreateDependency(SemanticVersion minimum, SemanticVersion maximum, ApiDependencyKind kind) 
+            => new(
+                new ApiModIdentity("Mz.ConsumerMod", "Consumer Mod", new(2, 0, 0)),
+                new ApiRequirement("Mz.CommandAPI", new(minimum, maximum)),
                 kind,
                 "Adds command integration"
             );
-        }
 
-        private static int CountAnnouncements(
-            InMemoryModMessageBus bus
-        )
+        private static int CountAnnouncements(InMemoryModMessageBus bus)
         {
-            int count = 0;
+            var count = 0;
 
-            for (
-                int index = 0;
-                index < bus.SentPayloads.Count;
-                index++
-            )
-            {
-                if (ApiDiscoveryWireProtocol.TryParseAnnouncement(
-                    bus.SentPayloads[index],
-                    out ApiAnnouncement announcement
-                ))
-                {
+            for (var index = 0; index < bus.SentPayloads.Count; index++)
+                if (ApiDiscoveryWireProtocol.TryParseAnnouncement(bus.SentPayloads[index], out ApiAnnouncement _))
                     count++;
-                }
-            }
 
             return count;
         }

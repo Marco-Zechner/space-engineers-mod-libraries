@@ -10,11 +10,7 @@ namespace Mz.ApiProtocol.Tests
         public void Constructor_StoresNormalizedIdAndVersion()
         {
             var version = new SemanticVersion(1, 2, 3);
-
-            var descriptor = new ApiDescriptor(
-                "  Mz.CommandAPI  ",
-                version
-            );
+            var descriptor = new ApiDescriptor("  Mz.CommandAPI  ", version);
 
             Assert.Equal("Mz.CommandAPI", descriptor.ApiId);
             Assert.Same(version, descriptor.Version);
@@ -24,17 +20,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidApiId_ThrowsArgumentException(
-            string? apiId
-        )
+        public void Constructor_InvalidApiId_ThrowsArgumentException(string? apiId)
         {
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
+            Assert.ThrowsAny<ArgumentException>(() =>
                 {
-                    new ApiDescriptor(
-                        apiId!,
-                        new SemanticVersion(1, 0, 0)
-                    );
+                    new ApiDescriptor(apiId!, new(1, 0, 0));
                 }
             );
         }
@@ -42,13 +32,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullVersion_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
-                    new ApiDescriptor(
-                        "Mz.CommandAPI",
-                        null!
-                    );
+                    new ApiDescriptor("Mz.CommandAPI", null!);
                 }
             );
         }
@@ -56,15 +42,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void ToString_ReturnsIdAndVersion()
         {
-            var descriptor = new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(1, 2, 3)
-            );
+            var descriptor = new ApiDescriptor("Mz.CommandAPI", new(1, 2, 3));
 
-            Assert.Equal(
-                "Mz.CommandAPI 1.2.3",
-                descriptor.ToString()
-            );
+            Assert.Equal("Mz.CommandAPI 1.2.3", descriptor.ToString());
         }
     }
 }

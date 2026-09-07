@@ -9,12 +9,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_StoresNormalizedIdAndRange()
         {
-            var range = CreateRange();
+            ApiVersionRange range = CreateRange();
 
-            var requirement = new ApiRequirement(
-                "  Mz.CommandAPI  ",
-                range
-            );
+            var requirement = new ApiRequirement("  Mz.CommandAPI  ", range);
 
             Assert.Equal("Mz.CommandAPI", requirement.ApiId);
             Assert.Same(range, requirement.SupportedVersions);
@@ -24,17 +21,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidApiId_ThrowsArgumentException(
-            string? apiId
-        )
+        public void Constructor_InvalidApiId_ThrowsArgumentException(string? apiId)
         {
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
+            Assert.ThrowsAny<ArgumentException>(() =>
                 {
-                    new ApiRequirement(
-                        apiId!,
-                        CreateRange()
-                    );
+                    new ApiRequirement(apiId!, CreateRange());
                 }
             );
         }
@@ -42,13 +33,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullRange_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
-                    new ApiRequirement(
-                        "Mz.CommandAPI",
-                        null!
-                    );
+                    new ApiRequirement("Mz.CommandAPI", null!);
                 }
             );
         }
@@ -56,118 +43,68 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Evaluate_MatchingSupportedProvider_ReturnsCompatible()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            var provider = new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(1, 5, 0)
-            );
+            var provider = new ApiDescriptor("Mz.CommandAPI", new(1, 5, 0));
 
-            Assert.Equal(
-                ApiCompatibilityStatus.Compatible,
-                requirement.Evaluate(provider)
-            );
-
-            Assert.True(
-                requirement.IsSatisfiedBy(provider)
-            );
+            Assert.Equal(ApiCompatibilityStatus.Compatible, requirement.Evaluate(provider));
+            Assert.True(requirement.IsSatisfiedBy(provider));
         }
 
         [Fact]
         public void Evaluate_DifferentApiId_ReturnsDifferentApi()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            var provider = new ApiDescriptor(
-                "Mz.OtherAPI",
-                new SemanticVersion(1, 5, 0)
-            );
+            var provider = new ApiDescriptor("Mz.OtherAPI", new(1, 5, 0));
 
-            Assert.Equal(
-                ApiCompatibilityStatus.DifferentApi,
-                requirement.Evaluate(provider)
-            );
-
-            Assert.False(
-                requirement.IsSatisfiedBy(provider)
-            );
+            Assert.Equal(ApiCompatibilityStatus.DifferentApi, requirement.Evaluate(provider));
+            Assert.False(requirement.IsSatisfiedBy(provider));
         }
 
         [Fact]
         public void Evaluate_ApiIdComparisonIsCaseSensitive()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            var provider = new ApiDescriptor(
-                "mz.commandapi",
-                new SemanticVersion(1, 5, 0)
-            );
+            var provider = new ApiDescriptor("mz.commandapi", new(1, 5, 0));
 
-            Assert.Equal(
-                ApiCompatibilityStatus.DifferentApi,
-                requirement.Evaluate(provider)
-            );
+            Assert.Equal(ApiCompatibilityStatus.DifferentApi, requirement.Evaluate(provider));
         }
 
         [Fact]
         public void Evaluate_OldProvider_ReturnsProviderTooOld()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            var provider = new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(1, 1, 9)
-            );
+            var provider = new ApiDescriptor("Mz.CommandAPI", new(1, 1, 9));
 
-            Assert.Equal(
-                ApiCompatibilityStatus.ProviderTooOld,
-                requirement.Evaluate(provider)
+            Assert.Equal(ApiCompatibilityStatus.ProviderTooOld, requirement.Evaluate(provider)
             );
         }
 
         [Fact]
         public void Evaluate_NewProvider_ReturnsProviderTooNew()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            var provider = new ApiDescriptor(
-                "Mz.CommandAPI",
-                new SemanticVersion(2, 0, 0)
-            );
+            var provider = new ApiDescriptor("Mz.CommandAPI", new(2, 0, 0));
 
-            Assert.Equal(
-                ApiCompatibilityStatus.ProviderTooNew,
-                requirement.Evaluate(provider)
-            );
+            Assert.Equal(ApiCompatibilityStatus.ProviderTooNew, requirement.Evaluate(provider));
         }
 
         [Fact]
         public void Evaluate_NullProvider_ThrowsArgumentNullException()
         {
-            var requirement = CreateRequirement();
+            ApiRequirement requirement = CreateRequirement();
 
-            Assert.Throws<ArgumentNullException>(
-                delegate
-                {
-                    requirement.Evaluate(null!);
-                }
-            );
+            Assert.Throws<ArgumentNullException>(() => requirement.Evaluate(null!));
         }
 
-        private static ApiRequirement CreateRequirement()
-        {
-            return new ApiRequirement(
-                "Mz.CommandAPI",
-                CreateRange()
-            );
-        }
+        private static ApiRequirement CreateRequirement() 
+            => new("Mz.CommandAPI", CreateRange());
 
-        private static ApiVersionRange CreateRange()
-        {
-            return new ApiVersionRange(
-                new SemanticVersion(1, 2, 0),
-                new SemanticVersion(2, 0, 0)
-            );
-        }
+        private static ApiVersionRange CreateRange() 
+            => new(new(1, 2, 0), new(2, 0, 0));
     }
 }

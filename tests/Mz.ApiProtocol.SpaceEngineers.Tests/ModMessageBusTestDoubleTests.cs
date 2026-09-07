@@ -28,31 +28,16 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
             Assert.Null(bus.LastPayload);
         }
 
-        private sealed class RecordingModMessageBus :
-            IModMessageBus
+        private sealed class RecordingModMessageBus : IModMessageBus
         {
             public long LastChannelId { get; private set; }
 
             public object? LastPayload { get; private set; }
 
-            public void RegisterHandler(
-                long channelId,
-                Action<object> handler
-            )
-            {
-            }
+            public void RegisterHandler(long channelId, Action<object> handler) { }
+            public void UnregisterHandler(long channelId,Action<object> handler) { }
 
-            public void UnregisterHandler(
-                long channelId,
-                Action<object> handler
-            )
-            {
-            }
-
-            public void Send(
-                long channelId,
-                object payload
-            )
+            public void Send(long channelId, object payload)
             {
                 LastChannelId = channelId;
                 LastPayload = payload;

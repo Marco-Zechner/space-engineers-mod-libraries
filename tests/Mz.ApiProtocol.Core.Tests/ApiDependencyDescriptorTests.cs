@@ -1,5 +1,4 @@
 using System;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -21,17 +20,8 @@ namespace Mz.ApiProtocol.Tests
 
             Assert.Same(consumer, dependency.Consumer);
             Assert.Same(requirement, dependency.Requirement);
-
-            Assert.Equal(
-                ApiDependencyKind.Required,
-                dependency.Kind
-            );
-
-            Assert.Equal(
-                "Registers chat commands",
-                dependency.FeatureDescription
-            );
-
+            Assert.Equal(ApiDependencyKind.Required, dependency.Kind);
+            Assert.Equal("Registers chat commands", dependency.FeatureDescription);
             Assert.True(dependency.IsRequired);
             Assert.False(dependency.IsOptional);
         }
@@ -46,11 +36,7 @@ namespace Mz.ApiProtocol.Tests
                 null!
             );
 
-            Assert.Equal(
-                string.Empty,
-                dependency.FeatureDescription
-            );
-
+            Assert.Equal(string.Empty, dependency.FeatureDescription);
             Assert.False(dependency.IsRequired);
             Assert.True(dependency.IsOptional);
         }
@@ -58,8 +44,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullConsumer_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
                     new ApiDependencyDescriptor(
                         null!,
@@ -74,8 +59,7 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullRequirement_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
                     new ApiDependencyDescriptor(
                         CreateConsumer(),
@@ -91,12 +75,9 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(2)]
         [InlineData(100)]
-        public void Constructor_InvalidKind_ThrowsArgumentException(
-            int numericKind
-        )
+        public void Constructor_InvalidKind_ThrowsArgumentException(int numericKind)
         {
-            Assert.Throws<ArgumentException>(
-                delegate
+            Assert.Throws<ArgumentException>(() =>
                 {
                     new ApiDependencyDescriptor(
                         CreateConsumer(),
@@ -108,24 +89,10 @@ namespace Mz.ApiProtocol.Tests
             );
         }
 
-        private static ApiModIdentity CreateConsumer()
-        {
-            return new ApiModIdentity(
-                "Mz.ConsumerMod",
-                "Consumer Mod",
-                new SemanticVersion(2, 1, 0)
-            );
-        }
+        private static ApiModIdentity CreateConsumer() 
+            => new("Mz.ConsumerMod", "Consumer Mod", new(2, 1, 0));
 
-        private static ApiRequirement CreateRequirement()
-        {
-            return new ApiRequirement(
-                "Mz.CommandAPI",
-                new ApiVersionRange(
-                    new SemanticVersion(1, 0, 0),
-                    new SemanticVersion(2, 0, 0)
-                )
-            );
-        }
+        private static ApiRequirement CreateRequirement() 
+            => new("Mz.CommandAPI", new(new(1, 0, 0), new(2, 0, 0)));
     }
 }

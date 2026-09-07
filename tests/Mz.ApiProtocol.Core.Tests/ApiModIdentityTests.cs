@@ -11,22 +11,10 @@ namespace Mz.ApiProtocol.Tests
         {
             var version = new SemanticVersion(1, 2, 3);
 
-            var identity = new ApiModIdentity(
-                "  Mz.CommandApiMod  ",
-                "  Command API  ",
-                version
-            );
+            var identity = new ApiModIdentity("  Mz.CommandApiMod  ", "  Command API  ", version);
 
-            Assert.Equal(
-                "Mz.CommandApiMod",
-                identity.Id
-            );
-
-            Assert.Equal(
-                "Command API",
-                identity.DisplayName
-            );
-
+            Assert.Equal("Mz.CommandApiMod", identity.Id);
+            Assert.Equal("Command API", identity.DisplayName);
             Assert.Same(version, identity.Version);
         }
 
@@ -34,18 +22,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidId_ThrowsArgumentException(
-            string? id
-        )
+        public void Constructor_InvalidId_ThrowsArgumentException(string? id)
         {
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
+            Assert.ThrowsAny<ArgumentException>(() =>
                 {
-                    new ApiModIdentity(
-                        id!,
-                        "Command API",
-                        new SemanticVersion(1, 0, 0)
-                    );
+                    new ApiModIdentity(id!, "Command API", new(1, 0, 0));
                 }
             );
         }
@@ -54,18 +35,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_InvalidDisplayName_ThrowsArgumentException(
-            string? displayName
-        )
+        public void Constructor_InvalidDisplayName_ThrowsArgumentException(string? displayName)
         {
-            Assert.ThrowsAny<ArgumentException>(
-                delegate
+            Assert.ThrowsAny<ArgumentException>(() =>
                 {
-                    new ApiModIdentity(
-                        "Mz.CommandApiMod",
-                        displayName!,
-                        new SemanticVersion(1, 0, 0)
-                    );
+                    new ApiModIdentity("Mz.CommandApiMod", displayName!, new(1, 0, 0));
                 }
             );
         }
@@ -73,14 +47,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_NullVersion_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
-                    new ApiModIdentity(
-                        "Mz.CommandApiMod",
-                        "Command API",
-                        null!
-                    );
+                    new ApiModIdentity("Mz.CommandApiMod", "Command API", null!);
                 }
             );
         }
@@ -88,16 +57,9 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void ToString_IncludesDisplayNameIdAndVersion()
         {
-            var identity = new ApiModIdentity(
-                "Mz.CommandApiMod",
-                "Command API",
-                new SemanticVersion(1, 2, 3)
-            );
+            var identity = new ApiModIdentity("Mz.CommandApiMod", "Command API", new(1, 2, 3));
 
-            Assert.Equal(
-                "Command API (Mz.CommandApiMod) 1.2.3",
-                identity.ToString()
-            );
+            Assert.Equal("Command API (Mz.CommandApiMod) 1.2.3", identity.ToString());
         }
     }
 }

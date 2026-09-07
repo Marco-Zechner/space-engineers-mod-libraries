@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.SpaceEngineers.Tests
@@ -13,20 +12,16 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         public void Start_RegistersAndBroadcastsUnsolicitedAnnouncement()
         {
             var bus = new InMemoryModMessageBus();
-            var provider = CreateProvider(bus);
+            ApiDiscoveryProvider provider = CreateProvider(bus);
 
             provider.Start();
 
             Assert.True(provider.IsStarted);
             Assert.Equal(1, bus.RegistrationCount);
 
-            var announcement =
-                ParseLastAnnouncement(bus);
+            ApiAnnouncement announcement = ParseLastAnnouncement(bus);
 
-            Assert.Equal(
-                Guid.Empty,
-                announcement.CorrelationId
-            );
+            Assert.Equal(Guid.Empty, announcement.CorrelationId);
 
             provider.Dispose();
         }
@@ -35,7 +30,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         public void MatchingRequest_ProducesCorrelatedAnnouncement()
         {
             var bus = new InMemoryModMessageBus();
-            var provider = CreateProvider(bus);
+            ApiDiscoveryProvider provider = CreateProvider(bus);
 
             provider.Start();
 
@@ -49,13 +44,9 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 )
             );
 
-            var announcement =
-                ParseLastAnnouncement(bus);
+            ApiAnnouncement announcement = ParseLastAnnouncement(bus);
 
-            Assert.Equal(
-                correlationId,
-                announcement.CorrelationId
-            );
+            Assert.Equal(correlationId, announcement.CorrelationId);
 
             provider.Dispose();
         }
@@ -64,11 +55,11 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         public void DifferentApiRequest_IsIgnored()
         {
             var bus = new InMemoryModMessageBus();
-            var provider = CreateProvider(bus);
+            ApiDiscoveryProvider provider = CreateProvider(bus);
 
             provider.Start();
 
-            var sendCountBeforeRequest = bus.SendCount;
+            int sendCountBeforeRequest = bus.SendCount;
 
             bus.Send(
                 ChannelId,
@@ -78,11 +69,8 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
                 )
             );
 
-            Assert.Equal(
-                sendCountBeforeRequest + 1,
-                bus.SendCount
-            );
-
+            Assert.Equal(sendCountBeforeRequest + 1, bus.SendCount);
+            
             provider.Dispose();
         }
 
@@ -90,7 +78,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         public void MalformedMessage_IsIgnoredWithoutError()
         {
             var bus = new InMemoryModMessageBus();
-            var provider = CreateProvider(bus);
+            ApiDiscoveryProvider provider = CreateProvider(bus);
 
             provider.Start();
             bus.Send(ChannelId, "malformed");
@@ -104,7 +92,7 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         public void StartAndStop_AreIdempotent()
         {
             var bus = new InMemoryModMessageBus();
-            var provider = CreateProvider(bus);
+            ApiDiscoveryProvider provider = CreateProvider(bus);
 
             provider.Start();
             provider.Start();
@@ -121,89 +109,38 @@ namespace Mz.ApiProtocol.SpaceEngineers.Tests
         [Fact]
         public void Announce_BeforeStart_ThrowsInvalidOperationException()
         {
-            var provider = CreateProvider(
-                new InMemoryModMessageBus()
-            );
+            ApiDiscoveryProvider provider = CreateProvider(new InMemoryModMessageBus());
 
-            Assert.Throws<InvalidOperationException>(
-                delegate
-                {
-                    provider.Announce();
-                }
-            );
+            Assert.Throws<InvalidOperationException>(provider.Announce);
         }
 
-        private static ApiDiscoveryProvider CreateProvider(
-            IModMessageBus bus
-        )
-        {
-            return new ApiDiscoveryProvider(
-                bus,
-                CreateProviderIdentity(),
-                new ApiDescriptor(
-                    "Mz.CommandAPI",
-                    new SemanticVersion(1, 5, 0)
-                ),
-                new Dictionary<string, Delegate>
-                {
-                    {
-                        "Ping",
-                        (Action)delegate
-                        {
-                        }
-                    }
-                }
-            );
-        }
+        private static ApiDiscoveryProvider CreateProvider(IModMessageBus bus) 
+            => new(
+            bus,
+            CreateProviderIdentity(),
+            new ApiDescriptor("Mz.CommandAPI", new(1, 5, 0)),
+            new Dictionary<string, Delegate> { { "Ping", (Action)delegate { } } }
+        );
 
-        private static ApiAnnouncement ParseLastAnnouncement(
-            InMemoryModMessageBus bus
-        )
+        private static ApiAnnouncement ParseLastAnnouncement(InMemoryModMessageBus bus)
         {
-            var payload =
-                bus.SentPayloads[
-                    bus.SentPayloads.Count - 1
-                ];
+            object? payload = bus.SentPayloads[bus.SentPayloads.Count - 1];
 
-            var success =
-                ApiDiscoveryWireProtocol.TryParseAnnouncement(
-                    payload,
-                    out var announcement
-                );
+            bool success = ApiDiscoveryWireProtocol.TryParseAnnouncement(payload, out ApiAnnouncement announcement);
 
             Assert.True(success);
             return announcement;
         }
         
-        private static ApiModIdentity CreateProviderIdentity()
-        {
-            return new ApiModIdentity(
-                "Mz.CommandApiMod",
-                "Command API",
-                new SemanticVersion(1, 4, 0)
-            );
-        }
-        
-        private static ApiDependencyDescriptor CreateDependency(
-            string apiId = "Mz.CommandAPI"
-        )
-        {
-            return new ApiDependencyDescriptor(
-                new ApiModIdentity(
-                    "Mz.ConsumerMod",
-                    "Consumer Mod",
-                    new SemanticVersion(2, 0, 0)
-                ),
-                new ApiRequirement(
-                    apiId,
-                    new ApiVersionRange(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(2, 0, 0)
-                    )
-                ),
+        private static ApiModIdentity CreateProviderIdentity() 
+            => new("Mz.CommandApiMod", "Command API", new(1, 4, 0));
+
+        private static ApiDependencyDescriptor CreateDependency(string apiId = "Mz.CommandAPI") 
+            => new(
+                new ApiModIdentity("Mz.ConsumerMod", "Consumer Mod", new(2, 0, 0)),
+                new ApiRequirement(apiId, new ApiVersionRange(new(1, 0, 0), new(2, 0, 0))),
                 ApiDependencyKind.Optional,
                 "Adds Command API integration"
             );
-        }
     }
 }

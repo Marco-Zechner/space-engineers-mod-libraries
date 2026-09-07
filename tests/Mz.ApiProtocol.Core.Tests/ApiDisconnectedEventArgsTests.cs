@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Mz.SemanticVersioning;
 using Xunit;
 
 namespace Mz.ApiProtocol.Tests
@@ -10,34 +9,20 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void Constructor_StoresConnectionAndReason()
         {
-            var connection = CreateConnection();
+            ApiConnection connection = CreateConnection();
 
-            var eventArgs = new ApiDisconnectedEventArgs(
-                connection,
-                ApiDisconnectReason.RediscoveryRequested
-            );
+            var eventArgs = new ApiDisconnectedEventArgs(connection, ApiDisconnectReason.RediscoveryRequested);
 
-            Assert.Same(
-                connection,
-                eventArgs.PreviousConnection
-            );
-
-            Assert.Equal(
-                ApiDisconnectReason.RediscoveryRequested,
-                eventArgs.Reason
-            );
+            Assert.Same(connection, eventArgs.PreviousConnection);
+            Assert.Equal(ApiDisconnectReason.RediscoveryRequested, eventArgs.Reason);
         }
 
         [Fact]
         public void Constructor_NullConnection_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                delegate
+            Assert.Throws<ArgumentNullException>(() =>
                 {
-                    new ApiDisconnectedEventArgs(
-                        null!,
-                        ApiDisconnectReason.ConsumerRequested
-                    );
+                    new ApiDisconnectedEventArgs(null!, ApiDisconnectReason.ConsumerRequested);
                 }
             );
         }
@@ -46,17 +31,11 @@ namespace Mz.ApiProtocol.Tests
         [InlineData(-1)]
         [InlineData(4)]
         [InlineData(100)]
-        public void Constructor_InvalidReason_ThrowsArgumentException(
-            int numericReason
-        )
+        public void Constructor_InvalidReason_ThrowsArgumentException(int numericReason)
         {
-            Assert.Throws<ArgumentException>(
-                delegate
+            Assert.Throws<ArgumentException>(() =>
                 {
-                    new ApiDisconnectedEventArgs(
-                        CreateConnection(),
-                        (ApiDisconnectReason)numericReason
-                    );
+                    new ApiDisconnectedEventArgs(CreateConnection(), (ApiDisconnectReason)numericReason);
                 }
             );
         }
@@ -65,28 +44,17 @@ namespace Mz.ApiProtocol.Tests
         {
             var announcement = new ApiAnnouncement(
                 CreateProviderIdentity(),
-                new ApiDescriptor(
-                    "Mz.CommandAPI",
-                    new SemanticVersion(1, 0, 0)
-                ),
+                new("Mz.CommandAPI", new(1, 0, 0)),
                 Guid.NewGuid(),
                 Guid.Empty,
                 new Dictionary<string, Delegate>()
             );
             
-            return new ApiConnection(
-                announcement
-            );
+            return new(announcement);
         }
         
                         
         private static ApiModIdentity CreateProviderIdentity()
-        {
-            return new ApiModIdentity(
-                "Mz.CommandApiMod",
-                "Command API",
-                new SemanticVersion(1, 4, 0)
-            );
-        }
+            => new("Mz.CommandApiMod", "Command API", new(1, 4, 0));
     }
 }

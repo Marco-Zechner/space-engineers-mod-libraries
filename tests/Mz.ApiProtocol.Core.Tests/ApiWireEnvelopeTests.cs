@@ -9,45 +9,16 @@ namespace Mz.ApiProtocol.Tests
         [Fact]
         public void TryParseEnvelope_Request_ReturnsConsumerMetadata()
         {
-            Guid correlationId = Guid.NewGuid();
+            var correlationId = Guid.NewGuid();
 
-            object payload =
-                ApiDiscoveryWireProtocol.CreateRequest(
-                    CreateDependency(),
-                    correlationId
-                );
+            object payload = ApiDiscoveryWireProtocol.CreateRequest(CreateDependency(), correlationId);
 
-            Assert.True(
-                ApiDiscoveryWireProtocol.TryParseEnvelope(
-                    payload,
-                    out ApiWireEnvelope envelope
-                )
-            );
-
-            Assert.Equal(
-                ApiWireMessageKind.Request,
-                envelope.MessageKind
-            );
-
-            Assert.Equal(
-                "Mz.ConsumerMod",
-                envelope.Participant.Id
-            );
-
-            Assert.Equal(
-                "Mz.CommandAPI",
-                envelope.ApiId
-            );
-
-            Assert.Equal(
-                ApiProtocolInfo.WireProtocolVersion,
-                envelope.WireProtocolVersion
-            );
-
-            Assert.Equal(
-                ApiProtocolInfo.LibraryVersion,
-                envelope.LibraryVersion
-            );
+            Assert.True(ApiDiscoveryWireProtocol.TryParseEnvelope(payload, out ApiWireEnvelope envelope));
+            Assert.Equal(ApiWireMessageKind.Request, envelope.MessageKind);
+            Assert.Equal("Mz.ConsumerMod", envelope.Participant.Id);
+            Assert.Equal("Mz.CommandAPI", envelope.ApiId);
+            Assert.Equal(ApiProtocolInfo.WireProtocolVersion, envelope.WireProtocolVersion);
+            Assert.Equal(ApiProtocolInfo.LibraryVersion, envelope.LibraryVersion);
         }
 
         [Fact]
@@ -64,27 +35,10 @@ namespace Mz.ApiProtocol.Tests
                 "Mz.CommandAPI"
             };
 
-            Assert.True(
-                ApiDiscoveryWireProtocol.TryParseEnvelope(
-                    payload,
-                    out ApiWireEnvelope envelope
-                )
-            );
-
-            Assert.Equal(
-                new SemanticVersion(2, 0, 0),
-                envelope.WireProtocolVersion
-            );
-
-            Assert.Equal(
-                new SemanticVersion(4, 3, 2),
-                envelope.LibraryVersion
-            );
-
-            Assert.Equal(
-                "Mz.FutureProvider",
-                envelope.Participant.Id
-            );
+            Assert.True(ApiDiscoveryWireProtocol.TryParseEnvelope(payload, out ApiWireEnvelope envelope));
+            Assert.Equal(new(2, 0, 0), envelope.WireProtocolVersion);
+            Assert.Equal(new(4, 3, 2), envelope.LibraryVersion);
+            Assert.Equal("Mz.FutureProvider", envelope.Participant.Id);
         }
 
         [Fact]
@@ -101,34 +55,16 @@ namespace Mz.ApiProtocol.Tests
                 "Mz.CommandAPI"
             };
 
-            Assert.False(
-                ApiDiscoveryWireProtocol.TryParseEnvelope(
-                    payload,
-                    out ApiWireEnvelope envelope
-                )
-            );
+            Assert.False(ApiDiscoveryWireProtocol.TryParseEnvelope(payload, out ApiWireEnvelope envelope));
 
             Assert.Null(envelope);
         }
 
-        private static ApiDependencyDescriptor CreateDependency()
-        {
-            return new ApiDependencyDescriptor(
-                new ApiModIdentity(
-                    "Mz.ConsumerMod",
-                    "Consumer Mod",
-                    new SemanticVersion(2, 0, 0)
-                ),
-                new ApiRequirement(
-                    "Mz.CommandAPI",
-                    new ApiVersionRange(
-                        new SemanticVersion(1, 0, 0),
-                        new SemanticVersion(2, 0, 0)
-                    )
-                ),
-                ApiDependencyKind.Optional,
-                "Adds Command API integration"
-            );
-        }
+        private static ApiDependencyDescriptor CreateDependency() => new(
+            new ApiModIdentity("Mz.ConsumerMod", "Consumer Mod", new(2, 0, 0)),
+            new ApiRequirement("Mz.CommandAPI", new(new(1, 0, 0), new(2, 0, 0))),
+            ApiDependencyKind.Optional,
+            "Adds Command API integration"
+        );
     }
 }
