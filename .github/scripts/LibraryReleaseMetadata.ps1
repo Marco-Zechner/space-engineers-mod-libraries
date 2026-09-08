@@ -1147,7 +1147,7 @@ function Add-LibraryDependency {
     $Dependencies[$PackageId] = $Version
 }
 
-function Resolve-LibraryDependencies {
+function Get-LibraryDiscoveredDependencies {
     param(
         [Parameter(Mandatory = $true)]
         [object]$Library,
@@ -1330,6 +1330,80 @@ function Resolve-LibraryDependencies {
 
     foreach ($packageId in @($dependencies.Keys | Sort-Object)) {
         $ordered[$packageId] = [string]$dependencies[$packageId]
+    }
+
+    return $ordered
+}
+
+function Resolve-LibraryDependencies {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Library,
+
+        [Parameter(Mandatory = $true)]
+        [object[]]$Libraries,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $discovered = Get-LibraryDiscoveredDependencies -Library $Library -Libraries $Libraries -RepoRoot $RepoRoot
+    $declared = $Library.Dependencies
+
+    if ($null -eq $declared) {
+        throw "Package '$($Library.PackageId)' does not expose declared LibraryVersionFile dependencies."
+    }
+
+    $declaredKeys = @{}
+    $discoveredKeys = @{}
+
+    foreach ($packageIdValue in @($declared.Keys)) {
+        $packageId = [string]$packageIdValue
+        $declaredKeys[$packageId.ToLowerInvariant()] = $packageId
+    }
+
+    foreach ($packageIdValue in @($discovered.Keys)) {
+        $packageId = [string]$packageIdValue
+        $dependencyKey = $packageId.ToLowerInvariant()
+        $discoveredKeys[$dependencyKey] = $packageId
+
+        if (-not $declaredKeys.ContainsKey($dependencyKey)) {
+            throw (
+                "Package '$($Library.PackageId)' uses dependency '$packageId' " +
+                "version '$($discovered[$packageId])' but LibraryVersionFile " +
+                "does not declare dependency '$packageId'."
+            )
+        }
+
+        $declaredId = [string]$declaredKeys[$dependencyKey]
+        $declaredVersion = [string]$declared[$declaredId]
+        $discoveredVersion = [string]$discovered[$packageId]
+
+        if ($declaredVersion -ne $discoveredVersion) {
+            throw (
+                "Package '$($Library.PackageId)' declares dependency " +
+                "'$declaredId' version '$declaredVersion', but discovered " +
+                "project/source usage requires version '$discoveredVersion'."
+            )
+        }
+    }
+
+    foreach ($packageIdValue in @($declared.Keys)) {
+        $packageId = [string]$packageIdValue
+
+        if (-not $discoveredKeys.ContainsKey($packageId.ToLowerInvariant())) {
+            throw (
+                "Package '$($Library.PackageId)' declares dependency " +
+                "'$packageId' version '$($declared[$packageId])', but no " +
+                "matching project or compiled-source dependency was discovered."
+            )
+        }
+    }
+
+    $ordered = [ordered]@{}
+
+    foreach ($packageId in @($declared.Keys | Sort-Object)) {
+        $ordered[[string]$packageId] = [string]$declared[$packageId]
     }
 
     return $ordered

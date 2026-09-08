@@ -507,7 +507,47 @@ try {
     Assert-Equal `
         -Expected 2 `
         -Actual $dependencies.Count `
-        -Message "The package declared an unexpected dependency."
+        -Message "The resolved declaration contained an unexpected dependency."
+
+    $originalDependencies = $rootPackage.Dependencies
+
+    try {
+        $rootPackage.Dependencies = [ordered]@{
+            "Test.Dependency" = "2.3.4"
+        }
+
+        Assert-Throws `
+            -Action {
+                Resolve-LibraryDependencies -Library $rootPackage -Libraries $libraries -RepoRoot $testRoot | Out-Null
+            } `
+            -ExpectedMessagePart "does not declare dependency 'External.Dependency'"
+
+        $rootPackage.Dependencies = [ordered]@{
+            "Test.Dependency" = "2.3.3"
+            "External.Dependency" = "4.5.6"
+        }
+
+        Assert-Throws `
+            -Action {
+                Resolve-LibraryDependencies -Library $rootPackage -Libraries $libraries -RepoRoot $testRoot | Out-Null
+            } `
+            -ExpectedMessagePart "declares dependency 'Test.Dependency' version '2.3.3'"
+
+        $rootPackage.Dependencies = [ordered]@{
+            "Test.Dependency" = "2.3.4"
+            "External.Dependency" = "4.5.6"
+            "Unused.Dependency" = "9.9.9"
+        }
+
+        Assert-Throws `
+            -Action {
+                Resolve-LibraryDependencies -Library $rootPackage -Libraries $libraries -RepoRoot $testRoot | Out-Null
+            } `
+            -ExpectedMessagePart "declares dependency 'Unused.Dependency'"
+    }
+    finally {
+        $rootPackage.Dependencies = $originalDependencies
+    }
 
     $lock = Get-Content `
         -LiteralPath (Join-Path $testRoot "selibs.lock.json") `
