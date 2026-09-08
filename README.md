@@ -10,7 +10,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 | Package | Latest stable release | Documentation |
 | --- | --- | --- |
-| `Mz.ApiProtocol` | [`0.2.5`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.5) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
+| `Mz.ApiProtocol` | [`0.3.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.3.0) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
 | `Mz.Logging` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1) | [Guide](src/Mz.Logging.Core/README.md) |
 | `Mz.Networking` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.2.0) | [Guide](src/Mz.SemanticVersioning/README.md) |
@@ -21,8 +21,9 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.ApiProtocol
 
-- Latest stable release: [`0.2.5`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.5)
-- Published the guide example style improvements after correcting release validation.
+- Latest stable release: [`0.3.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.3.0)
+- Added a params ApiEndpointContract constructor for concise endpoint declarations.
+- Declared the exact Mz.SemanticVersioning 0.2.0 SELibs dependency.
 
 ### Mz.Logging
 
