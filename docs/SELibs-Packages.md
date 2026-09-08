@@ -78,9 +78,8 @@ namespace `Mz.ApiProtocol` version `0.2.2` uses the exact tag
 Package dependencies are declared explicitly in `LibraryVersionFile.cs`. For
 example:
 
-    public static LibraryDependency[] Dependencies { get; } = new[]
-    {
-        new LibraryDependency("Mz.SemanticVersioning", "0.1.1")
+    public static LibraryDependency[] Dependencies { get; } = {
+        new LibraryDependency("Mz.SemanticVersioning", "0.2.0")
     };
 
 A package without dependencies declares `new LibraryDependency[0]`. These

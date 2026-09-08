@@ -142,7 +142,7 @@ function Read-LibraryVersionDescriptor {
         '(?:' +
             'new\s+LibraryDependency\s*\[\s*0\s*\]' +
             '|' +
-            'new\s*\[\s*\]\s*\{(?<entries>.*?)\}' +
+            '(?:new\s*\[\s*\]\s*)?\{(?<entries>.*?)\}' +
         ')' +
         '\s*;'
     )

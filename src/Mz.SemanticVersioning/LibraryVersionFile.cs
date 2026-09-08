@@ -14,12 +14,12 @@ namespace Mz.SemanticVersioning
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
-        public const int Minor = 1;
+        public const int Minor = 2;
 
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 1;
+        public const int Patch = 0;
 
         /// <summary>
         /// Gets the version string.
@@ -38,6 +38,14 @@ namespace Mz.SemanticVersioning
             VersionString,
             new[]
             {
+                new ChangelogEntry(
+                    "0.2.0",
+                    new[]
+                    {
+                        "Added LibraryDependency for exact SELibs package dependency metadata.",
+                        "Added explicit package dependency declarations to LibraryVersionFile."
+                    }
+                ),
                 new ChangelogEntry(
                     "0.1.1",
                     new[]

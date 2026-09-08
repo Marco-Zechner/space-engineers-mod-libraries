@@ -20,7 +20,7 @@ namespace Mz.TextTemplate
         /// <summary>
         /// Gets the patch version number.
         /// </summary>
-        public const int Patch = 0;
+        public const int Patch = 1;
 
         /// <summary>
         /// Gets the version string.
@@ -31,7 +31,7 @@ namespace Mz.TextTemplate
         /// Gets the exact package dependencies required by this release.
         /// </summary>
         public static LibraryDependency[] Dependencies { get; } = {
-            new LibraryDependency("Mz.SemanticVersioning", "0.1.1")
+            new LibraryDependency("Mz.SemanticVersioning", "0.2.0")
         };
 
         /// <summary>
@@ -41,6 +41,13 @@ namespace Mz.TextTemplate
                 VersionString,
                 new[]
                 {
+                    new ChangelogEntry(
+                        "0.1.1",
+                        new[]
+                        {
+                            "Declared the exact Mz.SemanticVersioning 0.2.0 SELibs dependency."
+                        }
+                    ),
                     new ChangelogEntry(
                         "0.1.0",
                         new[]
