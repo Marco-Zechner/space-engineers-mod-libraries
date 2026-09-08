@@ -130,15 +130,63 @@ function Read-LibraryVersionDescriptor {
         "$($versionParts["Patch"])"
     )
 
-    $dependencyPattern = (
-        '(?s)new\s+LibraryDependency\s*\(\s*' +
+    $dependencyEntryPattern = (
+        'new\s+LibraryDependency\s*\(\s*' +
         '"(?<packageId>(?:\\.|[^"\\])*)"\s*,\s*' +
         '"(?<version>(?:\\.|[^"\\])*)"\s*\)'
     )
 
-    $dependencyMatches = @([regex]::Matches($text, $dependencyPattern))
+    $dependencyPropertyPattern = (
+        '(?s)public\s+static\s+LibraryDependency\s*\[\s*\]\s+' +
+        'Dependencies\s*\{\s*get;\s*\}\s*=\s*' +
+        '(?:' +
+            'new\s+LibraryDependency\s*\[\s*0\s*\]' +
+            '|' +
+            'new\s*\[\s*\]\s*\{(?<entries>.*?)\}' +
+        ')' +
+        '\s*;'
+    )
+
+    $dependencyPropertyMatches = @(
+        [regex]::Matches($text, $dependencyPropertyPattern)
+    )
+
+    if ($dependencyPropertyMatches.Count -ne 1) {
+        throw (
+            "Library version file '$Path' must declare exactly one supported " +
+            "Dependencies property."
+        )
+    }
+
+    $dependencyEntriesText = [string]$dependencyPropertyMatches[0].Groups["entries"].Value
+    $dependencyMatches = @()
     $dependencies = [ordered]@{}
     $dependencyKeys = @{}
+
+    if (-not [string]::IsNullOrWhiteSpace($dependencyEntriesText)) {
+        $dependencyListPattern = (
+            '(?s)^\s*(?:' +
+            $dependencyEntryPattern +
+            '\s*(?:,\s*' +
+            $dependencyEntryPattern +
+            '\s*)*(?:,\s*)?' +
+            ')?$'
+        )
+
+        if ($dependencyEntriesText -notmatch $dependencyListPattern) {
+            throw (
+                "Dependencies property in '$Path' contains unsupported syntax. " +
+                "Use only LibraryDependency(packageId, version) entries."
+            )
+        }
+
+        $dependencyMatches = @(
+            [regex]::Matches(
+                $dependencyEntriesText,
+                $dependencyEntryPattern
+            )
+        )
+    }
 
     foreach ($dependencyMatch in $dependencyMatches) {
         $dependencyPackageId = ConvertFrom-LibraryCSharpStringLiteral `
@@ -166,7 +214,6 @@ function Read-LibraryVersionDescriptor {
         $dependencyKeys[$dependencyKey] = $dependencyPackageId
         $dependencies[$dependencyPackageId] = $dependencyVersion
     }
-
     $entryPattern = (
         '(?s)new\s+ChangelogEntry\s*\(\s*' +
         '"(?<version>(?:\\.|[^"\\])*)"\s*,\s*' +

@@ -432,6 +432,38 @@ try {
         [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
     }
 
+    $missingDependenciesText = $dependencyVersionText.Replace(
+        "        public static LibraryDependency[] Dependencies { get; } = new LibraryDependency[0];`n",
+        ""
+    )
+
+    try {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $missingDependenciesText, $dependencyVersionEncoding)
+
+        Assert-Throws `
+            -Action { Read-LibraryVersionDescriptor -Path $dependencyVersionFilePath | Out-Null } `
+            -ExpectedMessagePart "must declare exactly one supported Dependencies property"
+    }
+    finally {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
+    }
+
+    $unsupportedDependenciesText = $dependencyVersionText.Replace(
+        "new LibraryDependency[0]",
+        "BuildDependencies()"
+    )
+
+    try {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $unsupportedDependenciesText, $dependencyVersionEncoding)
+
+        Assert-Throws `
+            -Action { Read-LibraryVersionDescriptor -Path $dependencyVersionFilePath | Out-Null } `
+            -ExpectedMessagePart "must declare exactly one supported Dependencies property"
+    }
+    finally {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
+    }
+
     Assert-True `
         -Condition ($null -eq $rootPackage.PSObject.Properties["Slug"]) `
         -Message "Release metadata still exposes a derived slug."
