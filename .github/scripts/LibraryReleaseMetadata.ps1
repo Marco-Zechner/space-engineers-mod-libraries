@@ -130,6 +130,43 @@ function Read-LibraryVersionDescriptor {
         "$($versionParts["Patch"])"
     )
 
+    $dependencyPattern = (
+        '(?s)new\s+LibraryDependency\s*\(\s*' +
+        '"(?<packageId>(?:\\.|[^"\\])*)"\s*,\s*' +
+        '"(?<version>(?:\\.|[^"\\])*)"\s*\)'
+    )
+
+    $dependencyMatches = @([regex]::Matches($text, $dependencyPattern))
+    $dependencies = [ordered]@{}
+    $dependencyKeys = @{}
+
+    foreach ($dependencyMatch in $dependencyMatches) {
+        $dependencyPackageId = ConvertFrom-LibraryCSharpStringLiteral `
+            -Value $dependencyMatch.Groups["packageId"].Value `
+            -Path $Path
+
+        $dependencyVersion = ConvertFrom-LibraryCSharpStringLiteral `
+            -Value $dependencyMatch.Groups["version"].Value `
+            -Path $Path
+
+        if ($dependencyPackageId -notmatch '^[A-Za-z_][A-Za-z0-9_.]*$') {
+            throw "Library dependency '$dependencyPackageId' in '$Path' has an invalid package ID."
+        }
+
+        if ($dependencyVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Library dependency '$dependencyPackageId' in '$Path' has invalid version '$dependencyVersion'."
+        }
+
+        $dependencyKey = $dependencyPackageId.ToLowerInvariant()
+
+        if ($dependencyKeys.ContainsKey($dependencyKey)) {
+            throw "Library dependency '$dependencyPackageId' is declared more than once in '$Path'."
+        }
+
+        $dependencyKeys[$dependencyKey] = $dependencyPackageId
+        $dependencies[$dependencyPackageId] = $dependencyVersion
+    }
+
     $entryPattern = (
         '(?s)new\s+ChangelogEntry\s*\(\s*' +
         '"(?<version>(?:\\.|[^"\\])*)"\s*,\s*' +
@@ -259,6 +296,7 @@ function Read-LibraryVersionDescriptor {
     return [pscustomobject]@{
         PackageId = $packageId
         Version = $version
+        Dependencies = $dependencies
         Changelog = @($changelog)
         VersionFilePath = [System.IO.Path]::GetFullPath($Path)
     }
@@ -594,6 +632,7 @@ function Get-ReleaseLibraries {
         $library = [pscustomobject]@{
             PackageId = $descriptor.PackageId
             Version = $descriptor.Version
+            Dependencies = $descriptor.Dependencies
             Changelog = @($descriptor.Changelog)
             VersionFilePath = $descriptor.VersionFilePath
             RootProjectPath = $rootProjectPath

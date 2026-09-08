@@ -126,6 +126,7 @@ try {
             "        public const int Major = 2;",
             "        public const int Minor = 3;",
             "        public const int Patch = 4;",
+            "        public static LibraryDependency[] Dependencies { get; } = new LibraryDependency[0];",
             "        public static ChangelogEntry[] Changelog => null;",
             "        private static readonly ChangelogEntry[] Entries =",
             "        {",
@@ -192,6 +193,11 @@ try {
             "        public const int Major = 1;",
             "        public const int Minor = 0;",
             "        public const int Patch = 0;",
+            "        public static LibraryDependency[] Dependencies { get; } = new[]",
+            "        {",
+            '            new LibraryDependency("Test.Dependency", "2.3.4"),',
+            '            new LibraryDependency("External.Dependency", "4.5.6")',
+            "        };",
             "        public static ChangelogEntry[] Changelog => null;",
             "        private static readonly ChangelogEntry[] Entries =",
             "        {",
@@ -383,6 +389,29 @@ try {
         $libraries |
             Where-Object { $_.PackageId -eq "Test.Dependency" }
     )[0]
+
+    $rootDependenciesProperty = $rootPackage.PSObject.Properties["Dependencies"]
+
+    Assert-True `
+        -Condition ($null -ne $rootDependenciesProperty) `
+        -Message "Explicit LibraryVersionFile dependencies were not parsed."
+
+    $rootDependencies = $rootDependenciesProperty.Value
+
+    Assert-Equal `
+        -Expected "2.3.4" `
+        -Actual ([string]$rootDependencies["Test.Dependency"]) `
+        -Message "Declared project dependency version was not parsed."
+
+    Assert-Equal `
+        -Expected "4.5.6" `
+        -Actual ([string]$rootDependencies["External.Dependency"]) `
+        -Message "Declared external dependency version was not parsed."
+
+    Assert-Equal `
+        -Expected 2 `
+        -Actual $rootDependencies.Count `
+        -Message "Unexpected explicit dependency count was parsed."
 
     Assert-True `
         -Condition ($null -eq $rootPackage.PSObject.Properties["Slug"]) `
