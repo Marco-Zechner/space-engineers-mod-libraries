@@ -13,7 +13,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | `Mz.ApiProtocol` | [`0.2.5`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.ApiProtocol/0.2.5) | [Guide](src/Mz.ApiProtocol.Core/README.md) |
 | `Mz.Logging` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.1) | [Guide](src/Mz.Logging.Core/README.md) |
 | `Mz.Networking` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0) | [Guide](src/Mz.Networking.Core/README.md) |
-| `Mz.SemanticVersioning` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.1.1) | [Guide](src/Mz.SemanticVersioning/README.md) |
+| `Mz.SemanticVersioning` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.2.0) | [Guide](src/Mz.SemanticVersioning/README.md) |
 | `Mz.TextTemplate` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.TextTemplate/0.1.0) | [Guide](src/Mz.TextTemplate/README.md) |
 | `Mz.Toml` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.0) | [Guide](src/Mz.Toml/README.md) |
 
@@ -43,9 +43,9 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.SemanticVersioning
 
-- Latest stable release: [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.1.1)
-- Added a complete package usage guide and installation examples.
-- Added shared immutable changelog value types.
+- Latest stable release: [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.2.0)
+- Added LibraryDependency for exact SELibs package dependency metadata.
+- Added explicit package dependency declarations to LibraryVersionFile.
 
 ### Mz.TextTemplate
 
