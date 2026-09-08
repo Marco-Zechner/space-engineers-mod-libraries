@@ -205,6 +205,13 @@ function Read-LibraryVersionDescriptor {
             throw "Library dependency '$dependencyPackageId' in '$Path' has invalid version '$dependencyVersion'."
         }
 
+        try {
+            [void][version]::Parse($dependencyVersion)
+        }
+        catch {
+            throw "Library dependency '$dependencyPackageId' in '$Path' has invalid version '$dependencyVersion'."
+        }
+
         $dependencyKey = $dependencyPackageId.ToLowerInvariant()
 
         if ($dependencyKeys.ContainsKey($dependencyKey)) {
@@ -214,6 +221,7 @@ function Read-LibraryVersionDescriptor {
         $dependencyKeys[$dependencyKey] = $dependencyPackageId
         $dependencies[$dependencyPackageId] = $dependencyVersion
     }
+
     $entryPattern = (
         '(?s)new\s+ChangelogEntry\s*\(\s*' +
         '"(?<version>(?:\\.|[^"\\])*)"\s*,\s*' +

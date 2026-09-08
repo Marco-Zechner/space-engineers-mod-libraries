@@ -432,6 +432,22 @@ try {
         [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
     }
 
+    $oversizedDependencyVersionText = $dependencyVersionText.Replace(
+        "new LibraryDependency[0]",
+        'new[] { new LibraryDependency("Valid.Package", "2147483648.0.0") }'
+    )
+
+    try {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $oversizedDependencyVersionText, $dependencyVersionEncoding)
+
+        Assert-Throws `
+            -Action { Read-LibraryVersionDescriptor -Path $dependencyVersionFilePath | Out-Null } `
+            -ExpectedMessagePart "invalid version"
+    }
+    finally {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
+    }
+
     $missingDependenciesText = $dependencyVersionText.Replace(
         "        public static LibraryDependency[] Dependencies { get; } = new LibraryDependency[0];`n",
         ""

@@ -44,6 +44,7 @@ namespace Mz.SemanticVersioning.Tests
         [InlineData(" 1.2.3")]
         [InlineData("1.2.3 ")]
         [InlineData("1.2.x")]
+        [InlineData("2147483648.0.0")]
         public void Constructor_InvalidVersion_ThrowsFormatException(string version)
             => Assert.Throws<FormatException>(() => new LibraryDependency("Mz.Dependency", version));
 
