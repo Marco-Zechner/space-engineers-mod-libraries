@@ -1,4 +1,3 @@
-using Mz.Toml;
 using Xunit;
 
 namespace Mz.Toml.Tests;
