@@ -31,8 +31,7 @@ namespace Mz.Networking
         /// <summary>
         /// Gets the exact package dependencies required by this release.
         /// </summary>
-        public static LibraryDependency[] Dependencies { get; } = new[]
-        {
+        public static LibraryDependency[] Dependencies { get; } = {
             new LibraryDependency("Mz.ApiProtocol", "0.2.5"),
             new LibraryDependency("Mz.SemanticVersioning", "0.1.1")
         };
