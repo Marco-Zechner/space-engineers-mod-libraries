@@ -15,7 +15,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | `Mz.Networking` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.0) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.2.0) | [Guide](src/Mz.SemanticVersioning/README.md) |
 | `Mz.TextTemplate` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.TextTemplate/0.1.1) | [Guide](src/Mz.TextTemplate/README.md) |
-| `Mz.Toml` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.0) | [Guide](src/Mz.Toml/README.md) |
+| `Mz.Toml` | [`0.2.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.1) | [Guide](src/Mz.Toml/README.md) |
 
 ## Latest changes
 
@@ -53,13 +53,9 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.Toml
 
-- Latest stable release: [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.0)
-- Added exact source-preserving syntax spans, comments, trivia, and objective trivia placement.
-- Added the custom '#!' disabled-assignment extension while keeping disabled values out of the semantic document.
-- Added source-preserving enable, disable, value-replacement, and validated source-insertion operations.
-- Added recoverable syntax information for invalid decoded source, including explicit unparsed ranges.
-- Added the composable TomlSourceEditor with refreshed syntax, stale-node rejection, and atomic validated edits.
-- Kept strict TOML 1.0 semantic parsing, deterministic canonical writing, and Space Engineers C# 6 source-copy compatibility.
+- Latest stable release: [`0.2.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.1)
+- Applied internal naming and code-style cleanup.
+- Declared the exact Mz.SemanticVersioning 0.2.0 SELibs dependency.
 
 ## Release format
 
