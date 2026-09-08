@@ -27,6 +27,11 @@ namespace Mz.SemanticVersioning
         public static string VersionString => $"{Major}.{Minor}.{Patch}";
 
         /// <summary>
+        /// Gets the exact package dependencies required by this release.
+        /// </summary>
+        public static LibraryDependency[] Dependencies { get; } = new LibraryDependency[0];
+
+        /// <summary>
         /// Gets the complete changelog ordered from newest to oldest.
         /// </summary>
         public static Changelog Changelog { get; } = new Changelog(

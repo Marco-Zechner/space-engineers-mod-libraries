@@ -29,6 +29,14 @@ namespace Mz.Toml
         public static string VersionString => $"{Major}.{Minor}.{Patch}";
 
         /// <summary>
+        /// Gets the exact package dependencies required by this release.
+        /// </summary>
+        public static LibraryDependency[] Dependencies { get; } = new[]
+        {
+            new LibraryDependency("Mz.SemanticVersioning", "0.1.1")
+        };
+
+        /// <summary>
         /// Gets the complete changelog ordered from newest to oldest.
         /// </summary>
         public static Changelog Changelog { get; } = new Changelog(

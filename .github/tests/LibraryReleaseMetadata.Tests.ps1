@@ -413,6 +413,25 @@ try {
         -Actual $rootDependencies.Count `
         -Message "Unexpected explicit dependency count was parsed."
 
+    $dependencyVersionFilePath = Join-Path $testRoot "src\Test.Dependency\LibraryVersionFile.cs"
+    $dependencyVersionText = [System.IO.File]::ReadAllText($dependencyVersionFilePath)
+    $invalidDependencyVersionText = $dependencyVersionText.Replace(
+        "new LibraryDependency[0]",
+        'new[] { new LibraryDependency("Bad..Package", "1.0.0") }'
+    )
+    $dependencyVersionEncoding = New-Object System.Text.UTF8Encoding($false)
+
+    try {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $invalidDependencyVersionText, $dependencyVersionEncoding)
+
+        Assert-Throws `
+            -Action { Read-LibraryVersionDescriptor -Path $dependencyVersionFilePath | Out-Null } `
+            -ExpectedMessagePart "invalid package ID"
+    }
+    finally {
+        [System.IO.File]::WriteAllText($dependencyVersionFilePath, $dependencyVersionText, $dependencyVersionEncoding)
+    }
+
     Assert-True `
         -Condition ($null -eq $rootPackage.PSObject.Properties["Slug"]) `
         -Message "Release metadata still exposes a derived slug."

@@ -149,7 +149,7 @@ function Read-LibraryVersionDescriptor {
             -Value $dependencyMatch.Groups["version"].Value `
             -Path $Path
 
-        if ($dependencyPackageId -notmatch '^[A-Za-z_][A-Za-z0-9_.]*$') {
+        if ($dependencyPackageId -notmatch '^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$') {
             throw "Library dependency '$dependencyPackageId' in '$Path' has an invalid package ID."
         }
 
