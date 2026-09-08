@@ -64,6 +64,7 @@ Every `LibraryVersionFile.cs` beneath `src` defines one package root:
 
 - the file namespace is the SELibs package ID;
 - `Major`, `Minor`, and `Patch` define the package version;
+- `Dependencies` declares every exact SELibs package dependency as a package ID and numeric version string;
 - the single project beside the version file is the package root;
 - projects without their own version file join a package when their root
   namespace matches that package and they reference one of its projects;
@@ -74,13 +75,27 @@ The complete version-file namespace is the release identity. For example,
 namespace `Mz.ApiProtocol` version `0.2.2` uses the exact tag
 `release/Mz.ApiProtocol/0.2.2`. No separate slug is derived or configured.
 
-Normal project references to another discovered package become exact package
-dependencies. Evaluated source files outside the package's owned source
-folders are matched against folder ownership in `selibs.lock.json`.
+Package dependencies are declared explicitly in `LibraryVersionFile.cs`. For
+example:
+
+    public static LibraryDependency[] Dependencies { get; } = new[]
+    {
+        new LibraryDependency("Mz.SemanticVersioning", "0.1.1")
+    };
+
+A package without dependencies declares `new LibraryDependency[0]`. These
+declarations are authoritative and are written unchanged to the released SELibs
+package manifest.
+
+Release validation independently discovers dependency usage from normal project
+references and evaluated source files outside the package's owned source folders.
+External source ownership and versions are resolved through `selibs.lock.json`.
+Publishing fails when discovered usage is missing from `Dependencies`, when an
+exact declared version differs from discovered usage, when a declaration is no
+longer used, or when external source cannot be mapped to a package.
 
 Only the releasing package's owned source folders are copied into its component
-archive. Dependency source is never embedded. Unmapped external source causes
-publishing to fail rather than guessing a package identity.
+archive. Dependency source is never embedded.
 
 Adding another library therefore requires a project with an adjacent
 `LibraryVersionFile.cs`; no release configuration entry or workflow tag prefix
