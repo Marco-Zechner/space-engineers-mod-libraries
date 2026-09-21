@@ -290,14 +290,20 @@ try {
 
     Assert-True `
         -Condition (
-            -not $releaseWorkflowText.Contains(
+            $releaseWorkflowText.Contains(
                 "uses: ./.github/workflows/update-readme.yml"
             )
         ) `
         -Message (
-            "Automated tag releases still invoke the README workflow directly " +
-            "in addition to the release-published event."
+            "Automated tag releases do not invoke the README workflow after " +
+            "creating the GitHub release."
         )
+
+    Assert-True `
+        -Condition (
+            $releaseWorkflowText.Contains("needs: release")
+        ) `
+        -Message "README generation is not ordered after release publication."
 
     Assert-True `
         -Condition (
