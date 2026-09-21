@@ -30,18 +30,18 @@ namespace Mz.Storage.SpaceEngineers
         }
 
         /// <summary>
-        /// Creates indexed shared global storage with physical filenames namespaced by the supplied owner prefix.
+        /// Creates indexed shared global storage with physical filenames namespaced by the supplied owner.
         /// </summary>
         public static IndexedStorage CreateGlobal(string ownerPrefix)
         {
             if (string.IsNullOrWhiteSpace(ownerPrefix))
                 throw new ArgumentException("A stable global storage owner prefix is required.", nameof(ownerPrefix));
 
-            var prefix = ownerPrefix.Trim();
-            if (!prefix.EndsWith(".", StringComparison.Ordinal))
-                prefix += ".";
+            var owner = ownerPrefix.Trim().TrimEnd('.');
+            if (string.IsNullOrWhiteSpace(owner))
+                throw new ArgumentException("A stable global storage owner prefix is required.", nameof(ownerPrefix));
 
-            return new IndexedStorage(new GlobalStorageBackend(), prefix);
+            return new IndexedStorage(new GlobalStorageBackend(), owner + ".", "." + owner + IndexedStorage.IndexFileName);
         }
     }
 }

@@ -17,6 +17,8 @@ namespace Mz.Storage.SpaceEngineers.Tests
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
+        [InlineData(".")]
+        [InlineData("...")]
         public void CreateGlobal_InvalidOwnerPrefix_Throws(string? ownerPrefix) =>
             Assert.ThrowsAny<ArgumentException>(() => SpaceEngineersStorage.CreateGlobal(ownerPrefix!));
 

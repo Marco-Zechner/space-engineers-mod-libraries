@@ -46,6 +46,7 @@ namespace Mz.Storage
                     "Published indexed logical-name storage with persisted discovery and stale-entry repair.",
                     "Added local and world Space Engineers storage adapters using assembly-scoped ModAPI storage.",
                     "Added safely namespaced global storage through a caller-owned physical filename prefix.",
+                    "Uses .index for Local and World indexes and .<owner>.index for Global indexes.",
                     "Added the exact Mz.SemanticVersioning 0.2.0 SELibs dependency."
                 })
             }

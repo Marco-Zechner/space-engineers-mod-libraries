@@ -10,24 +10,32 @@ namespace Mz.Storage
     public sealed class IndexedStorage
     {
         /// <summary>
-        /// Gets the reserved physical filename used for the persisted logical-name index.
+        /// Gets the reserved logical and default physical filename used for the persisted logical-name index.
         /// </summary>
-        public const string IndexFileName = "__mz_storage_index_v1";
+        public const string IndexFileName = ".index";
 
         private readonly IStorageBackend _backend;
         private readonly string _physicalPrefix;
+        private readonly string _physicalIndexName;
 
         /// <summary>
         /// Creates indexed storage without a physical filename prefix.
         /// </summary>
-        public IndexedStorage(IStorageBackend backend) : this(backend, string.Empty)
+        public IndexedStorage(IStorageBackend backend) : this(backend, string.Empty, IndexFileName)
         {
         }
 
         /// <summary>
         /// Creates indexed storage with a prefix applied to every physical filename.
         /// </summary>
-        public IndexedStorage(IStorageBackend backend, string physicalPrefix)
+        public IndexedStorage(IStorageBackend backend, string physicalPrefix) : this(backend, physicalPrefix, physicalPrefix + IndexFileName)
+        {
+        }
+
+        /// <summary>
+        /// Creates indexed storage with independent physical data-prefix and index-filename mappings.
+        /// </summary>
+        public IndexedStorage(IStorageBackend backend, string physicalPrefix, string physicalIndexName)
         {
             if (backend == null)
                 throw new ArgumentNullException(nameof(backend));
@@ -35,8 +43,12 @@ namespace Mz.Storage
             if (physicalPrefix == null)
                 throw new ArgumentNullException(nameof(physicalPrefix));
 
+            if (string.IsNullOrWhiteSpace(physicalIndexName))
+                throw new ArgumentException("A physical index filename is required.", nameof(physicalIndexName));
+
             _backend = backend;
             _physicalPrefix = physicalPrefix;
+            _physicalIndexName = physicalIndexName;
         }
 
         /// <summary>
@@ -116,12 +128,11 @@ namespace Mz.Storage
         {
             repairNeeded = false;
             var names = new HashSet<string>(StringComparer.Ordinal);
-            var physicalIndexName = GetPhysicalIndexName();
 
-            if (!_backend.Exists(physicalIndexName))
+            if (!_backend.Exists(_physicalIndexName))
                 return names;
 
-            var content = _backend.Read(physicalIndexName);
+            var content = _backend.Read(_physicalIndexName);
             if (string.IsNullOrEmpty(content))
                 return names;
 
@@ -150,7 +161,7 @@ namespace Mz.Storage
         {
             var sorted = ToSortedArray(names);
             var content = sorted.Length == 0 ? string.Empty : string.Join("\n", sorted) + "\n";
-            _backend.Write(GetPhysicalIndexName(), content);
+            _backend.Write(_physicalIndexName, content);
         }
 
         private static string[] ToSortedArray(HashSet<string> names)
@@ -162,8 +173,6 @@ namespace Mz.Storage
         }
 
         private string GetPhysicalName(string name) => _physicalPrefix + name;
-
-        private string GetPhysicalIndexName() => _physicalPrefix + IndexFileName;
 
         private static void ValidateName(string name)
         {

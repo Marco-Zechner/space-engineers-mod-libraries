@@ -44,13 +44,17 @@ Create storage after `MyAPIGateway.Utilities` becomes available in the mod lifec
     IndexedStorage global = SpaceEngineersStorage.CreateGlobal("MyMod");
 
 Local storage is scoped by the calling type's assembly. World storage uses the
-same assembly scope inside the active save. Global storage is shared by all mods,
-so `CreateGlobal` requires a stable owner prefix and applies it to every physical
-data filename and to the private index filename.
+same assembly scope inside the active save. Their private index filename is
+`.index`.
 
-For example, owner prefix `MyMod` and logical name `config.toml` use a physical
-global filename beginning with `MyMod.` while callers continue to work only with
-the logical name `config.toml`.
+Global storage is shared by all mods, so it needs a stable owner supplied to
+`CreateGlobal(string)`. Space Engineers uses an internal assembly scope for
+Local and World storage, but the mod whitelist does not expose the reflection
+APIs required to recover that exact scope name safely for Global storage.
+
+For owner `MyMod`, logical name `config.toml` is stored physically as
+`MyMod.config.toml`, while the private global index is `.MyMod.index`. Callers
+continue to work only with the unprefixed logical name `config.toml`.
 
 ## Save, load, probe, and list
 
@@ -73,12 +77,15 @@ repaired when the index is read.
 ## Logical names and the private index
 
 Logical names must be nonblank, cannot contain line breaks, and cannot equal
-`IndexedStorage.IndexFileName`. The reserved index filename is an implementation
+`.index`. The reserved logical/default index filename is an implementation
 detail and is never returned by `ListKnown`.
 
-Local and World storage expose one indexed logical namespace per assembly storage
-scope. Global storage isolates that namespace by the owner prefix supplied to
-`CreateGlobal`.
+Local and World use `.index` physically inside their already isolated storage
+scope. Global storage maps its private index to `.<owner>.index`, keeping each
+owner's index separate in the shared global storage directory.
+
+A leading dot is only a naming convention here. Windows does not automatically
+apply the Hidden file attribute merely because a filename starts with `.`.
 
 ## Use the portable core
 
@@ -92,8 +99,10 @@ transport:
         void Write(string fileName, string content);
     }
 
-Then construct `IndexedStorage` directly. The optional physical prefix constructor
-can namespace all data files and the private index while preserving logical names.
+Then construct `IndexedStorage` directly. The two-argument constructor prefixes
+physical filenames using the default `.index` name. The three-argument
+constructor lets a backend choose an independent physical index filename while
+preserving the same logical names.
 
 ## Package version
 
