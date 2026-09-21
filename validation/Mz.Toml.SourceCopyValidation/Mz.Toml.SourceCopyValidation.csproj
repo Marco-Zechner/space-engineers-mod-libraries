@@ -18,6 +18,9 @@
             Include="..\..\src\Mz.SemanticVersioning\*.cs"
             Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
         <Compile
+            Include="..\..\src\Mz.Collections\*.cs"
+            Link="Libraries\Mz.Collections\%(Filename)%(Extension)" />
+        <Compile
             Include="..\..\src\Mz.Toml\**\*.cs"
             Exclude="..\..\src\Mz.Toml\bin\**\*;..\..\src\Mz.Toml\obj\**\*"
             Link="Libraries\Mz.Toml\%(RecursiveDir)%(Filename)%(Extension)" />

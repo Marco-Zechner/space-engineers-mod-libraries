@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Mz.Collections\Mz.Collections.csproj" />
     <ProjectReference Include="..\Mz.SemanticVersioning\Mz.SemanticVersioning.csproj" />
   </ItemGroup>
 

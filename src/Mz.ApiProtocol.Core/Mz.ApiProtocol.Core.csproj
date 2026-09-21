@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>net48;net8.0</TargetFrameworks>
@@ -15,6 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Mz.Collections\Mz.Collections.csproj" />
         <ProjectReference Include="..\Mz.SemanticVersioning\Mz.SemanticVersioning.csproj" />
     </ItemGroup>
 
