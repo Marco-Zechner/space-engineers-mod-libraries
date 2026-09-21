@@ -11,6 +11,7 @@ SELibs.
 | `Mz.ApiProtocol` | `Mz.ApiProtocol.Core`, `Mz.ApiProtocol.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
 | `Mz.Logging` | `Mz.Logging.Core`, `Mz.Logging.SpaceEngineers` | `Mz.SemanticVersioning` `0.1.1` |
 | `Mz.Networking` | `Mz.Networking.Core`, `Mz.Networking.SpaceEngineers` | `Mz.ApiProtocol` `0.2.5`, `Mz.SemanticVersioning` `0.1.1` |
+| `Mz.Storage` | `Mz.Storage.Core`, `Mz.Storage.SpaceEngineers` | `Mz.SemanticVersioning` `0.2.0` |
 | `Mz.TextTemplate` | `Mz.TextTemplate` | `Mz.SemanticVersioning` `0.1.1` |
 | `Mz.Toml` | `Mz.Toml` | `Mz.SemanticVersioning` `0.1.1` |
 
