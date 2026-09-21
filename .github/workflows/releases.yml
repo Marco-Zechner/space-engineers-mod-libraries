@@ -52,3 +52,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
               throw "GitHub release creation failed."
           }
+
+  update-readme:
+    name: Update published package catalog
+    needs: release
+    permissions:
+      contents: write
+    uses: ./.github/workflows/update-readme.yml
