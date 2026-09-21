@@ -210,6 +210,18 @@ try {
     $networkingChangelogVersions =
         @($networkingLibrary.Changelog.Version) -join ","
 
+    $storageLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.Storage"
+
+    $storageVersion =
+        [string]$storageLibrary.Version
+
+    $storageTag =
+        "release/Mz.Storage/$storageVersion"
+
+    $storageChangelogVersions =
+        @($storageLibrary.Changelog.Version) -join ","
     $tomlLibrary =
         Get-TestLibrary `
             -PackageId "Mz.Toml"
@@ -859,6 +871,111 @@ try {
         ) `
         -Message "Networking wire layout was not preserved."
 
+    $storageOutput = Join-Path $testRoot "storage"
+
+    & $bundleScript `
+        -Tag $storageTag `
+        -OutputDirectory $storageOutput `
+        -SkipTests |
+        Out-Null
+
+    $storageManifestPath = Join-Path `
+        $storageOutput `
+        ("Mz.Storage-" + $storageVersion + "-package.json")
+
+    $storageComponentPath = Join-Path `
+        $storageOutput `
+        ("Mz.Storage-" + $storageVersion + "-component.zip")
+
+    $storageManifest = Get-Content `
+        -LiteralPath $storageManifestPath `
+        -Raw |
+        ConvertFrom-Json
+
+    $storageEntries = @(Get-ZipEntries -Path $storageComponentPath)
+
+    Assert-Equal `
+        -Expected "Mz.Storage" `
+        -Actual ([string]$storageManifest.id) `
+        -Message "Mz.Storage has the wrong package ID."
+
+    Assert-Equal `
+        -Expected $storageVersion `
+        -Actual ([string]$storageManifest.version) `
+        -Message "Mz.Storage has the wrong package version."
+
+    Assert-Equal `
+        -Expected $storageChangelogVersions `
+        -Actual (@($storageManifest.changelog.version) -join ",") `
+        -Message "Mz.Storage changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected 1 `
+        -Actual @($storageManifest.dependencies.PSObject.Properties).Count `
+        -Message "Mz.Storage declares the wrong dependency count."
+
+    Assert-Equal `
+        -Expected $semanticVersion `
+        -Actual ([string]$storageManifest.dependencies."Mz.SemanticVersioning") `
+        -Message "Mz.Storage has the wrong SemanticVersioning dependency."
+
+    Assert-Equal `
+        -Expected "Mz.Storage.Core,Mz.Storage.SpaceEngineers" `
+        -Actual (@($storageManifest.folders | Sort-Object) -join ",") `
+        -Message "Mz.Storage declares the wrong owned folders."
+
+    Assert-True `
+        -Condition (
+            @(
+                $storageEntries |
+                    Where-Object {
+                        -not (
+                            $_.StartsWith("Libraries/Mz.Storage.Core/", [System.StringComparison]::Ordinal) -or
+                            $_.StartsWith("Libraries/Mz.Storage.SpaceEngineers/", [System.StringComparison]::Ordinal)
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Storage archive contains files outside its owned folders."
+
+    Assert-True `
+        -Condition (
+            @(
+                $storageEntries |
+                    Where-Object {
+                        $_.StartsWith("Libraries/Mz.SemanticVersioning/", [System.StringComparison]::Ordinal)
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Storage component incorrectly embeds SemanticVersioning."
+
+    Assert-True `
+        -Condition ($storageEntries -contains "Libraries/Mz.Storage.Core/LibraryVersionFile.cs") `
+        -Message "Mz.Storage release metadata is missing."
+
+    Assert-True `
+        -Condition ($storageEntries -contains "Libraries/Mz.Storage.Core/README.md") `
+        -Message "Mz.Storage README is missing."
+
+    Assert-True `
+        -Condition ($storageEntries -contains "Libraries/Mz.Storage.Core/IndexedStorage.cs") `
+        -Message "Mz.Storage indexed core is missing."
+
+    Assert-True `
+        -Condition ($storageEntries -contains "Libraries/Mz.Storage.SpaceEngineers/SpaceEngineersStorage.cs") `
+        -Message "Mz.Storage Space Engineers entry point is missing."
+
+    Assert-True `
+        -Condition (
+            @(
+                $storageEntries |
+                    Where-Object {
+                        $_ -match '\.csproj$' -or
+                        $_ -match '/(?:bin|obj)/'
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Storage archive contains project or build artifacts."
     $tomlOutput = Join-Path $testRoot "toml"
 
     & $bundleScript `

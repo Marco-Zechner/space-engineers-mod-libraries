@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>6</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Mz.Storage.SpaceEngineers</RootNamespace>
+    <AssemblyName>Mz.Storage.SpaceEngineers</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <SpaceEngineersBin64>E:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</SpaceEngineersBin64>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mz.Storage.Core\Mz.Storage.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sandbox.Common">
+      <HintPath>$(SpaceEngineersBin64)\Sandbox.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VRage.Game">
+      <HintPath>$(SpaceEngineersBin64)\VRage.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

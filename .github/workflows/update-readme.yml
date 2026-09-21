@@ -12,10 +12,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: repository-readme
-  cancel-in-progress: false
-
 jobs:
   update:
     name: Update published package catalog
@@ -34,49 +30,61 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Generate root README
+      - name: Regenerate and publish repository README
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          & ".\.github\scripts\New-RepositoryReadme.ps1" `
-              -Repository "${{ github.repository }}"
-
-      - name: Commit generated README
-        shell: pwsh
-        run: |
           $ErrorActionPreference = "Stop"
 
           git config user.name "github-actions[bot]"
-          git config `
-              user.email `
-              "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add -- README.md
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+              git fetch origin main
 
-          git diff --cached --quiet
-          $diffExitCode = $LASTEXITCODE
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Could not fetch current main."
+              }
 
-          if ($diffExitCode -eq 0) {
-              Write-Host "README.md is already current."
-              exit 0
-          }
+              git reset --hard origin/main
 
-          if ($diffExitCode -ne 1) {
-              throw (
-                  "Could not inspect the staged README.md diff. " +
-                  "Git exited with code $diffExitCode."
-              )
-          }
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Could not reset to current main."
+              }
 
-          git commit -m "docs: update published package catalog"
+              & ".\.github\scripts\New-RepositoryReadme.ps1" `
+                  -Repository "${{ github.repository }}"
 
-          if ($LASTEXITCODE -ne 0) {
-              throw "Could not commit generated README.md."
-          }
+              git add -- README.md
+              git diff --cached --quiet
+              $diffExitCode = $LASTEXITCODE
 
-          git push origin HEAD:main
+              if ($diffExitCode -eq 0) {
+                  Write-Host "README.md is already current."
+                  exit 0
+              }
 
-          if ($LASTEXITCODE -ne 0) {
-              throw "Could not push generated README.md."
+              if ($diffExitCode -ne 1) {
+                  throw ("Could not inspect the staged README.md diff. Git exited with code $diffExitCode.")
+              }
+
+              git commit -m "docs: update published package catalog"
+
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Could not commit generated README.md."
+              }
+
+              git push origin HEAD:main
+
+              if ($LASTEXITCODE -eq 0) {
+                  exit 0
+              }
+
+              if ($attempt -eq 5) {
+                  throw "Could not publish generated README.md after 5 attempts."
+              }
+
+              Write-Host "main advanced while publishing README.md; regenerating from the latest main."
+              Start-Sleep -Seconds (2 * $attempt)
           }
