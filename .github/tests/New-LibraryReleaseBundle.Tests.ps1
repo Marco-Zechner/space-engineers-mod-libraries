@@ -161,6 +161,19 @@ try {
     $semanticCurrentChange =
         [string]$semanticLibrary.Changelog[0].Changes[0]
 
+    $collectionsLibrary =
+        Get-TestLibrary `
+            -PackageId "Mz.Collections"
+
+    $collectionsVersion =
+        [string]$collectionsLibrary.Version
+
+    $collectionsTag =
+        "release/Mz.Collections/$collectionsVersion"
+
+    $collectionsChangelogVersions =
+        @($collectionsLibrary.Changelog.Version) -join ","
+
     $apiLibrary =
         Get-TestLibrary `
             -PackageId "Mz.ApiProtocol"
@@ -363,6 +376,110 @@ try {
         ) `
         -Message "SemanticVersioning README is missing from its archive."
 
+    $collectionsOutput = Join-Path $testRoot "collections"
+
+    & $bundleScript `
+        -Tag $collectionsTag `
+        -OutputDirectory $collectionsOutput `
+        -SkipTests |
+        Out-Null
+
+    $collectionsManifestPath = Join-Path `
+        $collectionsOutput `
+        ("Mz.Collections-" + $collectionsVersion + "-package.json")
+
+    $collectionsComponentPath = Join-Path `
+        $collectionsOutput `
+        ("Mz.Collections-" + $collectionsVersion + "-component.zip")
+
+    $collectionsManifest = Get-Content `
+        -LiteralPath $collectionsManifestPath `
+        -Raw |
+        ConvertFrom-Json
+
+    $collectionsEntries = @(Get-ZipEntries -Path $collectionsComponentPath)
+
+    Assert-Equal `
+        -Expected "Mz.Collections" `
+        -Actual ([string]$collectionsManifest.id) `
+        -Message "Mz.Collections has the wrong package ID."
+
+    Assert-Equal `
+        -Expected $collectionsVersion `
+        -Actual ([string]$collectionsManifest.version) `
+        -Message "Mz.Collections has the wrong package version."
+
+    Assert-Equal `
+        -Expected $collectionsChangelogVersions `
+        -Actual (@($collectionsManifest.changelog.version) -join ",") `
+        -Message "Mz.Collections changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected $semanticVersion `
+        -Actual ([string]$collectionsManifest.dependencies."Mz.SemanticVersioning") `
+        -Message "Mz.Collections has the wrong SemanticVersioning dependency."
+
+    Assert-Equal `
+        -Expected "Mz.Collections" `
+        -Actual (@($collectionsManifest.folders | Sort-Object) -join ",") `
+        -Message "Mz.Collections declares the wrong owned folders."
+
+    Assert-True `
+        -Condition (
+            @(
+                $collectionsEntries |
+                    Where-Object {
+                        -not $_.StartsWith(
+                            "Libraries/Mz.Collections/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Collections archive contains files outside its owned folder."
+
+    Assert-True `
+        -Condition (
+            @(
+                $collectionsEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.SemanticVersioning/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Collections component incorrectly embeds SemanticVersioning."
+
+    Assert-True `
+        -Condition (
+            $collectionsEntries -contains
+            "Libraries/Mz.Collections/ReadOnlyListView.cs"
+        ) `
+        -Message "Mz.Collections read-only list view is missing."
+
+    Assert-True `
+        -Condition (
+            $collectionsEntries -contains
+            "Libraries/Mz.Collections/ReadOnlyDictionaryView.cs"
+        ) `
+        -Message "Mz.Collections read-only dictionary view is missing."
+
+    Assert-True `
+        -Condition (
+            $collectionsEntries -contains
+            "Libraries/Mz.Collections/LibraryVersionFile.cs"
+        ) `
+        -Message "Mz.Collections release metadata is missing."
+
+    Assert-True `
+        -Condition (
+            $collectionsEntries -contains
+            "Libraries/Mz.Collections/README.md"
+        ) `
+        -Message "Mz.Collections README is missing."
+
     $apiOutput = Join-Path $testRoot "api"
 
     & $bundleScript `
@@ -400,6 +517,20 @@ try {
             @($apiManifest.changelog.version) -join ","
         ) `
         -Message "ApiProtocol changelog order is incorrect."
+
+    Assert-Equal `
+        -Expected 2 `
+        -Actual @(
+            $apiManifest.dependencies.PSObject.Properties
+        ).Count `
+        -Message "ApiProtocol declares the wrong dependency count."
+
+    Assert-Equal `
+        -Expected $collectionsVersion `
+        -Actual (
+            [string]$apiManifest.dependencies."Mz.Collections"
+        ) `
+        -Message "ApiProtocol has the wrong Mz.Collections dependency."
 
     Assert-Equal `
         -Expected $semanticVersion `
@@ -460,6 +591,20 @@ try {
             "ApiProtocol component incorrectly embeds its transitive " +
             "SemanticVersioning dependency."
         )
+
+    Assert-True `
+        -Condition (
+            @(
+                $apiEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.Collections/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "ApiProtocol component incorrectly embeds its Mz.Collections dependency."
 
     Assert-True `
         -Condition (
@@ -599,6 +744,20 @@ try {
         -Message "Networking changelog order is incorrect."
 
     Assert-Equal `
+        -Expected 2 `
+        -Actual @(
+            $networkingManifest.dependencies.PSObject.Properties
+        ).Count `
+        -Message "Networking declares the wrong dependency count."
+
+    Assert-Equal `
+        -Expected $apiVersion `
+        -Actual (
+            [string]$networkingManifest.dependencies."Mz.ApiProtocol"
+        ) `
+        -Message "Networking has the wrong ApiProtocol dependency."
+
+    Assert-Equal `
         -Expected $semanticVersion `
         -Actual (
             [string]$networkingManifest.dependencies."Mz.SemanticVersioning"
@@ -621,6 +780,34 @@ try {
             "Networking component incorrectly embeds its SemanticVersioning " +
             "dependency."
         )
+
+    Assert-True `
+        -Condition (
+            @(
+                $networkingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.ApiProtocol.",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Networking component incorrectly embeds its ApiProtocol dependency."
+
+    Assert-True `
+        -Condition (
+            @(
+                $networkingEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.Collections/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Networking component incorrectly embeds transitive Mz.Collections sources."
 
     Assert-True `
         -Condition (
@@ -732,11 +919,18 @@ try {
         -Message "Mz.Toml changelog order is incorrect."
 
     Assert-Equal `
-        -Expected 1 `
+        -Expected 2 `
         -Actual @(
             $tomlManifest.dependencies.PSObject.Properties
         ).Count `
         -Message "Mz.Toml declares the wrong dependency count."
+
+    Assert-Equal `
+        -Expected $collectionsVersion `
+        -Actual (
+            [string]$tomlManifest.dependencies."Mz.Collections"
+        ) `
+        -Message "Mz.Toml has the wrong Mz.Collections dependency."
 
     Assert-Equal `
         -Expected $semanticVersion `
@@ -799,6 +993,20 @@ try {
             "Mz.Toml component incorrectly embeds its SemanticVersioning " +
             "dependency."
         )
+
+    Assert-True `
+        -Condition (
+            @(
+                $tomlEntries |
+                    Where-Object {
+                        $_.StartsWith(
+                            "Libraries/Mz.Collections/",
+                            [System.StringComparison]::Ordinal
+                        )
+                    }
+            ).Count -eq 0
+        ) `
+        -Message "Mz.Toml component incorrectly embeds its Mz.Collections dependency."
 
     Assert-True `
         -Condition (

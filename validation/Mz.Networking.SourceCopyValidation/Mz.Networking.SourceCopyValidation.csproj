@@ -20,6 +20,10 @@
             Include="..\..\src\Mz.SemanticVersioning\*.cs"
             Link="Libraries\Mz.SemanticVersioning\%(Filename)%(Extension)" />
         <Compile
+            Include="..\..\src\Mz.Collections\**\*.cs"
+            Exclude="..\..\src\Mz.Collections\bin\**;..\..\src\Mz.Collections\obj\**"
+            Link="Libraries\Mz.Collections\%(RecursiveDir)%(Filename)%(Extension)" />
+        <Compile
             Include="..\..\src\Mz.ApiProtocol.Core\**\*.cs"
             Exclude="..\..\src\Mz.ApiProtocol.Core\bin\**;..\..\src\Mz.ApiProtocol.Core\obj\**"
             Link="Libraries\Mz.ApiProtocol.Core\%(RecursiveDir)%(Filename)%(Extension)" />
