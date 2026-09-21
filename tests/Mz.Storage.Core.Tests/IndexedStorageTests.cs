@@ -86,6 +86,53 @@ namespace Mz.Storage.Tests
             Assert.False(backend.Files.ContainsKey(IndexedStorage.IndexFileName));
         }
 
+        [Fact]
+        public void ListKnown_CorruptEntries_AreIgnoredAndIndexIsRepaired()
+        {
+            var backend = new MemoryStorageBackend();
+            backend.Files["alpha.toml"] = "a";
+            backend.Files[IndexedStorage.IndexFileName] = "alpha.toml\n\n__mz_storage_index_v1\nalpha.toml\n";
+
+            var storage = new IndexedStorage(backend);
+
+            Assert.Equal(new[] { "alpha.toml" }, storage.ListKnown());
+            Assert.Equal("alpha.toml\n", backend.Files[IndexedStorage.IndexFileName]);
+        }
+
+        [Fact]
+        public void Load_MissingFile_ThrowsWithoutCreatingIndex()
+        {
+            var backend = new MemoryStorageBackend();
+            var storage = new IndexedStorage(backend);
+
+            Assert.Throws<System.IO.FileNotFoundException>(() => storage.Load("missing.toml"));
+            Assert.False(backend.Files.ContainsKey(IndexedStorage.IndexFileName));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("__mz_storage_index_v1")]
+        [InlineData("bad\nname")]
+        public void Save_InvalidLogicalName_DoesNotWrite(string? name)
+        {
+            var backend = new MemoryStorageBackend();
+            var storage = new IndexedStorage(backend);
+
+            Assert.ThrowsAny<System.ArgumentException>(() => storage.Save(name!, "content"));
+            Assert.Empty(backend.Files);
+        }
+
+        [Fact]
+        public void Save_NullContent_DoesNotWrite()
+        {
+            var backend = new MemoryStorageBackend();
+            var storage = new IndexedStorage(backend);
+
+            Assert.Throws<System.ArgumentNullException>(() => storage.Save("config.toml", null!));
+            Assert.Empty(backend.Files);
+        }
         private sealed class MemoryStorageBackend : IStorageBackend
         {
             public Dictionary<string, string> Files { get; } = new Dictionary<string, string>();

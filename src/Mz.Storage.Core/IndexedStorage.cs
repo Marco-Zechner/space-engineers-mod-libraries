@@ -79,11 +79,12 @@ namespace Mz.Storage
         }
 
         /// <summary>
-        /// Returns known logical names after pruning entries whose physical files no longer exist.
+        /// Returns known logical names after pruning invalid or missing persisted entries.
         /// </summary>
         public string[] ListKnown()
         {
-            var names = ReadIndex();
+            bool repairNeeded;
+            var names = ReadIndex(out repairNeeded);
             var staleNames = new List<string>();
 
             foreach (var name in names)
@@ -92,28 +93,28 @@ namespace Mz.Storage
                     staleNames.Add(name);
             }
 
-            if (staleNames.Count > 0)
-            {
-                foreach (var name in staleNames)
-                    names.Remove(name);
+            foreach (var name in staleNames)
+                names.Remove(name);
 
+            if (repairNeeded || staleNames.Count > 0)
                 WriteIndex(names);
-            }
 
             return ToSortedArray(names);
         }
 
         private void AddKnown(string name)
         {
-            var names = ReadIndex();
-            if (!names.Add(name))
-                return;
+            bool repairNeeded;
+            var names = ReadIndex(out repairNeeded);
+            var added = names.Add(name);
 
-            WriteIndex(names);
+            if (added || repairNeeded)
+                WriteIndex(names);
         }
 
-        private HashSet<string> ReadIndex()
+        private HashSet<string> ReadIndex(out bool repairNeeded)
         {
+            repairNeeded = false;
             var names = new HashSet<string>(StringComparer.Ordinal);
             var physicalIndexName = GetPhysicalIndexName();
 
@@ -124,9 +125,23 @@ namespace Mz.Storage
             if (string.IsNullOrEmpty(content))
                 return names;
 
-            var entries = content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var entry in entries)
-                names.Add(entry);
+            var entries = content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+
+            for (var index = 0; index < entries.Length; index++)
+            {
+                var entry = entries[index];
+
+                if (entry.Length == 0)
+                {
+                    if (index < entries.Length - 1)
+                        repairNeeded = true;
+
+                    continue;
+                }
+
+                if (!IsValidName(entry) || !names.Add(entry))
+                    repairNeeded = true;
+            }
 
             return names;
         }
@@ -155,11 +170,11 @@ namespace Mz.Storage
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("A logical storage name is required.", nameof(name));
 
-            if (name == IndexFileName)
-                throw new ArgumentException("The logical storage name is reserved by Mz.Storage.", nameof(name));
-
-            if (name.IndexOf('\r') >= 0 || name.IndexOf('\n') >= 0)
-                throw new ArgumentException("Logical storage names cannot contain line breaks.", nameof(name));
+            if (!IsValidName(name))
+                throw new ArgumentException("The logical storage name is reserved or contains a line break.", nameof(name));
         }
+
+        private static bool IsValidName(string name) =>
+            !string.IsNullOrWhiteSpace(name) && name != IndexFileName && name.IndexOf('\r') < 0 && name.IndexOf('\n') < 0;
     }
 }
