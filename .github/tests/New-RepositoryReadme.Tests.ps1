@@ -356,6 +356,36 @@ try {
             "README workflow no longer handles manual release publication."
         )
 
+    Assert-True `
+        -Condition (
+            -not $readmeWorkflowText.Contains(
+                "group: repository-readme"
+            )
+        ) `
+        -Message (
+            "README updates still use a coalescing concurrency group that " +
+            "cancels pending burst-release updates."
+        )
+
+    Assert-True `
+        -Condition (
+            $readmeWorkflowText.Contains(
+                'for ($attempt = 1; $attempt -le 5; $attempt++)'
+            ) `
+            -and $readmeWorkflowText.Contains(
+                "git fetch origin main"
+            ) `
+            -and $readmeWorkflowText.Contains(
+                "git reset --hard origin/main"
+            ) `
+            -and $readmeWorkflowText.Contains(
+                "main advanced while publishing README.md"
+            )
+        ) `
+        -Message (
+            "README publication does not retry against the latest main when " +
+            "parallel release updates race."
+        )
     Write-Output (
         "OK repository README tests passed: " +
         "$script:Passed assertions"
