@@ -76,6 +76,22 @@ namespace Mz.Storage.Tests
         }
 
         [Fact]
+        public void LeadingDotPhysicalPrefix_MapsMetadataWithoutDoubleDot()
+        {
+            var backend = new MemoryStorageBackend();
+            var storage = new IndexedStorage(backend, "MyMod.", ".MyMod.", ".MyMod.index");
+
+            storage.Save("config.toml", "value = 1");
+            storage.Save(".defaults", "metadata");
+
+            Assert.Equal("value = 1", backend.Files["MyMod.config.toml"]);
+            Assert.Equal("metadata", backend.Files[".MyMod.defaults"]);
+            Assert.True(backend.Files.ContainsKey(".MyMod.index"));
+            Assert.False(backend.Files.ContainsKey("MyMod..defaults"));
+            Assert.Equal(new[] { ".defaults", "config.toml" }, storage.ListKnown());
+        }
+
+        [Fact]
         public void Exists_UnknownExistingFile_DoesNotMutateIndex()
         {
             var backend = new MemoryStorageBackend();
