@@ -15,7 +15,7 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 | `Mz.Logging` | [`0.1.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Logging/0.1.2) | [Guide](src/Mz.Logging.Core/README.md) |
 | `Mz.Networking` | [`0.2.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Networking/0.2.2) | [Guide](src/Mz.Networking.Core/README.md) |
 | `Mz.SemanticVersioning` | [`0.2.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.SemanticVersioning/0.2.0) | [Guide](src/Mz.SemanticVersioning/README.md) |
-| `Mz.Storage` | [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Storage/0.1.0) | [Guide](src/Mz.Storage.Core/README.md) |
+| `Mz.Storage` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Storage/0.1.1) | [Guide](src/Mz.Storage.Core/README.md) |
 | `Mz.TextTemplate` | [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.TextTemplate/0.1.1) | [Guide](src/Mz.TextTemplate/README.md) |
 | `Mz.Toml` | [`0.2.2`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Toml/0.2.2) | [Guide](src/Mz.Toml/README.md) |
 
@@ -52,12 +52,8 @@ Packages are distributed through [SELibs](https://github.com/Marco-Zechner/selib
 
 ### Mz.Storage
 
-- Latest stable release: [`0.1.0`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Storage/0.1.0)
-- Published indexed logical-name storage with persisted discovery and stale-entry repair.
-- Added local and world Space Engineers storage adapters using assembly-scoped ModAPI storage.
-- Added safely namespaced global storage through a caller-owned physical filename prefix.
-- Uses .index for Local and World indexes and .<owner>.index for Global indexes.
-- Added the exact Mz.SemanticVersioning 0.2.0 SELibs dependency.
+- Latest stable release: [`0.1.1`](https://github.com/Marco-Zechner/space-engineers-mod-libraries/releases/tag/release/Mz.Storage/0.1.1)
+- Global storage maps leading-dot logical metadata names after the owner prefix, avoiding duplicated dots such as MyMod..defaults.
 
 ### Mz.TextTemplate
 
