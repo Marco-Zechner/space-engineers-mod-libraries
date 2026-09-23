@@ -108,20 +108,31 @@ function New-TestRelease {
 
         [switch]$Draft,
 
-        [switch]$Prerelease
+        [switch]$Prerelease,
+
+        [switch]$EmptyEmbeddedAssets,
+
+        [string]$AssetMetadataPath
     )
+
+    $assets = @()
+
+    if (-not $EmptyEmbeddedAssets) {
+        $assets = @(
+            [ordered]@{
+                name = Split-Path -Leaf $ManifestPath
+                localPath = $ManifestPath
+            }
+        )
+    }
 
     return [ordered]@{
         tag_name = $Tag
         html_url = "https://example.invalid/releases/$Tag"
         draft = [bool]$Draft
         prerelease = [bool]$Prerelease
-        assets = @(
-            [ordered]@{
-                name = Split-Path -Leaf $ManifestPath
-                localPath = $ManifestPath
-            }
-        )
+        assets = $assets
+        assetMetadataPath = $AssetMetadataPath
     }
 }
 
@@ -183,6 +194,23 @@ try {
         -Version "9.0.0" `
         -Changes @("This draft must not be selected.")
 
+    $storage = New-TestManifest `
+        -Root $manifests `
+        -Id "Mz.Storage" `
+        -Version "0.1.1" `
+        -Changes @("Normalized Global metadata filenames.")
+
+    $storageAssetMetadataPath = Join-Path $testRoot "storage-assets.json"
+
+    Write-TestJson `
+        -Path $storageAssetMetadataPath `
+        -Value @(
+            [ordered]@{
+                name = Split-Path -Leaf $storage
+                localPath = $storage
+            }
+        )
+
     $releaseMetadataPath = Join-Path $testRoot "releases.json"
 
     Write-TestJson `
@@ -204,6 +232,11 @@ try {
                 -Tag "release/Mz.SemanticVersioning/0.1.1" `
                 -ManifestPath $semantic)
             (New-TestRelease `
+                -Tag "release/Mz.Storage/0.1.1" `
+                -ManifestPath $storage `
+                -EmptyEmbeddedAssets `
+                -AssetMetadataPath $storageAssetMetadataPath)
+            (New-TestRelease `
                 -Tag "release/Mz.ApiProtocol/9.0.0" `
                 -ManifestPath $draftManifest `
                 -Draft)
@@ -224,6 +257,18 @@ try {
             $text.Contains("# Space Engineers Mod Libraries")
         ) `
         -Message "Generated README has the wrong title."
+
+    Assert-True `
+        -Condition (
+            $text.Contains(
+                "[``0.1.1``]" +
+                "(https://example.invalid/releases/release/Mz.Storage/0.1.1)"
+            )
+        ) `
+        -Message (
+            "Generated README did not resolve release assets from " +
+            "authoritative asset metadata."
+        )
 
     Assert-True `
         -Condition (

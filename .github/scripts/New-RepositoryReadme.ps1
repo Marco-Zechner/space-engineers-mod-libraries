@@ -115,6 +115,57 @@ function Get-ReleaseRecords {
     )
 }
 
+function Get-ReleaseAssets {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Release,
+
+        [string]$ReleaseMetadataPath
+    )
+
+    $fixtureAssetsPath = [string](
+        Get-LibraryObjectPropertyValue `
+            -Object $Release `
+            -Name "assetMetadataPath"
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($fixtureAssetsPath)) {
+        if (-not (Test-Path -LiteralPath $fixtureAssetsPath -PathType Leaf)) {
+            throw "Release asset metadata file not found: $fixtureAssetsPath"
+        }
+
+        $response = Get-Content -LiteralPath $fixtureAssetsPath -Raw | ConvertFrom-Json
+        return @($response | ForEach-Object { $_ })
+    }
+
+    $assetsUrl = [string](
+        Get-LibraryObjectPropertyValue `
+            -Object $Release `
+            -Name "assets_url"
+    )
+
+    if (
+        [string]::IsNullOrWhiteSpace($ReleaseMetadataPath) -and
+        -not [string]::IsNullOrWhiteSpace($assetsUrl)
+    ) {
+        $response = Invoke-RestMethod `
+            -Uri $assetsUrl `
+            -Headers (Get-GitHubHeaders) `
+            -Method Get
+
+        return @($response | ForEach-Object { $_ })
+    }
+
+    return @(
+        (
+            Get-LibraryObjectPropertyValue `
+                -Object $Release `
+                -Name "assets"
+        ) |
+            ForEach-Object { $_ }
+    )
+}
+
 function Read-ReleaseManifest {
     param(
         [Parameter(Mandatory = $true)]
@@ -230,12 +281,9 @@ foreach (
     $packageId = [string]$library.PackageId
 
     $assets = @(
-        (
-            Get-LibraryObjectPropertyValue `
-                -Object $release `
-                -Name "assets"
-        ) |
-            ForEach-Object { $_ }
+        Get-ReleaseAssets `
+            -Release $release `
+            -ReleaseMetadataPath $ReleaseMetadataPath
     )
 
     $manifestAssets = @(
